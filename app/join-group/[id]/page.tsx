@@ -4,111 +4,75 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { AlajoIcon } from '@/components/ui/alajo-icon'
 
-type Group = {
-  id: string
-  name: string
-  description: string | null
-  cycle: 'six_month' | 'ten_month'
-  contribution_amount: number
-  slot_count: number
-  start_date: string | null
-  status: string
+function Icon({ name, size = 18 }: { name: 'users' | 'check' | 'arrow' | 'info'; size?: number }) {
+  const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  if (name === 'users') return <svg {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  if (name === 'check') return <svg {...p}><path d="m5 12 4 4L19 6"/></svg>
+  if (name === 'arrow') return <svg {...p}><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+  return <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
 }
-type Slot = { id: string; position: number; status: string }
 
-const money = (value: number) => `₦${Number(value).toLocaleString('en-NG', { minimumFractionDigits: 0 })}`
-const cycleLabel = (cycle: Group['cycle']) => cycle === 'ten_month' ? '10 Months' : '6 Months'
-const nav = [
-  ['dashboard','/dashboard','Dashboard'], ['groups','/groups','Groups'], ['contributions','/contributions','Contributions'], ['payouts','/payouts','Payouts'],
-  ['wallet','/wallet','Wallet'], ['transactions','/transactions','Transactions'], ['invite','/invite-earn','Invite & Earn'], ['notifications','/notifications','Notifications'],
-  ['settings','/settings','Settings'], ['help','/help-center','Help Center'], ['logout','/login','Logout'],
-] as const
+type Group = { id: string; name: string; description: string | null; cycle: string; contribution_amount: number; slot_count: number; start_date: string | null; status: string }
+type Slot = { id: string; position: number; status: string }
+const money = (n: number) => `₦${Number(n).toLocaleString('en-NG', { minimumFractionDigits: 0 })}`
+const cycleLabel = (v: string) => v === 'ten_month' ? '10 Months' : '6 Months'
 
 export default function JoinGroupPage() {
-  const params = useParams<{ id: string }>()
+  const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const supabase = createClient()
   const [group, setGroup] = useState<Group | null>(null)
   const [slots, setSlots] = useState<Slot[]>([])
-  const [selectedSlot, setSelectedSlot] = useState<string>('')
-  const [checks, setChecks] = useState([false, false, false, false])
+  const [selectedId, setSelectedId] = useState('')
+  const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    let cancelled = false
+    let alive = true
     async function load() {
+      const supabase = createClient()
       try {
         const { data: auth } = await supabase.auth.getUser()
         if (!auth.user) { router.replace('/login?error=session'); return }
-        const [{ data: groupRow, error: groupError }, { data: slotRows, error: slotError }] = await Promise.all([
-          supabase.from('groups').select('id,name,description,cycle,contribution_amount,slot_count,start_date,status').eq('id', params.id).single(),
-          supabase.from('group_slots').select('id,position,status').eq('group_id', params.id).order('position', { ascending: true }),
+        const [{ data: g, error: ge }, { data: s, error: se }] = await Promise.all([
+          supabase.from('groups').select('id,name,description,cycle,contribution_amount,slot_count,start_date,status').eq('id', id).single(),
+          supabase.from('group_slots').select('id,position,status').eq('group_id', id).order('position', { ascending: true }),
         ])
-        if (groupError) throw new Error(groupError.message)
-        if (slotError) throw new Error(slotError.message)
-        if (!cancelled) { setGroup(groupRow); setSlots(slotRows ?? []) }
-      } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load this group.')
-      } finally { if (!cancelled) setLoading(false) }
+        if (ge) throw new Error(ge.message)
+        if (se) throw new Error(se.message)
+        if (alive) { setGroup(g); setSlots(s ?? []) }
+      } catch (e) { if (alive) setError(e instanceof Error ? e.message : 'Unable to load this group.') }
+      finally { if (alive) setLoading(false) }
     }
     load()
-    return () => { cancelled = true }
-  }, [params.id, router, supabase])
+    return () => { alive = false }
+  }, [id, router])
 
-  const availableSlots = useMemo(() => slots.filter((slot) => slot.status === 'available'), [slots])
-  const selected = slots.find((slot) => slot.id === selectedSlot)
-  const allAgreed = checks.every(Boolean)
+  const available = useMemo(() => slots.filter(s => s.status === 'available'), [slots])
+  const chosen = slots.find(s => s.id === selectedId)
   const payout = group ? Number(group.contribution_amount) * Number(group.slot_count) : 0
 
   async function join() {
-    if (!selectedSlot || !allAgreed || !group) return
+    if (!group || !chosen || !agreed) return
     setJoining(true); setError('')
-    const { error: joinError } = await supabase.rpc('join_group', { p_group_id: group.id, p_slot_id: selectedSlot })
-    if (joinError) {
-      setError(joinError.message.includes('just been taken') ? 'That position has just been taken. Please choose another available position.' : joinError.message)
+    const supabase = createClient()
+    const { error: e } = await supabase.rpc('join_group', { p_group_id: group.id, p_slot_id: chosen.id })
+    if (e) {
+      setError(e.message)
       const { data } = await supabase.from('group_slots').select('id,position,status').eq('group_id', group.id).order('position', { ascending: true })
-      setSlots(data ?? []); setSelectedSlot(''); setJoining(false); return
+      setSlots(data ?? []); setSelectedId(''); setJoining(false); return
     }
-    router.push(`/join-group-success?group=${group.id}&slot=${selected?.position ?? ''}`)
+    router.push(`/join-group-success?group=${group.id}&slot=${chosen.position}`)
   }
 
-  if (loading) return <main className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-center"><div className="mx-auto h-8 w-8 rounded-full border-2 border-gray-200 border-t-[#14532d] animate-spin" /><p className="mt-3 text-sm text-gray-500">Loading group…</p></div></main>
-  if (error && !group) return <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6"><div className="bg-white rounded-2xl border border-red-100 p-6 max-w-md w-full"><h1 className="font-bold">Unable to load group</h1><p className="mt-2 text-sm text-gray-500">{error}</p><Link href="/groups" className="mt-4 inline-block text-sm font-semibold text-[#14532d]">Back to Groups</Link></div></main>
-  if (!group) return null
+  if (loading) return <main className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-sm text-gray-500">Loading group…</p></main>
+  if (!group) return <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6"><div className="bg-white rounded-2xl border p-7 max-w-md w-full"><h1 className="font-bold text-xl">Unable to load group</h1><p className="text-sm text-gray-500 mt-2">{error || 'This group could not be found.'}</p><Link href="/groups" className="inline-block mt-5 text-[#14532d] font-semibold">Back to Groups</Link></div></main>
 
-  return <div className="min-h-screen bg-gray-50 text-gray-900 flex">
-    <aside className="hidden lg:flex w-64 shrink-0 bg-[#0b2313] text-white p-5 flex-col min-h-screen sticky top-0">
-      <Link href="/dashboard" className="text-2xl font-extrabold tracking-tight">Alajo</Link>
-      <nav className="mt-8 flex-1 space-y-1 text-[14px] font-medium">{nav.map(([icon, href, label]) => <Link key={label} href={href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${label === 'Groups' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}><AlajoIcon name={icon} size={17}/>{label}{label === 'Notifications' && <span className="w-1.5 h-1.5 rounded-full bg-[#eab308] ml-auto"/>}</Link>)}</nav>
-      <div className="bg-[#123524] rounded-xl p-4 relative overflow-hidden"><p className="font-semibold text-[14px]">Grow your savings with Alajo</p><p className="text-[12px] text-gray-300 mt-1">The more you save, the more you earn.</p><Link href="/invite-earn" className="mt-3 inline-flex items-center gap-1.5 bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends <AlajoIcon name="arrow-up" size={14}/></Link><div className="absolute -bottom-1 -right-1 text-amber-300"><AlajoIcon name="coin" size={34}/></div></div>
-    </aside>
-
-    <main className="flex-1 min-w-0">
-      <header className="bg-white border-b border-gray-100 px-5 lg:px-8 py-5"><p className="text-gray-400 text-sm">Groups / Join Group</p><h1 className="text-2xl font-bold mt-1">Join Savings Group</h1></header>
-      <section className="p-5 lg:p-8 max-w-7xl mx-auto space-y-6">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-7">
-          <div className="flex items-start justify-between gap-6"><div><span className="inline-flex items-center gap-2 bg-green-50 text-[#16a34a] text-[12px] font-semibold px-3 py-1 rounded-full"><AlajoIcon name="groups" size={14}/> Available Group</span><h2 className="font-bold text-[24px] text-gray-900 mt-4">{group.name}</h2><p className="text-[14px] text-gray-500 mt-2 max-w-2xl">{group.description ?? `Join this ${cycleLabel(group.cycle).toLowerCase()} rotating savings group and receive your payout based on your selected slot.`}</p></div><div className="bg-green-50 rounded-xl px-5 py-4 text-center shrink-0"><p className="text-[12px] text-gray-500">Members</p><p className="font-bold text-[24px] text-[#14532d]">{slots.filter(s => s.status !== 'available').length} / {group.slot_count}</p></div></div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mt-8">{[['Monthly Contribution', money(Number(group.contribution_amount))],['Savings Cycle',cycleLabel(group.cycle)],['Total Payout',money(payout)],['Admin Fee','10%']].map(([label,value]) => <div key={label} className="bg-[#f9fafb] rounded-xl border border-gray-100 p-4"><p className="text-gray-400 text-[13px]">{label}</p><p className="mt-2 font-bold text-[20px] text-gray-900">{value}</p></div>)}</div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mt-6"><div><p className="text-gray-400 text-[13px]">Group Starts</p><p className="font-semibold mt-1">{group.start_date ? new Date(group.start_date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : 'To be announced'}</p></div><div><p className="text-gray-400 text-[13px]">First Contribution</p><p className="font-semibold mt-1">{group.start_date ? new Date(group.start_date).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : 'To be announced'}</p></div><div><p className="text-gray-400 text-[13px]">Available Slots</p><p className="font-semibold text-[#16a34a] mt-1">{availableSlots.length} {availableSlots.length === 1 ? 'Slot' : 'Slots'} Remaining</p></div></div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-7"><div className="flex items-center justify-between gap-4"><div><h2 className="font-bold text-[22px]">Select Your Payout Slot</h2><p className="text-[14px] text-gray-500 mt-1">Choose the month you would like to receive your payout. Only one member can occupy each slot.</p></div><span className="text-[13px] font-medium bg-green-50 text-[#16a34a] px-3 py-1 rounded-full whitespace-nowrap">{availableSlots.length} Available</span></div>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mt-8">{slots.map((slot) => { const available = slot.status === 'available'; const selectedNow = selectedSlot === slot.id; return <label key={slot.id} className={available ? 'cursor-pointer' : 'cursor-not-allowed'}><input type="radio" name="slot" value={slot.id} checked={selectedNow} onChange={() => available && setSelectedSlot(slot.id)} disabled={!available} className="peer sr-only"/><div className={`rounded-xl border p-5 transition-all duration-200 ${available ? 'hover:border-[#14532d] hover:shadow-sm' : 'bg-gray-50 opacity-60'} ${selectedNow ? 'border-[#14532d] bg-green-50 ring-1 ring-[#14532d]' : 'border-gray-200'}`}><div className="flex items-center justify-between"><h3 className="font-semibold">Slot {slot.position}</h3><span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedNow ? 'border-[#14532d] bg-[#14532d]' : available ? 'border-gray-300' : 'border-gray-200 bg-gray-100'}`}>{selectedNow && <span className="w-2 h-2 rounded-full bg-white"/>}</span></div><p className="text-[13px] text-gray-500 mt-3">Receive payout in</p><p className="font-semibold text-[#14532d] mt-1">Month {slot.position}</p><span className={`inline-flex items-center gap-1.5 mt-4 px-2 py-1 rounded-full text-[11px] font-semibold ${available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}><AlajoIcon name={available ? 'check' : 'clock'} size={12}/>{available ? 'Available' : 'Taken'}</span></div></label> })}</div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6"><h2 className="font-bold text-[22px]">Membership Agreement</h2><p className="text-[14px] text-gray-500 mt-2">Please review the terms below before joining this savings group.</p><div className="mt-6 space-y-4">{['I understand that I must make my monthly contribution before the contribution deadline.','I understand that late payments may attract applicable penalties until payment is received.','I authorize Alajo to automatically debit my wallet whenever my monthly contribution becomes due.','I agree to the Alajo Terms & Conditions and Savings Policy.'].map((text,i)=><label key={i} className="flex items-start gap-3 cursor-pointer"><input type="checkbox" checked={checks[i]} onChange={e=>setChecks(c=>c.map((v,j)=>j===i?e.target.checked:v))} className="mt-1 w-5 h-5 accent-[#14532d]"/><span className="text-[14px] text-gray-700 leading-7">{text}</span></label>)}</div></div>
-          <div className="bg-white rounded-2xl border border-gray-100 p-6"><h3 className="font-bold text-[20px]">Membership Summary</h3><div className="mt-6 space-y-5 text-[14px]">{[['Group',group.name],['Contribution',money(Number(group.contribution_amount))],['Cycle',cycleLabel(group.cycle)],['Selected Slot',selected ? `Slot ${selected.position}` : 'Select a slot'],['Expected Payout',money(payout)],['First Contribution',group.start_date ? new Date(group.start_date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : 'To be announced']].map(([label,value])=><div className="flex justify-between gap-4" key={label}><span className="text-gray-500">{label}</span><span className={`font-semibold text-right ${label === 'Selected Slot' && selected ? 'text-[#14532d]' : ''}`}>{value}</span></div>)}</div>
-            {error && <div className="mt-5 rounded-lg bg-red-50 text-red-700 text-sm p-3">{error}</div>}
-            <button onClick={join} disabled={!selectedSlot || !allAgreed || joining} className="mt-8 w-full bg-[#14532d] hover:bg-[#123f24] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition">{joining ? 'Joining Group…' : 'Join Savings Group'}</button>
-            <Link href="/groups" className="mt-3 block w-full border border-gray-200 text-gray-700 text-center py-3 rounded-xl font-semibold hover:bg-gray-50 transition">Cancel</Link>
-          </div></div>
-
-        <div className="bg-green-50 border border-green-100 rounded-2xl p-6 flex items-start gap-4"><div className="w-12 h-12 rounded-full bg-white text-[#14532d] flex items-center justify-center shrink-0"><AlajoIcon name="info" size={24}/></div><div><h3 className="font-semibold">Before You Join</h3><p className="text-[14px] text-gray-600 mt-2 leading-7">Ensure your wallet has sufficient funds before your contribution due date. If Auto Contribution is enabled, Alajo will automatically debit your wallet each month.</p></div></div>
-      </section>
-    </main>
-  </div>
+  return <main className="min-h-screen bg-gray-50 text-gray-900"><header className="bg-white border-b border-gray-100 px-5 lg:px-10 py-5"><div className="max-w-6xl mx-auto"><Link href="/groups" className="text-sm text-gray-500">Groups</Link><span className="mx-2 text-gray-300">/</span><span className="text-sm font-medium">Join Group</span></div></header><section className="max-w-6xl mx-auto p-5 lg:p-10 space-y-6">
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-8"><div className="flex items-start justify-between gap-5"><div><span className="inline-flex items-center gap-2 bg-green-50 text-[#16a34a] text-xs font-semibold px-3 py-1 rounded-full"><Icon name="users" size={14}/>Available Group</span><h1 className="mt-4 text-2xl font-bold">{group.name}</h1><p className="mt-2 text-sm text-gray-500 max-w-2xl">{group.description || `Join this ${cycleLabel(group.cycle).toLowerCase()} rotating savings group and choose your payout month.`}</p></div><div className="bg-green-50 rounded-xl px-5 py-4 text-center"><p className="text-xs text-gray-500">Available</p><p className="text-2xl font-bold text-[#14532d]">{available.length}</p><p className="text-xs text-gray-500">slots</p></div></div><div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">{[['Monthly Contribution',money(Number(group.contribution_amount))],['Savings Cycle',cycleLabel(group.cycle)],['Total Payout',money(payout)],['Group Size',String(group.slot_count)]].map(([a,b])=><div key={a} className="bg-gray-50 rounded-xl border border-gray-100 p-4"><p className="text-xs text-gray-400">{a}</p><p className="mt-2 text-xl font-bold">{b}</p></div>)}</div></div>
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-8"><div className="flex items-center justify-between gap-4"><div><h2 className="text-xl font-bold">Select Your Payout Slot</h2><p className="text-sm text-gray-500 mt-1">Choose the month you want to receive your payout. Slots are first-come, first-served.</p></div><span className="bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">{available.length} Available</span></div><div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-7">{slots.map(slot=>{const open=slot.status==='available';const active=selectedId===slot.id;return <label key={slot.id} className={open?'cursor-pointer':'cursor-not-allowed'}><input type="radio" name="payout-slot" checked={active} disabled={!open} onChange={()=>setSelectedId(slot.id)} className="sr-only"/><div className={`rounded-xl border p-5 ${active?'border-[#14532d] bg-green-50 ring-1 ring-[#14532d]':'border-gray-200'} ${!open?'bg-gray-50 opacity-55':'hover:border-[#14532d]'}`}><div className="flex justify-between"><h3 className="font-semibold">Slot {slot.position}</h3><span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${active?'bg-[#14532d] border-[#14532d]':'border-gray-300'}`}>{active&&<span className="w-2 h-2 rounded-full bg-white"/>}</span></div><p className="text-xs text-gray-500 mt-3">Receive payout in</p><p className="font-semibold text-[#14532d] mt-1">Month {slot.position}</p><span className={`inline-flex items-center gap-1 mt-4 px-2 py-1 rounded-full text-[11px] font-semibold ${open?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}`}>{open&&<Icon name="check" size={12}/>} {open?'Available':'Taken'}</span></div></label>})}</div></div>
+    <div className="grid lg:grid-cols-3 gap-6"><div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6"><h2 className="text-xl font-bold">Membership Agreement</h2><p className="text-sm text-gray-500 mt-1">Confirm that you understand the group rules before joining.</p><label className="mt-6 flex gap-3 cursor-pointer"><input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} className="mt-1 h-5 w-5 accent-[#14532d]"/><span className="text-sm text-gray-700 leading-7">I agree to make my monthly contribution on time and accept the Alajo Terms & Conditions and Savings Policy.</span></label><div className="mt-6 rounded-xl bg-green-50 p-4 flex gap-3 text-sm text-gray-600"><Icon name="info" size={20}/><p>Your selected slot is reserved only when the join transaction succeeds. If another member takes it first, choose another available slot.</p></div></div><div className="bg-white rounded-2xl border border-gray-100 p-6"><h3 className="text-lg font-bold">Membership Summary</h3><div className="mt-5 space-y-4 text-sm"><div className="flex justify-between gap-4"><span className="text-gray-500">Group</span><b className="text-right">{group.name}</b></div><div className="flex justify-between"><span className="text-gray-500">Contribution</span><b>{money(Number(group.contribution_amount))}</b></div><div className="flex justify-between"><span className="text-gray-500">Cycle</span><b>{cycleLabel(group.cycle)}</b></div><div className="flex justify-between"><span className="text-gray-500">Selected Slot</span><b className="text-[#14532d]">{chosen?`Slot ${chosen.position}`:'Select a slot'}</b></div><div className="flex justify-between"><span className="text-gray-500">Expected Payout</span><b className="text-[#14532d]">{money(payout)}</b></div></div>{error&&<p className="mt-5 bg-red-50 text-red-700 rounded-lg p-3 text-xs">{error}</p>}<button onClick={join} disabled={!chosen||!agreed||joining} className="mt-7 w-full rounded-xl bg-[#14532d] text-white py-3 font-semibold disabled:opacity-50">{joining?'Joining…':'Join Savings Group'}</button><Link href="/groups" className="mt-3 block text-center border border-gray-200 rounded-xl py-3 font-semibold text-sm">Cancel</Link></div></div>
+  </section></main>
 }
