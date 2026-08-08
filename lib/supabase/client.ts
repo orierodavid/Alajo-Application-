@@ -1,12 +1,16 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  throw new Error('Missing Supabase configuration')
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL')
+}
+
+if (!supabaseKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY')
 }
 
 export function createClient() {
-  return createBrowserClient(SUPABASE_URL, SUPABASE_KEY)
+  return createBrowserClient(supabaseUrl, supabaseKey)
 }
