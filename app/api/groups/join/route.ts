@@ -22,40 +22,54 @@ export async function POST(request: Request) {
     const groupId = typeof body?.groupId === 'string' ? body.groupId : ''
     const slotId = typeof body?.slotId === 'string' ? body.slotId : ''
 
-    if (!groupId) {
-      return NextResponse.json({ error: 'Group is required.' }, { status: 400 })
-    }
+    if (!groupId) return NextResponse.json({ error: 'Group is required.' }, { status: 400 })
 
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      return NextResponse.json({ error: 'Please log in again.' }, { status: 401 })
+    if (userError || !user) return NextResponse.json({ error: 'Please log in again.' }, { status: 401 })
+
+    if (slotId) {
+      // The established database join function accepts the payout position,
+      // not the group_slots UUID. Resolve the selected slot to its position
+      // before calling the transactional function.
+      const { data: slot, error: slotError } = await supabase
+        .from('group_slots')
+        .select('position,status')
+        .eq('id', slotId)
+        .eq('group_id', groupId)
+        .maybeSingle()
+
+      if (slotError) {
+        console.error('Load selected slot error:', slotError)
+        return NextResponse.json({ error: 'Unable to verify the selected payout slot.' }, { status: 400 })
+      }
+      if (!slot) return NextResponse.json({ error: 'That payout position is not valid.' }, { status: 400 })
+      if (slot.status !== 'available') return NextResponse.json({ error: 'That group was just filled. Please choose another position.' }, { status: 400 })
+
+      const { data, error } = await supabase.rpc('join_group', {
+        p_group_id: groupId,
+        p_position: slot.position,
+      })
+
+      if (error) {
+        console.error('Join group RPC error:', error)
+        const message = messages[error.message] ?? messages[error.details ?? ''] ?? 'Unable to join this group right now. Please try again.'
+        return NextResponse.json({ error: message }, { status: 400 })
+      }
+
+      return NextResponse.json({ membership: data })
     }
 
-    // Use the existing transactional database functions. If a slot was
-    // selected, honour it; otherwise use the automatic first-available slot
-    // flow used by the original Alajo join experience.
-    const rpc = slotId ? 'join_group' : 'join_group_auto'
-    const args = slotId
-      ? { p_group_id: groupId, p_slot_id: slotId }
-      : { p_group_id: groupId }
-
-    const { data, error } = await supabase.rpc(rpc, args)
-
+    const { data, error } = await supabase.rpc('join_group_auto', { p_group_id: groupId })
     if (error) {
-      console.error('Join group RPC error:', error)
+      console.error('Automatic join RPC error:', error)
       const message = messages[error.message] ?? messages[error.details ?? ''] ?? 'Unable to join this group right now. Please try again.'
-      const status = /already|maximum|only be active|not available|not valid|taken|no available/i.test(error.message) ? 400 : 400
-      return NextResponse.json({ error: message }, { status })
+      return NextResponse.json({ error: message }, { status: 400 })
     }
 
     return NextResponse.json({ membership: data })
   } catch (error) {
     console.error('Join group API error:', error)
-    const message = error instanceof Error ? error.message : ''
-    return NextResponse.json(
-      { error: messages[message] ?? 'Unable to join this group right now. Please try again.' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'Unable to join this group right now. Please try again.' }, { status: 400 })
   }
 }
