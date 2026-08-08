@@ -1,120 +1,66 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createBrowserClient } from '@supabase/ssr'
 import GroupsClient from './groups-client'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export default function GroupsPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [groups, setGroups] = useState<any[]>([])
+  const [memberships, setMemberships] = useState<any[]>([])
+  const [userEmail, setUserEmail] = useState('')
+  const [error, setError] = useState('')
 
-export default async function GroupsPage() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('Groups page: Supabase environment variables are missing')
-    redirect('/login?error=config')
-  }
-
-  // Do not wrap redirect() in a catch block: Next.js implements redirect
-  // by throwing a control-flow exception that must be allowed to escape.
-  const supabase = await createClient()
-
-  const { data: authData, error: userError } = await supabase.auth.getUser()
-  if (userError || !authData.user) {
-    redirect('/login?error=session')
-  }
-
-  type Group = {
-    id: string
-    name: string
-    description: string | null
-    cycle: 'six_month' | 'ten_month'
-    contribution_amount: number
-    slot_count: number
-    start_date: string | null
-    status: string
-    memberCount: number
-  }
-
-  type Membership = {
-    id: string
-    group_id: string
-    status: string
-    joined_at: string
-    slot_id: string
-  }
-
-  let groups: Group[] = []
-  let memberships: Membership[] = []
-
-  const { data: groupRows, error: groupsError } = await supabase
-    .from('groups')
-    .select('id,name,description,cycle,contribution_amount,slot_count,start_date,status')
-    .in('status', ['open', 'full'])
-    .order('created_at', { ascending: true })
-
-  if (groupsError) {
-    console.error('Groups page: groups query failed', {
-      message: groupsError.message,
-      code: groupsError.code,
-      details: groupsError.details,
-      hint: groupsError.hint,
-    })
-  } else {
-    const groupIds = (groupRows ?? []).map((group) => group.id)
-    let slotRows: Array<{ group_id: string; status: string }> = []
-
-    if (groupIds.length > 0) {
-      const { data, error: slotsError } = await supabase
-        .from('group_slots')
-        .select('group_id,status')
-        .in('group_id', groupIds)
-
-      if (slotsError) {
-        console.error('Groups page: slots query failed', {
-          message: slotsError.message,
-          code: slotsError.code,
-          details: slotsError.details,
-          hint: slotsError.hint,
-        })
-      } else {
-        slotRows = data ?? []
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        if (!url || !key) throw new Error('Supabase configuration is missing.')
+        const supabase = createBrowserClient(url, key)
+        const { data: authData, error: authError } = await supabase.auth.getUser()
+        if (authError || !authData.user) {
+          router.replace('/login?error=session')
+          return
+        }
+        if (!cancelled) setUserEmail(authData.user.email ?? '')
+        const [{ data: groupRows, error: groupsError }, { data: membershipRows, error: membershipError }] = await Promise.all([
+          supabase.from('groups').select('id,name,description,cycle,contribution_amount,slot_count,start_date,status').in('status', ['open', 'full']).order('created_at', { ascending: true }),
+          supabase.from('group_members').select('id,group_id,status,joined_at,slot_id').eq('user_id', authData.user.id),
+        ])
+        if (groupsError) throw new Error(groupsError.message)
+        if (membershipError) throw new Error(membershipError.message)
+        const rows = groupRows ?? []
+        const groupIds = rows.map((g) => g.id)
+        let slotRows: Array<{ group_id: string; status: string }> = []
+        if (groupIds.length) {
+          const { data, error: slotsError } = await supabase.from('group_slots').select('group_id,status').in('group_id', groupIds)
+          if (slotsError) throw new Error(slotsError.message)
+          slotRows = data ?? []
+        }
+        const counts = new Map<string, number>()
+        for (const slot of slotRows) {
+          if (slot.status === 'assigned' || slot.status === 'reserved') counts.set(slot.group_id, (counts.get(slot.group_id) ?? 0) + 1)
+        }
+        const normalized = rows.map((group) => ({ ...group, memberCount: counts.get(group.id) ?? 0 }))
+        if (!cancelled) {
+          setGroups(normalized)
+          setMemberships(membershipRows ?? [])
+        }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load groups.')
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }
+    load()
+    return () => { cancelled = true }
+  }, [router])
 
-    const counts = new Map<string, number>()
-    for (const slot of slotRows) {
-      if (slot.status === 'assigned' || slot.status === 'reserved') {
-        counts.set(slot.group_id, (counts.get(slot.group_id) ?? 0) + 1)
-      }
-    }
-
-    groups = (groupRows ?? []).map((group) => ({
-      ...group,
-      memberCount: counts.get(group.id) ?? 0,
-    })) as Group[]
-  }
-
-  const { data: membershipRows, error: membershipError } = await supabase
-    .from('group_members')
-    .select('id,group_id,status,joined_at,slot_id')
-    .eq('user_id', authData.user.id)
-
-  if (membershipError) {
-    console.error('Groups page: memberships query failed', {
-      message: membershipError.message,
-      code: membershipError.code,
-      details: membershipError.details,
-      hint: membershipError.hint,
-    })
-  } else {
-    memberships = (membershipRows ?? []) as Membership[]
-  }
-
-  return (
-    <GroupsClient
-      groups={groups}
-      memberships={memberships}
-      userEmail={authData.user.email ?? ''}
-    />
-  )
+  if (loading) return <main className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-center"><div className="mx-auto h-8 w-8 rounded-full border-2 border-gray-200 border-t-[#16a34a] animate-spin" /><p className="mt-3 text-sm text-gray-500">Loading your groups…</p></div></main>
+  if (error) return <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6"><div className="bg-white border border-red-100 rounded-xl p-6 max-w-md w-full"><h1 className="font-bold text-gray-900">Unable to load Groups</h1><p className="mt-2 text-sm text-gray-500">{error}</p><button onClick={() => window.location.reload()} className="mt-4 bg-[#14532d] text-white rounded-lg px-4 py-2 text-sm font-semibold">Try Again</button></div></main>
+  return <GroupsClient groups={groups} memberships={memberships} userEmail={userEmail} />
 }
