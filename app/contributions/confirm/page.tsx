@@ -50,3 +50,5 @@ function ConfirmationContent() {
 }
 
 export default function PaymentConfirmationPage() { return <Suspense fallback={<main className="min-h-screen bg-[#f8faf9] flex items-center justify-center text-gray-500">Loading payment confirmation…</main>}><ConfirmationContent /></Suspense> }
+
+// Deployment marker: payment confirmation route must be included in production.
