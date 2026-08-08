@@ -7,6 +7,8 @@ import { AlajoIcon } from '@/components/ui/alajo-icon'
 
 type Group = { id: string; name: string; description: string | null; cycle: 'six_month' | 'ten_month'; contribution_amount: number; slot_count: number; start_date: string | null; status: string; memberCount: number }
 type Membership = { id: string; group_id: string; status: string; joined_at: string; slot_id: string }
+type StatIcon = 'groups' | 'add' | 'crown' | 'payouts'
+type Stat = { icon: StatIcon; bg: string; color: string; title: string; value: string | number; subtitle: string }
 const money = (value: number) => `₦${Number(value).toLocaleString('en-NG', { minimumFractionDigits: 0 })}`
 const cycleLabel = (cycle: Group['cycle']) => cycle === 'ten_month' ? '10 Months' : '6 Months'
 const nav = [
@@ -24,6 +26,12 @@ export default function GroupsClient({ groups, memberships, userEmail }: { group
   const pastMemberships = useMemo(() => myMemberships.filter((m) => ['completed', 'cancelled', 'replaced'].includes(m.status)), [myMemberships])
   const myGroupIds = new Set(activeMemberships.map((m) => m.group_id))
   const visibleGroups = tab === 'my' ? items.filter((g) => myGroupIds.has(g.id)) : tab === 'past' ? items.filter((g) => pastMemberships.some((m) => m.group_id === g.id)) : items.filter((g) => !myGroupIds.has(g.id))
+  const stats: Stat[] = [
+    { icon: 'groups', bg: 'bg-green-50', color: 'text-[#16a34a]', title: 'My Active Groups', value: activeMemberships.length, subtitle: "Groups you're part of" },
+    { icon: 'add', bg: 'bg-purple-50', color: 'text-purple-500', title: 'Groups Joined', value: myMemberships.length, subtitle: 'Total groups joined' },
+    { icon: 'crown', bg: 'bg-yellow-50', color: 'text-yellow-500', title: 'Total Contributions', value: '₦0.00', subtitle: 'Across all groups' },
+    { icon: 'payouts', bg: 'bg-orange-50', color: 'text-orange-500', title: 'Total Payouts', value: '₦0.00', subtitle: 'Total received' },
+  ]
 
   return <div className="min-h-screen bg-gray-50 text-gray-900 flex">
     <aside className="hidden lg:flex w-64 shrink-0 bg-[#0b2313] text-white p-5 flex-col min-h-screen sticky top-0">
@@ -41,9 +49,7 @@ export default function GroupsClient({ groups, memberships, userEmail }: { group
       <header className="bg-white border-b border-gray-100 px-5 lg:px-8 py-5 flex items-center justify-between"><div><p className="text-gray-400 text-sm">Groups</p><h1 className="text-2xl font-bold">Savings Groups</h1></div><p className="hidden sm:block text-sm text-gray-400">{userEmail}</p></header>
       <section className="p-5 lg:p-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-          {[
-            ['groups','bg-green-50','text-[#16a34a]','My Active Groups',activeMemberships.length,"Groups you're part of"], ['add','bg-purple-50','text-purple-500','Groups Joined',myMemberships.length,'Total groups joined'], ['crown','bg-yellow-50','text-yellow-500','Total Contributions','₦0.00','Across all groups'], ['payouts','bg-orange-50','text-orange-500','Total Payouts','₦0.00','Total received'],
-          ].map(([icon,bg,color,title,value,subtitle]) => <div key={String(title)} className="bg-white rounded-xl border border-gray-100 p-5"><div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center ${color}`}><AlajoIcon name={icon} size={18}/></div><p className="mt-3 text-gray-500 text-[13px]">{title}</p><p className="text-[20px] font-bold text-gray-900">{value}</p><p className="text-[12px] text-gray-400 mt-1">{subtitle}</p></div>)}
+          {stats.map((stat) => <div key={stat.title} className="bg-white rounded-xl border border-gray-100 p-5"><div className={`w-9 h-9 rounded-full ${stat.bg} flex items-center justify-center ${stat.color}`}><AlajoIcon name={stat.icon} size={18}/></div><p className="mt-3 text-gray-500 text-[13px]">{stat.title}</p><p className="text-[20px] font-bold text-gray-900">{stat.value}</p><p className="text-[12px] text-gray-400 mt-1">{stat.subtitle}</p></div>)}
         </div>
         <div className="mt-6 flex items-center justify-between"><div className="flex items-center gap-6 text-[14px] font-medium overflow-x-auto">{([['my','My Groups'],['available','Available Groups'],['past','Past Groups']] as const).map(([key,label]) => <button key={key} onClick={() => setTab(key)} className={tab === key ? 'text-[#16a34a] border-b-2 border-[#16a34a] pb-2 whitespace-nowrap' : 'text-gray-400 pb-2 whitespace-nowrap'}>{label}</button>)}</div></div>
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
