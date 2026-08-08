@@ -1,11 +1,10 @@
-import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+'use client'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
-type IconName = 'dashboard' | 'groups' | 'contributions' | 'payouts' | 'wallet' | 'transactions' | 'invite' | 'notifications' | 'settings' | 'help' | 'logout' | 'coin' | 'card' | 'clock' | 'arrowDown' | 'arrowUp' | 'add'
+type IconName = 'dashboard' | 'groups' | 'contributions' | 'payouts' | 'wallet' | 'transactions' | 'invite' | 'notifications' | 'settings' | 'help' | 'logout' | 'coin' | 'card' | 'clock'
 
 function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, string> = {
@@ -23,54 +22,75 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
     coin: 'M20 12c0 3-3.6 5-8 5s-8-2-8-5 3.6-5 8-5 8 2 8 5ZM4 12v4c0 3 3.6 5 8 5s8-2 8-5v-4',
     card: 'M3 7h18v14H3zM3 7V5a2 2 0 0 1 2-2h14',
     clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 6v6l4 2',
-    arrowDown: 'M12 4v16M6 14l6 6 6-6',
-    arrowUp: 'M12 20V4M6 10l6-6 6 6',
-    add: 'M12 5v14M5 12h14',
   }
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
 }
 
-async function logout() {
-  'use server'
-  const cookieStore = await cookies()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (url && key) {
-    const supabase = createServerClient(url, key, { cookies: { getAll: () => cookieStore.getAll(), setAll: (items) => { try { items.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {} } } })
-    await supabase.auth.signOut()
+const navItems: Array<[IconName, string, string]> = [
+  ['dashboard', 'Dashboard', '/dashboard'], ['groups', 'Groups', '/groups'], ['contributions', 'Contributions', '/contributions'],
+  ['payouts', 'Payouts', '/payouts'], ['wallet', 'Wallet', '/wallet'], ['transactions', 'Transactions', '/transactions'],
+  ['invite', 'Invite & Earn', '/invite-earn'], ['notifications', 'Notifications', '/notifications'], ['settings', 'Settings', '/settings'], ['help', 'Help Center', '/help-center'],
+]
+
+export default function DashboardPage() {
+  const supabase = useMemo(() => createClient(), [])
+  const [name, setName] = useState('User')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getUser().then(({ data, error: authError }) => {
+      if (!mounted) return
+      if (authError || !data.user) {
+        window.location.replace('/login?error=session')
+        return
+      }
+      const fullName = data.user.user_metadata?.full_name
+      setName((typeof fullName === 'string' && fullName.trim()) || data.user.email?.split('@')[0] || 'User')
+      setLoading(false)
+    }).catch(() => {
+      if (!mounted) return
+      setError('Unable to load your Alajo session. Please log in again.')
+      setLoading(false)
+    })
+    return () => { mounted = false }
+  }, [supabase])
+
+  async function logout() {
+    setError('')
+    const { error: signOutError } = await supabase.auth.signOut()
+    if (signOutError) {
+      setError('Unable to log out right now. Please try again.')
+      return
+    }
+    window.location.replace('/login')
   }
-  redirect('/login')
-}
 
-const navItems: Array<[IconName, string, string]> = [['dashboard','Dashboard','/dashboard'],['groups','Groups','/groups'],['contributions','Contributions','/contributions'],['payouts','Payouts','/payouts'],['wallet','Wallet','/wallet'],['transactions','Transactions','/transactions'],['invite','Invite & Earn','/invite-earn'],['notifications','Notifications','/notifications'],['settings','Settings','/settings'],['help','Help Center','/help-center']]
+  if (loading) return <main className="min-h-screen bg-[#f8faf9] flex items-center justify-center"><div className="text-sm text-gray-500">Loading your dashboard…</div></main>
+  if (error) return <main className="min-h-screen bg-[#f8faf9] flex items-center justify-center p-6"><div className="bg-white border border-red-100 rounded-xl p-6 max-w-md text-center"><p className="font-semibold text-gray-900">Dashboard unavailable</p><p className="mt-2 text-sm text-gray-500">{error}</p><Link href="/login" className="inline-block mt-4 px-4 py-2 rounded-md bg-[#14532d] text-white text-sm font-semibold">Return to Login</Link></div></main>
 
-export default async function DashboardPage() {
-  const cookieStore = await cookies()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) redirect('/login?error=config')
-  const supabase = createServerClient(url, key, { cookies: { getAll: () => cookieStore.getAll(), setAll: (items) => { try { items.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {} } } })
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data.user) redirect('/login?error=session')
-  const user = data.user
-  const name = (typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()) || user.email?.split('@')[0] || 'User'
-
-  const cards: Array<[IconName,string,string,string,string,string]> = [['card','bg-green-50','text-[#16a34a]','Total Contributions','₦250,000.00','Across all groups'],['groups','bg-orange-50','text-orange-500','Active Groups','3',"Groups you're part of"],['payouts','bg-indigo-50','text-indigo-500','Total Payouts','₦180,000.00','Total received'],['clock','bg-purple-50','text-purple-500','Pending Payouts','₦70,000.00','Awaiting your turn']]
+  const cards: Array<[IconName, string, string, string, string, string]> = [
+    ['card', 'bg-green-50', 'text-[#16a34a]', 'Total Contributions', '₦250,000.00', 'Across all groups'],
+    ['groups', 'bg-orange-50', 'text-orange-500', 'Active Groups', '3', "Groups you're part of"],
+    ['payouts', 'bg-indigo-50', 'text-indigo-500', 'Total Payouts', '₦180,000.00', 'Total received'],
+    ['clock', 'bg-purple-50', 'text-purple-500', 'Pending Payouts', '₦70,000.00', 'Awaiting your turn'],
+  ]
 
   return <div className="min-h-screen bg-[#f8faf9] text-gray-900 flex">
     <aside className="hidden lg:flex w-[250px] shrink-0 min-h-screen bg-[#0b2313] text-white p-5 flex-col fixed inset-y-0 left-0">
-      <div className="px-2 text-[26px] font-extrabold tracking-tight flex items-center gap-2">Alajo <span className="text-yellow-400"><Icon name="coin" size={20}/></span></div>
+      <div className="px-2 text-[26px] font-extrabold tracking-tight flex items-center gap-2">Alajo <span className="text-yellow-400"><Icon name="coin" size={20} /></span></div>
       <nav className="mt-8 flex-1 space-y-1 text-[14px] font-medium">
-        {navItems.map(([icon,label,href]) => <a key={label} href={href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${label === 'Dashboard' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}><Icon name={icon}/><span>{label}</span>{label === 'Notifications' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#eab308]"/>}</a>)}
-        <form action={logout}><button type="submit" className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5"><Icon name="logout"/><span>Logout</span></button></form>
+        {navItems.map(([icon, label, href]) => <Link key={label} href={href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${label === 'Dashboard' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}><Icon name={icon} /><span>{label}</span>{label === 'Notifications' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#eab308]" />}</Link>)}
+        <button type="button" onClick={logout} className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-gray-300 hover:bg-white/5"><Icon name="logout" /><span>Logout</span></button>
       </nav>
-      <div className="bg-[#123524] rounded-xl p-4 text-white"><p className="font-semibold text-[14px]">Grow your savings with Alajo</p><p className="text-[12px] text-gray-300 mt-1">The more you save, the more you earn.</p><a href="/invite-earn" className="mt-3 inline-block bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends</a></div>
+      <div className="bg-[#123524] rounded-xl p-4 text-white"><p className="font-semibold text-[14px]">Grow your savings with Alajo</p><p className="text-[12px] text-gray-300 mt-1">The more you save, the more you earn.</p><Link href="/invite-earn" className="mt-3 inline-block bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends</Link></div>
     </aside>
     <main className="lg:ml-[250px] flex-1 min-w-0">
-      <header className="h-[76px] bg-white border-b border-gray-100 px-5 sm:px-8 flex items-center justify-between"><div><p className="text-gray-400 text-[13px]">Dashboard</p><h1 className="font-semibold text-[18px]">Good morning, {name}</h1></div><div className="flex items-center gap-4"><Icon name="notifications"/><div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center font-semibold">{name.charAt(0).toUpperCase()}</div></div></header>
+      <header className="h-[76px] bg-white border-b border-gray-100 px-5 sm:px-8 flex items-center justify-between"><div><p className="text-gray-400 text-[13px]">Dashboard</p><h1 className="font-semibold text-[18px]">Good morning, {name}</h1></div><div className="flex items-center gap-4"><Icon name="notifications" /><div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center font-semibold">{name.charAt(0).toUpperCase()}</div></div></header>
       <section className="p-5 sm:p-8 max-w-[1250px]"><p className="text-gray-500 text-[14px]">Here&apos;s what&apos;s happening with your savings today</p>
-        <div className="mt-6 grid grid-cols-2 xl:grid-cols-4 gap-5">{cards.map(([icon,bg,color,label,value,sub]) => <div key={label} className="bg-white rounded-xl border border-gray-100 p-5"><div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center ${color}`}><Icon name={icon}/></div><p className="mt-3 text-gray-500 text-[13px]">{label}</p><p className="text-[20px] font-bold text-gray-900">{value}</p><p className="text-[12px] text-gray-400 mt-1">{sub}</p></div>)}</div>
-        <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-5"><div className="bg-white rounded-xl border border-gray-100 p-5"><div className="flex items-center justify-between"><h2 className="font-semibold">Recent Activity</h2><a href="/transactions" className="text-[#16a34a] text-[13px] font-medium">View All</a></div><div className="mt-5 text-sm text-gray-500">Your recent savings activity will appear here.</div></div><div className="bg-white rounded-xl border border-gray-100 p-5"><div className="flex items-center justify-between"><h2 className="font-semibold">My Active Groups</h2><a href="/groups" className="text-[#16a34a] text-[13px] font-medium">View All Groups</a></div><div className="mt-5 text-sm text-gray-500">Open Groups to view your savings groups.</div></div></div>
+        <div className="mt-6 grid grid-cols-2 xl:grid-cols-4 gap-5">{cards.map(([icon, bg, color, label, value, sub]) => <div key={label} className="bg-white rounded-xl border border-gray-100 p-5"><div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center ${color}`}><Icon name={icon} /></div><p className="mt-3 text-gray-500 text-[13px]">{label}</p><p className="text-[20px] font-bold text-gray-900">{value}</p><p className="text-[12px] text-gray-400 mt-1">{sub}</p></div>)}</div>
+        <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-5"><div className="bg-white rounded-xl border border-gray-100 p-5"><div className="flex items-center justify-between"><h2 className="font-semibold">Recent Activity</h2><Link href="/transactions" className="text-[#16a34a] text-[13px] font-medium">View All</Link></div><div className="mt-5 text-sm text-gray-500">Your recent savings activity will appear here.</div></div><div className="bg-white rounded-xl border border-gray-100 p-5"><div className="flex items-center justify-between"><h2 className="font-semibold">My Active Groups</h2><Link href="/groups" className="text-[#16a34a] text-[13px] font-medium">View All Groups</Link></div><div className="mt-5 text-sm text-gray-500">Open Groups to view your savings groups.</div></div></div>
       </section>
     </main>
   </div>
