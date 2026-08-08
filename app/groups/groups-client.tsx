@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 
 type Group = { id: string; name: string; description: string | null; cycle: 'six_month' | 'ten_month'; contribution_amount: number; slot_count: number; start_date: string | null; status: string; memberCount: number }
@@ -17,6 +18,7 @@ const nav = [
 
 export default function GroupsClient({ groups, memberships, userEmail }: { groups: Group[]; memberships: Membership[]; userEmail: string }) {
   const router = useRouter()
+  const supabase = createClient()
   const [tab, setTab] = useState<'my' | 'available' | 'past'>('my')
   const [items, setItems] = useState(groups)
   const [myMemberships, setMyMemberships] = useState(memberships)
@@ -30,14 +32,31 @@ export default function GroupsClient({ groups, memberships, userEmail }: { group
   async function joinGroup(group: Group) {
     setJoining(group.id); setMessage('')
     try {
-      const response = await fetch('/api/groups/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId: group.id }) })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Unable to join group')
-      if (!result.membership) throw new Error('The group was joined but the membership confirmation was not returned. Please refresh your Groups page.')
-      setMyMemberships((current) => [...current, result.membership])
+      const { data: membership, error } = await supabase.rpc('join_group_auto', { p_group_id: group.id })
+
+      if (error) {
+        console.error('Join group RPC error:', error)
+        const messages: Record<string, string> = {
+          AUTH_REQUIRED: 'Please log in again.',
+          GROUP_NOT_FOUND: 'This group could not be found.',
+          GROUP_NOT_OPEN: 'This group is no longer accepting members.',
+          POSITION_TAKEN: 'That group was just filled. Please choose another group.',
+          MAX_ACTIVE_GROUPS: 'You can only be active in 3 groups at a time.',
+          ALREADY_A_MEMBER: 'You are already a member of this group.',
+        }
+        throw new Error(messages[error.message] ?? error.message ?? 'Unable to join this group right now.')
+      }
+
+      if (!membership) throw new Error('The group was joined but no membership confirmation was returned. Please refresh your Groups page.')
+
+      setMyMemberships((current) => [...current, membership as Membership])
       setItems((current) => current.map((item) => item.id === group.id ? { ...item, memberCount: item.memberCount + 1 } : item))
       router.push('/join-group-success')
-    } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to join group') } finally { setJoining(null) }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Something went wrong while joining the group.')
+    } finally {
+      setJoining(null)
+    }
   }
 
   return <div className="min-h-screen bg-gray-50 text-gray-900 flex">
