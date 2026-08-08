@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 function BrandPanel() {
   return <section className="relative p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-gray-100 overflow-hidden">
@@ -22,7 +21,24 @@ function BrandPanel() {
 
 export default function LoginPage() {
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [remember,setRemember]=useState(true); const [error,setError]=useState(''); const [loading,setLoading]=useState(false); const [show,setShow]=useState(false)
-  async function submit(e:FormEvent){e.preventDefault();setError('');setLoading(true);const {error}=await createClient().auth.signInWithPassword({email,password});if(error)setError(error.message);else window.location.assign('/dashboard');setLoading(false)}
-  async function google(){setError('');const {error}=await createClient().auth.signInWithOAuth({provider:'google',options:{redirectTo:`${window.location.origin}/auth/callback`}});if(error)setError(error.message)}
-  return <main className="min-h-screen bg-white grid lg:grid-cols-2"><BrandPanel/><section className="p-10 lg:p-14 flex flex-col justify-center"><div className="max-w-[380px] w-full mx-auto"><h2 className="font-extrabold text-[26px] text-gray-900 text-center">Welcome Back 👋</h2><p className="mt-1 text-center text-gray-500 text-[15px]">Login to your account</p><form onSubmit={submit} className="mt-8 space-y-5"><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Email Address</label><div className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2.5"><span className="text-gray-400">✉️</span><input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full outline-none text-[14px] text-gray-800"/></div></div><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Password</label><div className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2.5"><span className="text-gray-400">🔒</span><input required type={show?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} className="w-full outline-none text-[14px] text-gray-800"/><button type="button" onClick={()=>setShow(!show)} className="text-gray-400">👁️</button></div></div><div className="flex items-center justify-between text-[14px]"><label className="flex items-center gap-2 text-gray-700"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} className="w-4 h-4 accent-[#16a34a]"/> Remember me</label><Link href="/forgot-password" className="text-[#16a34a] font-medium">Forgot Password?</Link></div>{error&&<p className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</p>}<button disabled={loading} className="block text-center w-full py-3 rounded-md bg-[#14532d] text-white font-semibold text-[15px] disabled:opacity-60">{loading?'Logging in…':'Login'}</button><div className="flex items-center gap-3 text-gray-300 text-[13px]"><div className="flex-1 h-px bg-gray-200"/>or<div className="flex-1 h-px bg-gray-200"/></div><button type="button" onClick={google} className="flex items-center justify-center gap-2 w-full py-3 rounded-md border border-gray-200 font-semibold text-[15px] text-gray-800">🔵 Continue with Google</button><p className="text-center text-[14px] text-gray-500">Don't have an account? <Link href="/signup-personal" className="text-[#16a34a] font-semibold">Sign up</Link></p></form></div></section></main>
+  async function submit(e:FormEvent){
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const response = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,password}) })
+      const data = await response.json()
+      if (!response.ok) {
+        setError(data.error || 'Unable to log in. Please try again.')
+        return
+      }
+      window.location.assign('/dashboard')
+    } catch {
+      setError('Unable to log in right now. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+  function google(){setError('Google sign-in is not available yet. Please use your email and password.')}
+  return <main className="min-h-screen bg-white grid lg:grid-cols-2"><BrandPanel/><section className="p-10 lg:p-14 flex flex-col justify-center"><div className="max-w-[380px] w-full mx-auto"><h2 className="font-extrabold text-[26px] text-gray-900 text-center">Welcome Back 👋</h2><p className="mt-1 text-center text-gray-500 text-[15px]">Login to your account</p><form onSubmit={submit} className="mt-8 space-y-5"><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Email Address</label><div className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2.5"><span className="text-gray-400">✉️</span><input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full outline-none text-[14px] text-gray-800"/></div></div><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Password</label><div className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2.5"><span className="text-gray-400">🔒</span><input required type={show?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)} className="w-full outline-none text-[14px] text-gray-800"/><button type="button" onClick={()=>setShow(!show)} className="text-gray-400">👁️</button></div></div><div className="flex items-center justify-between text-[14px]"><label className="flex items-center gap-2 text-gray-700"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} className="w-4 h-4 accent-[#16a34a]"/> Remember me</label><Link href="/forgot-password" className="text-[#16a34a] font-medium">Forgot Password?</Link></div>{error&&<p className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</p>}<button disabled={loading} className="block text-center w-full py-3 rounded-md bg-[#14532d] text-white font-semibold text-[15px] disabled:opacity-60">{loading?'Logging in…':'Login'}</button><div className="flex items-center gap-3 text-gray-300 text-[13px]"><div className="flex-1 h-px bg-gray-200"/>or<div className="flex-1 h-px bg-gray-200"/></div><button type="button" onClick={google} className="flex items-center justify-center gap-2 w-full py-3 rounded-md border border-gray-200 font-semibold text-[15px] text-gray-800">🔵 Continue with Google</button><p className="text-center text-[14px] text-gray-500">Don't have an account? <Link href="/signup" className="text-[#16a34a] font-semibold">Sign up</Link></p></form></div></section></main>
 }
