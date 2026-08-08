@@ -71,7 +71,7 @@ export default function AdminContributionsPage() {
 
   const selectedGroup = groups.find(g => g.id === groupId)
   const groupMembers = useMemo(() => members.filter(m => m.group_id === groupId && ['active', 'pending'].includes(m.status)), [members, groupId])
-  const maxPeriod = selectedGroup?.cycle === '10_months' || selectedGroup?.cycle === '10 months' ? 10 : 6
+  const maxPeriod = selectedGroup?.cycle === 'ten_month' || selectedGroup?.cycle === '10_months' || selectedGroup?.cycle === '10 months' ? 10 : 6
 
   function changeGroup(id: string) {
     setGroupId(id)
@@ -96,7 +96,7 @@ export default function AdminContributionsPage() {
       status: 'pending'
     })
     if (insertError) setError(insertError.message)
-    else { setMessage('Contribution schedule created successfully.'); setMemberId('') }
+    else { setMessage(`Contribution schedule for Month ${period} created successfully.`); setMemberId('') }
     setSaving(false)
   }
 
