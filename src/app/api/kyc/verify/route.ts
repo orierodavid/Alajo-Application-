@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyIdentity, type KycType } from '@/lib/kyc/mock-provider';
+import { verifyIdentity, type KycType } from '../../../../lib/kyc/mock-provider';
 
 export async function POST(request: Request) {
   try {
