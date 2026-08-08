@@ -77,11 +77,33 @@ export default function AdminContributionsPage() {
     const value = Number(amount)
     const dueDates = datesForCycle()
     const rows = dueDates.map((date, index) => ({ group_member_id: memberId, period_number: index + 1, due_date: date, amount: value, outstanding_amount: value, status: 'pending' }))
-    const { data: existing } = await supabase.from('contribution_schedules').select('id,period_number').eq('group_member_id', memberId).in('period_number', rows.map(r => r.period_number))
-    if (existing?.length) { setError('A contribution schedule already exists for one or more of these periods for this member.'); setSaving(false); return }
-    const { error: insertError } = await supabase.from('contribution_schedules').insert(rows)
-    if (insertError) setError(insertError.message)
-    else setMessage(`${cycleMonths}-month contribution schedule created successfully: ${rows.length} periods generated.`)
+
+    // A schedule may already contain some periods (for example Month 1 was
+    // created during an earlier test). Only create the missing periods.
+    const { data: existing, error: existingError } = await supabase
+      .from('contribution_schedules')
+      .select('id,period_number')
+      .eq('group_member_id', memberId)
+      .in('period_number', rows.map(r => r.period_number))
+
+    if (existingError) { setError(existingError.message); setSaving(false); return }
+
+    const existingPeriods = new Set((existing || []).map((row: any) => Number(row.period_number)))
+    const missingRows = rows.filter(row => !existingPeriods.has(row.period_number))
+
+    if (!missingRows.length) {
+      setMessage(`All ${cycleMonths} periods already exist for this member. No duplicate schedules were created.`)
+      setSaving(false)
+      return
+    }
+
+    const { error: insertError } = await supabase.from('contribution_schedules').insert(missingRows)
+    if (insertError) {
+      setError(insertError.message)
+    } else {
+      const skipped = rows.length - missingRows.length
+      setMessage(`${cycleMonths}-month contribution schedule is ready. Created ${missingRows.length} missing period${missingRows.length === 1 ? '' : 's'}${skipped ? ` and kept ${skipped} existing period${skipped === 1 ? '' : 's'}` : ''}.`)
+    }
     setSaving(false)
   }
 
