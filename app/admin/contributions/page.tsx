@@ -8,6 +8,14 @@ type Member = { id: string; group_id: string; user_id: string; status: string; n
 
 const money = (value: number) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 
+function cycleMonths(cycle: string | undefined) {
+  const normalized = String(cycle || '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+  if (normalized === 'ten_month' || normalized === 'ten_months' || normalized === '10_month' || normalized === '10_months') return 10
+  if (normalized === 'six_month' || normalized === 'six_months' || normalized === '6_month' || normalized === '6_months') return 6
+  const numeric = normalized.match(/(6|10)/)
+  return numeric ? Number(numeric[1]) : 6
+}
+
 export default function AdminContributionsPage() {
   const supabase = createClient()
   const [groups, setGroups] = useState<Group[]>([])
@@ -71,7 +79,7 @@ export default function AdminContributionsPage() {
 
   const selectedGroup = groups.find(g => g.id === groupId)
   const groupMembers = useMemo(() => members.filter(m => m.group_id === groupId && ['active', 'pending'].includes(m.status)), [members, groupId])
-  const maxPeriod = selectedGroup?.cycle === 'ten_month' || selectedGroup?.cycle === '10_months' || selectedGroup?.cycle === '10 months' ? 10 : 6
+  const maxPeriod = cycleMonths(selectedGroup?.cycle)
 
   function changeGroup(id: string) {
     setGroupId(id)
