@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 type IconName = 'dashboard' | 'groups' | 'contributions' | 'payouts' | 'wallet' | 'transactions' | 'invite' | 'notifications' | 'settings' | 'help' | 'logout' | 'coin' | 'card' | 'clock'
 
@@ -14,11 +15,16 @@ function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
 
 const navItems: Array<[IconName, string, string]> = [['dashboard', 'Dashboard', '/dashboard'], ['groups', 'Groups', '/groups'], ['contributions', 'Contributions', '/contributions'], ['payouts', 'Payouts', '/payouts'], ['wallet', 'Wallet', '/wallet'], ['transactions', 'Transactions', '/transactions'], ['invite', 'Invite & Earn', '/invite-earn'], ['notifications', 'Notifications', '/notifications'], ['settings', 'Settings', '/settings'], ['help', 'Help Center', '/help-center']]
 
+const money = (value: number) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
+
 export default function DashboardPage() {
   const [name, setName] = useState('User')
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
 
   useEffect(() => {
     let active = true
+    const supabase = createClient()
+
     fetch('/api/auth/session', { cache: 'no-store' })
       .then(async (response) => {
         if (response.status === 401) {
@@ -32,10 +38,28 @@ export default function DashboardPage() {
       .catch(() => {
         // Keep the dashboard available if session verification is temporarily unavailable.
       })
+
+    async function loadWallet() {
+      try {
+        const { data: auth } = await supabase.auth.getUser()
+        if (!auth.user) return
+        const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', auth.user.id).maybeSingle()
+        if (!error && active) setWalletBalance(Number(data?.balance || 0))
+      } catch {
+        // Leave the wallet card in its loading state if the wallet cannot be read.
+      }
+    }
+
+    loadWallet()
     return () => { active = false }
   }, [])
 
-  const cards: Array<[IconName, string, string, string, string, string]> = [['card', 'bg-green-50', 'text-[#16a34a]', 'Total Contributions', '₦250,000.00', 'Across all groups'], ['groups', 'bg-orange-50', 'text-orange-500', 'Active Groups', '3', "Groups you're part of"], ['payouts', 'bg-indigo-50', 'text-indigo-500', 'Total Payouts', '₦180,000.00', 'Total received'], ['clock', 'bg-purple-50', 'text-purple-500', 'Pending Payouts', '₦70,000.00', 'Awaiting your turn']]
+  const cards: Array<[IconName, string, string, string, string, string]> = [
+    ['wallet', 'bg-green-50', 'text-[#16a34a]', 'Wallet Balance', walletBalance === null ? 'Loading…' : money(walletBalance), 'Available Balance'],
+    ['groups', 'bg-orange-50', 'text-orange-500', 'Active Groups', '3', "Groups you're part of"],
+    ['payouts', 'bg-indigo-50', 'text-indigo-500', 'Total Payouts', '₦180,000.00', 'Total received'],
+    ['clock', 'bg-purple-50', 'text-purple-500', 'Pending Payouts', '₦70,000.00', 'Awaiting your turn']
+  ]
 
   return <div className="min-h-screen bg-[#f8faf9] text-gray-900 flex">
     <aside className="hidden lg:flex w-[250px] shrink-0 min-h-screen bg-[#0b2313] text-white p-5 flex-col fixed inset-y-0 left-0">
