@@ -11,10 +11,15 @@ export async function POST(request: Request) {
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    const supabaseKey =
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: 'Alajo account service is not configured on the production server.' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Alajo account service is not configured on the production server.' },
+        { status: 500 }
+      )
     }
 
     const cookieStore = await cookies()
@@ -42,6 +47,9 @@ export async function POST(request: Request) {
 
     return response
   } catch {
-    return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Unable to log in right now. Please try again.' },
+      { status: 500 }
+    )
   }
 }
