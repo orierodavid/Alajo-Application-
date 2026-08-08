@@ -3,30 +3,23 @@ import Link from 'next/link'
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-gray-900">
-      <section className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-16">
-        <div className="grid w-full gap-12 lg:grid-cols-2 lg:items-center">
-          <div>
-            <div className="mb-8 flex items-center gap-1 text-2xl font-extrabold">Alajo<span className="text-green-600">◔</span></div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-green-700">Smart rotational savings</p>
-            <h1 className="max-w-xl text-5xl font-extrabold tracking-tight sm:text-6xl">Save together. Receive your turn. Grow with confidence.</h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-gray-500">Join structured savings groups, make scheduled contributions and receive your payout according to your position.</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/login" className="rounded-md bg-green-900 px-6 py-3 font-semibold text-white hover:bg-green-800">Login</Link>
-              <Link href="/signup" className="rounded-md border border-gray-200 px-6 py-3 font-semibold text-gray-900 hover:bg-gray-50">Create account</Link>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-6 shadow-sm">
-            <div className="rounded-xl bg-white p-6 shadow-sm">
-              <p className="text-sm text-gray-500">Total Contributions</p>
-              <p className="mt-2 text-3xl font-bold">₦250,000.00</p>
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-gray-100 p-4"><p className="text-xs text-gray-400">Active Groups</p><p className="mt-1 text-xl font-bold">3</p></div>
-                <div className="rounded-lg border border-gray-100 p-4"><p className="text-xs text-gray-400">Total Payouts</p><p className="mt-1 text-xl font-bold text-green-700">₦180,000</p></div>
-              </div>
-            </div>
-          </div>
+      <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
+        <Link href="/" className="flex items-center gap-1"><span className="text-[26px] font-extrabold tracking-tight">Alajo</span><span className="text-xl">◌</span></Link>
+        <nav className="hidden items-center gap-8 text-[15px] font-medium md:flex"><a href="#features">Features</a><a href="#how-it-works">How It Works</a><a href="#benefits">Benefits</a><a href="#about">About Us</a><a href="#contact">Contact</a></nav>
+        <div className="flex items-center gap-3"><Link href="/login" className="rounded-md border border-gray-300 px-5 py-2 text-[15px] font-semibold">Login</Link><Link href="/signup-personal" className="rounded-md bg-[#14532d] px-5 py-2 text-[15px] font-semibold text-white">Get Started</Link></div>
+      </header>
+      <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-14 lg:grid-cols-2 lg:px-10 lg:pt-20">
+        <div><h1 className="max-w-[520px] text-[44px] font-bold leading-[1.15] tracking-tight">Smart Rotational Savings for Everyone</h1><p className="mt-6 max-w-[420px] text-[17px] leading-relaxed text-gray-500">Join thousands of people already saving and growing together with Alajo.</p><div className="mt-8 flex items-center gap-4"><Link href="/signup-personal" className="rounded-md bg-[#14532d] px-7 py-3 text-[15px] font-semibold text-white">Get Started</Link><a href="#how-it-works" className="rounded-md border border-gray-900 px-7 py-3 text-[15px] font-semibold">Learn More</a></div></div>
+        <div className="relative mx-auto h-[520px] w-full max-w-[520px]">
+          <div className="absolute left-0 top-6 w-[420px] rounded-t-xl bg-[#1a1a1a] p-2 shadow-2xl"><div className="h-[260px] rounded-md bg-white p-4"><div className="flex h-full"><aside className="w-10 rounded-l bg-[#0f2c1c] text-center text-white/70">≡<br/><br/>⌂<br/><br/>◧<br/><br/>◎</aside><div className="flex-1 p-4"><b>Alajo</b><p className="mt-3 font-semibold">Good morning, David 👋</p><p className="text-gray-400">Here's what's happening with your savings today</p><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded border p-3"><small className="text-gray-400">Total Contributions</small><p className="font-bold text-[#16a34a]">₦250,000.00</p></div><div className="rounded border p-3"><small className="text-gray-400">Active Groups</small><p className="font-bold">3</p></div></div><p className="mt-4 font-semibold">Recent Activity</p><p className="text-gray-500">◔ Contribution Made</p><p className="text-gray-500">◔ Group Joined</p></div></div></div></div>
+          <div className="absolute right-0 top-0 w-[220px] rounded-[22px] bg-black p-2.5 shadow-2xl"><div className="h-[400px] rounded-[14px] bg-white p-4"><div className="flex justify-between"><b>Alajo</b><span>🔔　●</span></div><p className="mt-5 font-semibold">Available Groups</p><p className="text-gray-400">Choose a group that suits your goal and start saving</p><div className="mt-4 space-y-3">{[['₦20,000 Group','6 Months Cycle','6 / 10'],['₦50,000 Group','6 Months Cycle','7 / 10'],['₦100,000 Group','10 Months Cycle','5 / 10']].map(g=><div key={g[0]} className="rounded border p-3"><b>{g[0]}</b><p className="text-gray-400">{g[1]}</p><div className="mt-2 flex justify-between text-gray-400"><span>Members: {g[2]}</span><span className="rounded bg-[#16a34a] px-2 py-1 text-white">Join</span></div></div>)}</div></div></div>
+          <div className="absolute left-[140px] top-[180px] w-[150px] rounded-[20px] bg-black p-2 shadow-2xl"><div className="h-[300px] rounded-[12px] bg-white p-3"><div className="flex justify-between"><b>Alajo</b><span>🔔</span></div><p className="mt-3 font-semibold">Good morning, David</p><div className="mt-3 rounded border p-2"><small className="text-gray-400">Total Contributions</small><p className="font-bold text-[#16a34a]">₦250,000.00</p></div><p className="mt-3 font-semibold">My Active Groups</p><div className="mt-2 space-y-2"><div className="rounded border p-2">₦50,000 Group<br/><small className="text-gray-400">6 Months Cycle</small></div><div className="rounded border p-2">₦30,000 Group<br/><small className="text-gray-400">6 Months Cycle</small></div></div></div></div>
         </div>
       </section>
+      <section id="features" className="mx-auto max-w-7xl px-6 py-16 lg:px-10"><h2 className="text-3xl font-bold">Everything you need to save together</h2><div className="mt-8 grid gap-5 md:grid-cols-3"><div className="rounded-xl border p-6"><b>Join Savings Groups</b><p className="mt-2 text-gray-500">Choose a group that fits your savings goal.</p></div><div className="rounded-xl border p-6"><b>Make Contributions</b><p className="mt-2 text-gray-500">Track every contribution throughout your cycle.</p></div><div className="rounded-xl border p-6"><b>Receive Payouts</b><p className="mt-2 text-gray-500">Receive your scheduled rotational payout.</p></div></div></section>
+      <section id="how-it-works" className="bg-gray-50 px-6 py-16 text-center"><h2 className="text-3xl font-bold">How It Works</h2><p className="mx-auto mt-3 max-w-xl text-gray-500">Create your account, complete verification, join an available group and contribute according to your schedule.</p></section>
+      <section id="benefits" className="px-6 py-16 text-center"><h2 className="text-3xl font-bold">Save with confidence</h2><p className="mx-auto mt-3 max-w-xl text-gray-500">Transparent groups, secure account access and clear contribution and payout tracking.</p></section>
+      <footer id="contact" className="border-t px-6 py-8 text-center text-sm text-gray-500">© 2026 Alajo. Smart rotational savings for everyone.</footer>
     </main>
   )
 }
