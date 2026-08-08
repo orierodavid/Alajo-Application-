@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 
 type Group = { id: string; name: string; description: string | null; cycle: 'six_month' | 'ten_month'; contribution_amount: number; slot_count: number; start_date: string | null; status: string; memberCount: number }
@@ -15,6 +16,7 @@ const nav = [
 ] as const
 
 export default function GroupsClient({ groups, memberships, userEmail }: { groups: Group[]; memberships: Membership[]; userEmail: string }) {
+  const router = useRouter()
   const [tab, setTab] = useState<'my' | 'available' | 'past'>('my')
   const [items, setItems] = useState(groups)
   const [myMemberships, setMyMemberships] = useState(memberships)
@@ -28,11 +30,13 @@ export default function GroupsClient({ groups, memberships, userEmail }: { group
   async function joinGroup(group: Group) {
     setJoining(group.id); setMessage('')
     try {
-      const nextPosition = Math.max(1, group.memberCount + 1)
-      const response = await fetch('/api/groups/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId: group.id, position: nextPosition }) })
+      const response = await fetch('/api/groups/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groupId: group.id }) })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Unable to join group')
-      setMyMemberships((current) => [...current, result.membership]); setItems((current) => current.map((item) => item.id === group.id ? { ...item, memberCount: item.memberCount + 1 } : item)); setTab('my'); setMessage(`You joined ${group.name} successfully.`)
+      if (!result.membership) throw new Error('The group was joined but the membership confirmation was not returned. Please refresh your Groups page.')
+      setMyMemberships((current) => [...current, result.membership])
+      setItems((current) => current.map((item) => item.id === group.id ? { ...item, memberCount: item.memberCount + 1 } : item))
+      router.push('/join-group-success')
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to join group') } finally { setJoining(null) }
   }
 
@@ -44,7 +48,7 @@ export default function GroupsClient({ groups, memberships, userEmail }: { group
       </nav>
       <div className="bg-[#123524] rounded-xl p-4 text-white relative overflow-hidden">
         <p className="font-semibold text-[14px]">Grow your savings with Alajo</p><p className="text-[12px] text-gray-300 mt-1">The more you save, the more you earn.</p>
-        <Link href="/invite-earn" className="mt-3 inline-flex items-center gap-1.5 bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends <span aria-hidden>→</span></Link>
+        <Link href="/invite-earn" className="mt-3 inline-flex items-center gap-1.5 bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends <AlajoIcon name="arrow-up" size={14} /></Link>
         <div className="absolute -bottom-1 -right-1 opacity-80 text-amber-300"><AlajoIcon name="coin" size={34} /></div>
       </div>
     </aside>
@@ -57,11 +61,11 @@ export default function GroupsClient({ groups, memberships, userEmail }: { group
           ].map(([icon,bg,color,title,value,subtitle]) => <div key={String(title)} className="bg-white rounded-xl border border-gray-100 p-5"><div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center ${color}`}><AlajoIcon name={icon as any} size={18}/></div><p className="mt-3 text-gray-500 text-[13px]">{title}</p><p className="text-[20px] font-bold text-gray-900">{value}</p><p className="text-[12px] text-gray-400 mt-1">{subtitle}</p></div>)}
         </div>
         <div className="mt-6 flex items-center justify-between"><div className="flex items-center gap-6 text-[14px] font-medium overflow-x-auto">{([['my','My Groups'],['available','Available Groups'],['past','Past Groups']] as const).map(([key,label]) => <button key={key} onClick={() => setTab(key)} className={tab === key ? 'text-[#16a34a] border-b-2 border-[#16a34a] pb-2 whitespace-nowrap' : 'text-gray-400 pb-2 whitespace-nowrap'}>{label}</button>)}</div></div>
-        {message && <div className="mt-5 rounded-lg bg-green-50 border border-green-100 text-green-700 px-4 py-3 text-sm">{message}</div>}
+        {message && <div className="mt-5 rounded-lg bg-red-50 border border-red-100 text-red-700 px-4 py-3 text-sm">{message}</div>}
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {visibleGroups.map((group) => { const joined = myGroupIds.has(group.id); const payout = Number(group.contribution_amount) * group.slot_count; return <article key={group.id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><h4 className="font-bold text-gray-900 text-[16px]">{group.name}</h4><p className="text-xs text-gray-400 mt-1">{group.description}</p></div><span className={`text-xs px-2 py-1 rounded-full ${group.status === 'full' ? 'bg-gray-100 text-gray-500' : 'bg-green-50 text-green-600'}`}>{group.status === 'full' ? 'Full' : joined ? 'Active' : 'Open'}</span></div><div className="mt-3 space-y-2 text-sm"><p><span className="text-gray-400">Contribution:</span> <b>{money(Number(group.contribution_amount))}</b></p><p><span className="text-gray-400">Cycle:</span> <b>{cycleLabel(group.cycle)}</b></p><p><span className="text-gray-400">Members:</span> <b>{group.memberCount}/{group.slot_count}</b></p><p><span className="text-gray-400">Payout:</span> <b>{money(payout)}</b></p><p><span className="text-gray-400">Status:</span> <b className="text-green-600">{joined ? 'Active' : group.status === 'full' ? 'Full' : 'Available'}</b></p></div>{joined ? <div className="mt-4 rounded-lg bg-green-50 text-green-700 px-3 py-2 text-sm font-medium flex items-center gap-2"><AlajoIcon name="check" size={16}/>You are a member of this group.</div> : tab === 'available' ? <button disabled={joining === group.id || group.status === 'full'} onClick={() => joinGroup(group)} className="mt-4 w-full bg-[#14532d] hover:bg-[#123f24] disabled:opacity-50 text-white font-semibold rounded-lg py-2.5">{joining === group.id ? 'Joining…' : 'Join Group'}</button> : null}</article> })}
         </div>
-        {visibleGroups.length === 0 && <div className="mt-5 bg-white rounded-xl border border-gray-100 p-10 text-center"><p className="font-semibold text-gray-900">{tab === 'my' ? 'You have not joined a group yet.' : tab === 'past' ? 'No past groups yet.' : 'No available groups right now.'}</p><p className="text-sm text-gray-400 mt-1">Available groups will appear here automatically.</p>{tab === 'my' && <button onClick={() => setTab('available')} className="mt-4 text-[#16a34a] font-semibold">Browse Available Groups →</button>}</div>}
+        {visibleGroups.length === 0 && <div className="mt-5 bg-white rounded-xl border border-gray-100 p-10 text-center"><p className="font-semibold text-gray-900">{tab === 'my' ? 'You have not joined a group yet.' : tab === 'past' ? 'No past groups yet.' : 'No available groups right now.'}</p><p className="text-sm text-gray-400 mt-1">Available groups will appear here automatically.</p>{tab === 'my' && <button onClick={() => setTab('available')} className="mt-4 text-[#16a34a] font-semibold">Browse Available Groups <AlajoIcon name="arrow-up" size={14} className="inline" /></button>}</div>}
       </section>
     </main>
   </div>
