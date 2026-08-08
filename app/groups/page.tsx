@@ -25,12 +25,14 @@ export default async function GroupsPage() {
   if (membershipError) console.error('Membership load error:', membershipError)
 
   const groupIds = (groups ?? []).map((group) => group.id)
-  const { data: memberRows } = groupIds.length
-    ? await supabase.from('group_members').select('group_id,status').in('group_id', groupIds).in('status', ['pending', 'active'])
+  const { data: slots } = groupIds.length
+    ? await supabase.from('group_slots').select('group_id,status').in('group_id', groupIds)
     : { data: [] }
 
   const counts = new Map<string, number>()
-  for (const row of memberRows ?? []) counts.set(row.group_id, (counts.get(row.group_id) ?? 0) + 1)
+  for (const slot of slots ?? []) {
+    if (slot.status === 'assigned' || slot.status === 'reserved') counts.set(slot.group_id, (counts.get(slot.group_id) ?? 0) + 1)
+  }
 
   return (
     <GroupsClient
