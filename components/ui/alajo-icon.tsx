@@ -3,7 +3,7 @@
 type IconName =
   | 'dashboard' | 'groups' | 'contributions' | 'payouts' | 'wallet' | 'transactions'
   | 'invite' | 'notifications' | 'settings' | 'help' | 'logout' | 'coin'
-  | 'add' | 'crown' | 'arrow-down' | 'arrow-up' | 'clock' | 'check'
+  | 'add' | 'crown' | 'arrow-down' | 'arrow-up' | 'clock' | 'check' | 'info'
 
 type Props = { name: IconName; size?: number; className?: string }
 
@@ -26,6 +26,7 @@ const paths: Record<IconName, string> = {
   'arrow-up': 'M12 20V4M6 10l6-6 6 6',
   clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 6v6l4 2',
   check: 'm5 12 4 4L19 6',
+  info: 'M12 16v-4M12 8h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
 }
 
 export function AlajoIcon({ name, size = 18, className = '' }: Props) {
