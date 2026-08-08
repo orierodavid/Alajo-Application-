@@ -9,215 +9,41 @@ function BrandPanel() {
     <section className="relative p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-gray-100 overflow-hidden">
       <Link href="/" className="flex items-center gap-1 relative z-10 w-fit">
         <span className="text-[22px] font-extrabold tracking-tight text-gray-900 font-display">Alajo</span>
-        <svg width="18" height="18" viewBox="0 0 20 20" className="mt-1">
-          <circle cx="10" cy="10" r="8" fill="none" stroke="#e5e7eb" strokeWidth="2.5" />
-          <path d="M10 2 A8 8 0 0 1 17 8" fill="none" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M17 8 A8 8 0 0 1 14.5 16" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 20 20" className="mt-1"><circle cx="10" cy="10" r="8" fill="none" stroke="#e5e7eb" strokeWidth="2.5"/><path d="M10 2 A8 8 0 0 1 17 8" fill="none" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round"/><path d="M17 8 A8 8 0 0 1 14.5 16" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round"/></svg>
       </Link>
-      <h1 className="relative z-10 mt-8 font-display font-bold text-[28px] leading-[1.2] text-gray-900 max-w-[320px]">
-        Smart Rotational Savings for <span className="text-[#16a34a]">Everyone</span>
-      </h1>
-      <p className="relative z-10 mt-3 text-[15px] text-gray-500 max-w-[300px]">
-        Join thousands of people already saving and growing together with Alajo.
-      </p>
-      <div className="relative z-10 mt-8 space-y-5">
-        {[
-          ['👥', 'Join Savings Groups', 'Become a member of a savings group that fits your goals.'],
-          ['💳', 'Make Contributions', 'Contribute monthly and track your savings progress.'],
-          ['💰', 'Receive Payouts', 'Get your payout based on your selected position in the group.'],
-        ].map(([icon, title, text]) => (
-          <div className="flex gap-3" key={title}>
-            <div className="w-9 h-9 shrink-0 rounded-full bg-green-50 flex items-center justify-center text-[#16a34a]">{icon}</div>
-            <div>
-              <p className="font-semibold text-[14px] text-gray-900">{title}</p>
-              <p className="text-[13px] text-gray-500">{text}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="absolute left-[-40px] bottom-[-40px] w-56 h-56 rounded-full bg-[#eab308]/25" />
-      <div className="absolute left-[-60px] bottom-[-80px] w-64 h-64 rounded-full bg-[#14532d]/90" />
-      <div className="relative z-10 mt-10 flex items-end">
-        <div className="bg-black rounded-t-lg p-1.5 w-[300px]">
-          <div className="bg-white rounded overflow-hidden h-[150px] text-[7px] p-2">
-            <p className="font-bold font-display text-[9px]">Alajo</p>
-            <p className="mt-1 text-gray-700">Good morning, David 👋</p>
-            <div className="mt-1 grid grid-cols-3 gap-1">
-              <div className="border border-gray-100 rounded p-1"><p className="text-gray-400">Total Contributions</p><p className="text-[#16a34a] font-bold">₦250,000.00</p></div>
-              <div className="border border-gray-100 rounded p-1"><p className="text-gray-400">Active Groups</p><p className="font-bold">3</p></div>
-              <div className="border border-gray-100 rounded p-1"><p className="text-gray-400">Total Payouts</p><p className="font-bold">₦180,000.00</p></div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-black rounded-[16px] p-1.5 w-[90px] -ml-6 -mb-4 shrink-0">
-          <div className="bg-white rounded-[10px] overflow-hidden h-[160px] p-1.5 text-[6px]">
-            <p className="font-bold font-display text-[7px]">Alajo</p>
-            <p className="mt-1 text-gray-700">Good morning, David</p>
-            <p className="text-gray-400 mt-1">Total Contributions</p>
-            <p className="text-[#16a34a] font-bold">₦250,000.00</p>
-            <p className="text-gray-400 mt-1">My Active Groups</p>
-            <div className="mt-1 border border-gray-100 rounded p-1">₦50,000 Group</div>
-          </div>
-        </div>
-      </div>
+      <h1 className="relative z-10 mt-8 font-display font-bold text-[28px] leading-[1.2] text-gray-900 max-w-[320px]">Smart Rotational Savings for <span className="text-[#16a34a]">Everyone</span></h1>
+      <p className="relative z-10 mt-3 text-[15px] text-gray-500 max-w-[300px]">Join thousands of people already saving and growing together with Alajo.</p>
+      <div className="relative z-10 mt-8 space-y-5">{[['👥','Join Savings Groups','Become a member of a savings group that fits your goals.'],['💳','Make Contributions','Contribute monthly and track your savings progress.'],['💰','Receive Payouts','Get your payout based on your selected position in the group.']].map(([icon,title,text])=><div className="flex gap-3" key={title}><div className="w-9 h-9 shrink-0 rounded-full bg-green-50 flex items-center justify-center text-[#16a34a]">{icon}</div><div><p className="font-semibold text-[14px] text-gray-900">{title}</p><p className="text-[13px] text-gray-500">{text}</p></div></div>)}</div>
+      <div className="absolute left-[-40px] bottom-[-40px] w-56 h-56 rounded-full bg-[#eab308]/25"/><div className="absolute left-[-60px] bottom-[-80px] w-64 h-64 rounded-full bg-[#14532d]/90"/>
     </section>
   )
 }
 
 export default function SignupPage() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const [resendLoading, setResendLoading] = useState(false)
-  const [resendSeconds, setResendSeconds] = useState(0)
-  const [show1, setShow1] = useState(false)
-  const [show2, setShow2] = useState(false)
+  const [name,setName]=useState(''); const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [confirm,setConfirm]=useState(''); const [error,setError]=useState(''); const [loading,setLoading]=useState(false); const [sent,setSent]=useState(false); const [resendSeconds,setResendSeconds]=useState(0)
+  useEffect(()=>{if(resendSeconds<=0)return;const t=window.setInterval(()=>setResendSeconds(v=>Math.max(0,v-1)),1000);return()=>window.clearInterval(t)},[resendSeconds])
 
-  useEffect(() => {
-    if (resendSeconds <= 0) return
-    const timer = window.setInterval(() => setResendSeconds((value) => Math.max(0, value - 1)), 1000)
-    return () => window.clearInterval(timer)
-  }, [resendSeconds])
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    if (loading) return
-    setError('')
-
-    if (!name.trim()) return setError('Please enter your full name')
-    if (password !== confirm) return setError('Passwords do not match')
-    if (password.length < 8) return setError('Password must be at least 8 characters')
-
+  async function submit(e:FormEvent){
+    e.preventDefault(); if(loading)return; setError('')
+    if(!name.trim())return setError('Please enter your full name'); if(!email.trim())return setError('Please enter your email address'); if(password.length<8)return setError('Password must be at least 8 characters'); if(password!==confirm)return setError('Passwords do not match')
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: {
-          data: { full_name: name.trim() },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-        },
-      })
-
-      if (signUpError) {
-        setError(signUpError.message)
-        return
-      }
-
-      if (!data.user) {
-        setError('We could not create your account. Please try again.')
-        return
-      }
-
-      setSent(true)
-      setResendSeconds(30)
-    } catch {
-      setError('Something went wrong while creating your account. Please try again.')
-    } finally {
-      setLoading(false)
-    }
+      const supabase=createClient()
+      const cleanEmail=email.trim().toLowerCase()
+      const {data,error:signUpError}=await supabase.auth.signUp({email:cleanEmail,password,options:{data:{full_name:name.trim()},emailRedirectTo:`${window.location.origin}/auth/callback?next=/dashboard`}})
+      if(signUpError){setError(signUpError.message);return}
+      if(!data.user){setError('Supabase did not return a user. Please try again.');return}
+      setSent(true);setResendSeconds(30)
+    } catch (err:unknown) {
+      const message=err instanceof Error?err.message:String(err)
+      console.error('Alajo signup error:',err)
+      setError(message||'Unable to connect to the account service. Please try again.')
+    } finally {setLoading(false)}
   }
 
-  async function resendEmail() {
-    if (resendLoading || resendSeconds > 0 || !email) return
-    setError('')
-    setResendLoading(true)
-    try {
-      const { error: resendError } = await createClient().auth.resend({
-        type: 'signup',
-        email: email.trim().toLowerCase(),
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
-      })
-      if (resendError) setError(resendError.message)
-      else setResendSeconds(30)
-    } catch {
-      setError('Unable to resend the verification email. Please try again.')
-    } finally {
-      setResendLoading(false)
-    }
-  }
+  async function resendEmail(){if(resendSeconds>0||!email)return;setError('');try{const {error:e}=await createClient().auth.resend({type:'signup',email:email.trim().toLowerCase(),options:{emailRedirectTo:`${window.location.origin}/auth/callback?next=/dashboard`}});if(e)setError(e.message);else setResendSeconds(30)}catch(err:unknown){setError(err instanceof Error?err.message:'Unable to resend the verification email.')} }
 
-  if (sent) {
-    return (
-      <main className="min-h-screen bg-white grid lg:grid-cols-2">
-        <BrandPanel />
-        <section className="p-10 lg:p-14 flex flex-col justify-center">
-          <div className="max-w-[400px] w-full mx-auto text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-green-50 flex items-center justify-center text-3xl text-[#16a34a]">✉️</div>
-            <h1 className="mt-6 font-display font-bold text-[26px] text-gray-900">Verify Your Email</h1>
-            <p className="mt-4 text-gray-500 text-[15px] leading-relaxed">
-              We've sent a verification link to<br />
-              <span className="font-semibold text-gray-900">{email}</span>
-            </p>
-            <p className="mt-4 text-gray-500 text-[15px] leading-relaxed max-w-[380px] mx-auto">
-              Please check your email and click on the link to verify your account.
-            </p>
-            <button
-              type="button"
-              onClick={() => { window.location.href = `mailto:${email}` }}
-              className="mt-8 inline-block w-full max-w-[340px] py-3 rounded-md bg-[#14532d] text-white font-semibold text-[15px] hover:bg-[#123f24]"
-            >
-              Open Email App
-            </button>
-            <button
-              type="button"
-              disabled={resendLoading || resendSeconds > 0}
-              onClick={resendEmail}
-              className="block mx-auto mt-4 text-[14px] text-gray-500 disabled:cursor-not-allowed"
-            >
-              {resendLoading ? 'Sending…' : resendSeconds > 0 ? `Resend Email (${resendSeconds}s)` : 'Resend Email'}
-            </button>
-            {error && <p className="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>}
-          </div>
-        </section>
-      </main>
-    )
-  }
+  if(sent)return <main className="min-h-screen bg-white grid lg:grid-cols-2"><BrandPanel/><section className="p-10 lg:p-14 flex flex-col justify-center"><div className="max-w-[400px] w-full mx-auto text-center"><div className="w-16 h-16 mx-auto rounded-full bg-green-50 flex items-center justify-center text-3xl text-[#16a34a]">✉️</div><h1 className="mt-6 font-display font-bold text-[26px] text-gray-900">Verify Your Email</h1><p className="mt-4 text-gray-500 text-[15px] leading-relaxed">We've sent a verification link to<br/><span className="font-semibold text-gray-900">{email}</span></p><p className="mt-4 text-gray-500 text-[15px] leading-relaxed">Please check your email and click on the link to verify your account.</p><button type="button" onClick={()=>window.location.href=`mailto:${email}`} className="mt-8 inline-block w-full max-w-[340px] py-3 rounded-md bg-[#14532d] text-white font-semibold text-[15px]">Open Email App</button><button type="button" disabled={resendSeconds>0} onClick={resendEmail} className="block mx-auto mt-4 text-[14px] text-gray-500">{resendSeconds>0?`Resend Email (${resendSeconds}s)`:'Resend Email'}</button>{error&&<p className="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>}</div></section></main>
 
-  return (
-    <main className="min-h-screen bg-white grid lg:grid-cols-2">
-      <BrandPanel />
-      <section className="p-10 lg:p-14 flex flex-col justify-center">
-        <div className="max-w-[380px] w-full mx-auto">
-          <h2 className="font-display font-extrabold text-[26px] text-gray-900 text-center">Create Your Account</h2>
-          <p className="mt-1 text-center text-gray-500 text-[15px]">Sign up to start saving with Alajo</p>
-          <form onSubmit={submit} className="mt-8 space-y-5">
-            <div>
-              <label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Full Name</label>
-              <input required value={name} onChange={(e) => setName(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2.5 outline-none text-[14px]" />
-            </div>
-            <div>
-              <label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Email Address</label>
-              <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2.5 outline-none text-[14px]" />
-            </div>
-            <div>
-              <label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Password</label>
-              <div className="flex border border-gray-200 rounded-md px-3 py-2.5">
-                <input required type={show1 ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full outline-none text-[14px]" />
-                <button type="button" aria-label="Toggle password visibility" onClick={() => setShow1(!show1)}>👁️</button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Confirm Password</label>
-              <div className="flex border border-gray-200 rounded-md px-3 py-2.5">
-                <input required type={show2 ? 'text' : 'password'} value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full outline-none text-[14px]" />
-                <button type="button" aria-label="Toggle password confirmation visibility" onClick={() => setShow2(!show2)}>👁️</button>
-              </div>
-            </div>
-            {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>}
-            <button disabled={loading} type="submit" className="w-full py-3 rounded-md bg-[#14532d] text-white font-semibold text-[15px] disabled:opacity-70">
-              {loading ? 'Creating account…' : 'Create Account'}
-            </button>
-            <p className="text-center text-[14px] text-gray-500">Already have an account? <Link href="/login" className="text-[#16a34a] font-semibold">Login</Link></p>
-          </form>
-        </div>
-      </section>
-    </main>
-  )
+  return <main className="min-h-screen bg-white grid lg:grid-cols-2"><BrandPanel/><section className="p-10 lg:p-14 flex flex-col justify-center"><div className="max-w-[380px] w-full mx-auto"><h2 className="font-display font-extrabold text-[26px] text-gray-900 text-center">Create Your Account</h2><p className="mt-1 text-center text-gray-500 text-[15px]">Sign up to start saving with Alajo</p><form onSubmit={submit} className="mt-8 space-y-5"><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Full Name</label><input required value={name} onChange={e=>setName(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2.5 outline-none text-[14px]"/></div><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Email Address</label><input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2.5 outline-none text-[14px]"/></div><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Password</label><input required type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2.5 outline-none text-[14px]"/></div><div><label className="block text-[14px] font-semibold text-gray-900 mb-1.5">Confirm Password</label><input required type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2.5 outline-none text-[14px]"/></div>{error&&<p className="text-sm text-red-600 bg-red-50 p-3 rounded-md break-words">{error}</p>}<button disabled={loading} type="submit" className="w-full py-3 rounded-md bg-[#14532d] text-white font-semibold text-[15px] disabled:opacity-70">{loading?'Creating account…':'Create Account'}</button><p className="text-center text-[14px] text-gray-500">Already have an account? <Link href="/login" className="text-[#16a34a] font-semibold">Login</Link></p></form></div></section></main>
 }
