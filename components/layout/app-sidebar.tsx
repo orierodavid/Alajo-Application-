@@ -15,7 +15,7 @@ export function AppSidebar() {
   return <aside className="hidden lg:flex w-[250px] shrink-0 min-h-screen bg-[#0b2313] text-white p-5 flex-col fixed inset-y-0 left-0 z-30 shadow-2xl shadow-black/10">
     <Link href="/dashboard" className="px-2 flex items-center gap-2 text-[22px] font-extrabold tracking-tight">
       <span className="font-display">Alajo</span>
-      <AlajoIcon name="brand" size={18}/>
+      <span className="text-yellow-400 text-lg" aria-hidden="true">◌</span>
     </Link>
     <nav className="mt-8 flex-1 space-y-1 text-[14px] font-medium">
       {nav.map(([icon, href, label]) => {
