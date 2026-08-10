@@ -11,6 +11,15 @@ type Contribution = { id: string; amount: number; due_date: string; period_numbe
 const money = (n: number) => `₦${Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 const date = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 
+function friendlyPaymentError(error: any) {
+  const message = String(error?.message || '')
+  if (message.includes('INSUFFICIENT_WALLET_BALANCE')) return 'Insufficient wallet balance for this contribution.'
+  if (message.includes('CONTRIBUTION_NOT_PAYABLE')) return 'This contribution is no longer available for payment.'
+  if (message.includes('CONTRIBUTION_NOT_FOUND')) return 'This contribution could not be found.'
+  if (message.includes('PARTIAL_PAYMENT_NOT_SUPPORTED')) return 'This contribution has a partial payment and cannot be settled through this wallet flow.'
+  return message || 'Payment could not be completed.'
+}
+
 function ConfirmationContent() {
   const params = useSearchParams()
   const id = params.get('id') || ''
@@ -41,7 +50,7 @@ function ConfirmationContent() {
         if (!['pending','overdue'].includes(schedule.status)) throw new Error(`This contribution is currently ${schedule.status} and cannot be paid.`)
         const { data: wallet } = await supabase.from('wallets').select('balance').eq('user_id', auth.user.id).maybeSingle()
         if (active) { setWalletBalance(Number(wallet?.balance || 0)); setItem({ id: schedule.id, amount: Number(schedule.amount || 0), due_date: schedule.due_date, period_number: Number(schedule.period_number), status: schedule.status, groupName: group?.name || 'Savings Group' }) }
-      } catch (e: any) { if (active) setError(e?.message || 'Unable to load payment confirmation.') }
+      } catch (e: any) { if (active) setError(friendlyPaymentError(e)) }
       finally { if (active) setLoading(false) }
     }
     load(); return () => { active = false }
@@ -57,12 +66,12 @@ function ConfirmationContent() {
       const { data, error: rpcError } = await supabase.rpc('pay_contribution', { p_schedule_id: item.id })
       if (rpcError) throw rpcError
       const result = Array.isArray(data) ? data[0] : data
-      if (result?.success === false) throw new Error(result.message || 'Payment could not be completed.')
-      setWalletBalance(Number(result?.wallet_balance ?? walletBalance - item.amount))
+      if (!result?.success) throw new Error(result?.message || 'Payment could not be completed.')
+      setWalletBalance(Number(result.wallet_balance))
       setItem(prev => prev ? { ...prev, status: 'paid' } : prev)
       setMessage('Contribution payment confirmed successfully.')
     } catch (e: any) {
-      setError(e?.message || 'Payment could not be completed.')
+      setError(friendlyPaymentError(e))
     } finally { setPaying(false) }
   }
 
