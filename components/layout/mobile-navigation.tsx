@@ -10,7 +10,8 @@ const nav = [['dashboard','/dashboard','Dashboard'],['groups','/groups','Groups'
 
 export function MobileNavigation(){
  const pathname=usePathname();const[open,setOpen]=useState(false);const[accountOpen,setAccountOpen]=useState(false);const[firstName,setFirstName]=useState('User');const[dark,setDark]=useState(false);const[loggingOut,setLoggingOut]=useState(false)
- const authPage=pathname==='/login'||pathname==='/signup'||pathname==='/forgot-password'||pathname.startsWith('/reset-password')
+ const publicPage=pathname==='/'
+ const authPage=publicPage||pathname==='/login'||pathname==='/signup'||pathname==='/forgot-password'||pathname.startsWith('/reset-password')
  useEffect(()=>{if(authPage)return;fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.name)setFirstName(s.name.trim().split(/\s+/)[0])}).catch(()=>{});const d=localStorage.getItem('alajo-theme')==='dark';setDark(d);document.documentElement.classList.toggle('dark',d)},[authPage])
  const toggleTheme=()=>{const n=!dark;setDark(n);localStorage.setItem('alajo-theme',n?'dark':'light');document.documentElement.classList.toggle('dark',n);setAccountOpen(false)}
  async function logout(){if(loggingOut)return;setLoggingOut(true);setAccountOpen(false);try{await fetch('/api/auth/logout',{method:'POST',credentials:'include',cache:'no-store'});try{await createClient().auth.signOut({scope:'global'})}catch{};localStorage.removeItem('alajo-theme');window.location.replace('/login')}catch{setLoggingOut(false)}}
