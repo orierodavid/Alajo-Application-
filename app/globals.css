@@ -8,31 +8,38 @@ body { margin: 0; background: #fff; color: #111827; font-family: Arial, Helvetic
 button, input, select, textarea { font: inherit; }
 img, svg { max-width: 100%; }
 
-html.dark body { background: #08170e; color: #f3f7f4; }
-html.dark main { color: #f3f7f4; }
+html.dark body { background: #07150c; color: #f4f8f5; }
+html.dark main { color: #f4f8f5; }
 
-/* Premium Alajo dark surfaces: fewer blacks, clearer hierarchy, softer contrast. */
-html.dark .bg-white { background-color: #102719 !important; }
-html.dark .bg-gray-50 { background-color: #0d2115 !important; }
-html.dark .bg-gray-100 { background-color: #173322 !important; }
-html.dark .bg-gray-200 { background-color: #1d3a28 !important; }
-html.dark .bg-\[\#f7f8f9\] { background-color: #08170e !important; }
-html.dark .bg-\[\#f6f8f7\] { background-color: #0a1b10 !important; }
+/* Alajo dark surfaces: deep green background, elevated cards, crisp white hairlines. */
+html.dark .bg-white { background-color: #102519 !important; }
+html.dark [class~="bg-white/90"] { background-color: rgba(16,37,25,.94) !important; }
+html.dark .bg-gray-50 { background-color: #0c1f13 !important; }
+html.dark .bg-gray-100 { background-color: #142d1d !important; }
+html.dark .bg-gray-200 { background-color: #1b3825 !important; }
+html.dark .bg-\[\#f7f8f9\] { background-color: #07150c !important; }
+html.dark .bg-\[\#f6f8f7\] { background-color: #07150c !important; }
+
+/* Consistent 1px white border around every existing card surface. */
+html.dark .rounded-2xl.border-gray-100,
+html.dark .rounded-xl.border-gray-100,
+html.dark .rounded-2xl.border-gray-200,
+html.dark .rounded-xl.border-gray-200 { border-color: rgba(255,255,255,.20) !important; }
 
 html.dark .text-gray-950, html.dark .text-gray-900 { color: #f4f8f5 !important; }
 html.dark .text-gray-800 { color: #e8f0eb !important; }
 html.dark .text-gray-700 { color: #d3dfd7 !important; }
 html.dark .text-gray-600 { color: #bdcbbf !important; }
 html.dark .text-gray-500 { color: #9eafa3 !important; }
-html.dark .text-gray-400 { color: #84978b !important; }
+html.dark .text-gray-400 { color: #8fa196 !important; }
 html.dark .text-gray-300 { color: #c3d0c8 !important; }
 
 html.dark .border-gray-50 { border-color: rgba(255,255,255,.06) !important; }
-html.dark .border-gray-100 { border-color: rgba(255,255,255,.08) !important; }
-html.dark .border-gray-200 { border-color: rgba(255,255,255,.12) !important; }
-html.dark .border-gray-300 { border-color: rgba(255,255,255,.16) !important; }
+html.dark .border-gray-100 { border-color: rgba(255,255,255,.12) !important; }
+html.dark .border-gray-200 { border-color: rgba(255,255,255,.14) !important; }
+html.dark .border-gray-300 { border-color: rgba(255,255,255,.18) !important; }
 
-html.dark input, html.dark select, html.dark textarea { background-color: #102719; color: #f3f7f4; border-color: rgba(255,255,255,.12); }
+html.dark input, html.dark select, html.dark textarea { background-color: #102519; color: #f3f7f4; border-color: rgba(255,255,255,.14); }
 html.dark input::placeholder, html.dark textarea::placeholder { color: #7f9385; }
 html.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,.24) !important; }
 html.dark .shadow, html.dark .shadow-md { box-shadow: 0 8px 24px rgba(0,0,0,.24) !important; }
