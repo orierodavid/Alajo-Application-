@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 
 export default function SignOutButton() {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   async function signOut() {
     if (loading) return
@@ -13,16 +15,17 @@ export default function SignOutButton() {
 
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      const { error } = await supabase.auth.signOut({ scope: 'global' })
+      if (error) throw error
 
-      if (error) {
-        console.error('Logout failed:', error)
-        setLoading(false)
-        return
-      }
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+      }).catch(() => {})
 
-      // Return to the public Alajo home page after the local session is killed.
-      window.location.replace('/')
+      router.replace('/login')
+      router.refresh()
     } catch (error) {
       console.error('Logout failed:', error)
       setLoading(false)
