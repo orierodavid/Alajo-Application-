@@ -21,7 +21,8 @@ export default function SignOutButton() {
         return
       }
 
-      window.location.replace('/login')
+      // Return to the public Alajo home page after the local session is killed.
+      window.location.replace('/')
     } catch (error) {
       console.error('Logout failed:', error)
       setLoading(false)
