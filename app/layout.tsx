@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   description: 'Structured rotational savings for everyone.',
   applicationName: 'Alajo',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
+    shortcut: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
+  },
   appleWebApp: { capable: true, title: 'Alajo', statusBarStyle: 'default' },
 }
 
