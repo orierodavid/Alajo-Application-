@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Alajo">
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset=".45" stop-color="#eab308"/><stop offset="1" stop-color="#b7791f"/></linearGradient>
+  <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#86efac"/><stop offset="1" stop-color="#16a34a"/></linearGradient>
+</defs>
+<path d="M128 330 240 112l112 218-48-28-64-128-62 128z" fill="url(#gold)"/>
+<path d="M242 112c90 2 139 42 151 100-47-29-93-45-145-45z" fill="none" stroke="#f8e79a" stroke-width="12" stroke-linecap="round"/>
+<path d="M291 322c46-77 98-99 135-91-17 52-56 87-124 105z" fill="url(#leaf)"/>
+<path d="M315 323c35-21 65-44 92-73" fill="none" stroke="#064e3b" stroke-width="8" stroke-linecap="round"/>
+</svg>
