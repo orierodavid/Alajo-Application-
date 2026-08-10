@@ -1,9 +1,25 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) redirect('/login?next=/dashboard');
+
+  // KYC is a server-side onboarding gate. Do not trust the client or a
+  // previous redirect: a user who has not been approved must not be able to
+  // bypass verification by navigating directly to /dashboard.
+  const { data: kyc, error: kycError } = await supabase
+    .from('kyc_records')
+    .select('status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (kycError || kyc?.status !== 'approved') {
+    redirect('/kyc');
+  }
 
   return (
     <main className="app-shell">
@@ -18,7 +34,7 @@ export default async function DashboardPage() {
           <Link href="/notifications">Notifications</Link>
           <Link href="/settings">Settings</Link>
         </nav>
-        <div className="sidebar-footer"><span className="avatar">{user?.email?.slice(0, 1).toUpperCase() ?? 'A'}</span><div><strong>{user?.email ?? 'Alajo member'}</strong><small>Member account</small></div></div>
+        <div className="sidebar-footer"><span className="avatar">{user.email?.slice(0, 1).toUpperCase() ?? 'A'}</span><div><strong>{user.email ?? 'Alajo member'}</strong><small>Member account</small></div></div>
       </aside>
       <section className="dashboard-content">
         <header className="page-header"><div><p className="eyebrow">OVERVIEW</p><h1>Your Alajo dashboard</h1><p className="muted">Track your active groups, contributions and upcoming payouts.</p></div><Link className="primary-link" href="/groups/browse">Browse groups</Link></header>
