@@ -25,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
+        <script dangerouslySetInnerHTML={{ __html: `try { if (localStorage.getItem('alajo-theme') === 'dark') document.documentElement.classList.add('dark') } catch {}` }} />
         <MobileNavigation />
         {children}
         <script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}) }) }` }} />
