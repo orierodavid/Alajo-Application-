@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { MobileNavigation } from '@/components/layout/mobile-navigation'
 
 export const metadata: Metadata = {
   title: 'Alajo — Smart Rotational Savings',
@@ -18,5 +17,5 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><MobileNavigation/>{children}<script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}) }) }` }} /></body></html>
+  return <html lang="en"><body>{children}<script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}) } })` }} /></body></html>
 }
