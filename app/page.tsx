@@ -3,17 +3,28 @@
 import Link from 'next/link'
 
 function MobileWelcome() {
-  return <section className="lg:hidden relative min-h-[100svh] overflow-hidden bg-[#0b2313] text-white flex flex-col items-center px-6 pt-[max(24px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(22,163,74,.28),transparent_42%),linear-gradient(160deg,#123524_0%,#0b2313_58%,#071a0e_100%)]"/>
-    <div className="relative z-10 flex-1 w-full max-w-[390px] flex flex-col items-center justify-center text-center">
-      <img src="/icons/alajo-mark.svg" alt="Alajo" className="w-[138px] h-[138px]"/>
-      <div className="mt-3 text-[40px] leading-none font-semibold tracking-[.17em] text-[#f5c542]">ALAJO</div>
-      <div className="mt-6 w-32 h-px bg-gradient-to-r from-transparent via-[#eab308] to-transparent"/>
-      <p className="mt-5 text-[17px] font-light tracking-wide text-white/90">Smart Rotational Savings</p>
-      <Link href="/login" className="mt-9 w-full max-w-[330px] h-[54px] rounded-xl bg-[#16a34a] text-white text-[17px] font-semibold shadow-[0_10px_28px_rgba(22,163,74,.25)] flex items-center justify-center">Login</Link>
-      <p className="mt-4 text-center text-[14px] text-white/70">New to Alajo? <Link href="/signup" className="text-[#f5c542] font-medium">Create an account</Link></p>
-    </div>
-  </section>
+  return (
+    <section className="lg:hidden relative min-h-[100svh] h-[100svh] overflow-hidden bg-[#123524] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(22,163,74,.34),transparent_44%),linear-gradient(145deg,#1b4a32_0%,#123524_52%,#0b2313_100%)]" />
+      <div className="relative z-10 h-full w-full flex items-center justify-center px-6 py-[max(24px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
+        <div className="w-full max-w-[360px] flex flex-col items-center justify-center text-center -translate-y-3 sm:-translate-y-5">
+          <img src="/icons/alajo-mark.svg" alt="Alajo" className="w-[112px] h-[112px] object-contain" />
+          <div className="mt-4 text-[38px] leading-none font-semibold tracking-[.16em] text-[#f5c542]">ALAJO</div>
+          <div className="mt-5 w-24 h-px bg-gradient-to-r from-transparent via-[#eab308] to-transparent" />
+          <p className="mt-4 text-[16px] font-light tracking-wide text-white/90">Smart Rotational Savings</p>
+          <Link
+            href="/login"
+            className="mt-7 w-full max-w-[300px] h-[52px] rounded-xl bg-[#16a34a] text-white text-[16px] font-semibold shadow-[0_10px_28px_rgba(22,163,74,.28)] flex items-center justify-center active:scale-[.99] transition-transform"
+          >
+            Login
+          </Link>
+          <p className="mt-4 text-center text-[13px] text-white/70">
+            New to Alajo? <Link href="/signup" className="text-[#f5c542] font-medium">Create an account</Link>
+          </p>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function DesktopHome() {
@@ -26,4 +37,6 @@ function DesktopHome() {
   </div>
 }
 
-export default function Home() { return <main><MobileWelcome/><DesktopHome/></main> }
+export default function Home() {
+  return <main><MobileWelcome/><DesktopHome/></main>
+}
