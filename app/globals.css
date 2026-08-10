@@ -18,3 +18,20 @@ img, svg { max-width: 100%; }
   h1, h2, h3 { overflow-wrap: anywhere; }
   button, a { -webkit-tap-highlight-color: transparent; }
 }
+
+/* The mobile navigation is fixed globally in app/layout.tsx. Every page must
+   start below it; this prevents page-level headers/titles from sitting beneath
+   the global mobile controls. Pages may opt out only for full-screen auth views. */
+@media (max-width: 1023px) {
+  body > div > main,
+  body > div > div > main {
+    padding-top: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  body > div > main,
+  body > div > div > main {
+    padding-top: 0;
+  }
+}
