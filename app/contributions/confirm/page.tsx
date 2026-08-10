@@ -61,13 +61,16 @@ function ConfirmationContent() {
     setError(''); setMessage('')
     if (walletBalance < item.amount) { setError(`Insufficient wallet balance. You need ${money(item.amount - walletBalance)} more.`); return }
     setPaying(true)
-    const supabase = createClient()
     try {
-      const { data, error: rpcError } = await supabase.rpc('pay_contribution', { p_schedule_id: item.id })
-      if (rpcError) throw rpcError
-      const result = Array.isArray(data) ? data[0] : data
-      if (!result?.success) throw new Error(result?.message || 'Payment could not be completed.')
-      setWalletBalance(Number(result.wallet_balance))
+      const response = await fetch('/api/contributions/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduleId: item.id }),
+      })
+      const data = await response.json()
+      if (!response.ok || !data?.success) throw new Error(data?.error || data?.result?.message || 'Payment could not be completed.')
+      const result = data.result
+      setWalletBalance(Number(result?.wallet_balance ?? 0))
       setItem(prev => prev ? { ...prev, status: 'paid' } : prev)
       setMessage('Contribution payment confirmed successfully.')
     } catch (e: any) {
