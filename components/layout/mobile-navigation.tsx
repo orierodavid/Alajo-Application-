@@ -9,8 +9,10 @@ const nav = [['dashboard','/dashboard','Dashboard'],['groups','/groups','Groups'
 
 export function MobileNavigation(){
  const pathname=usePathname();const[open,setOpen]=useState(false);const[accountOpen,setAccountOpen]=useState(false);const[firstName,setFirstName]=useState('User');const[dark,setDark]=useState(false)
- useEffect(()=>{fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.name)setFirstName(s.name.trim().split(/\s+/)[0])}).catch(()=>{});const d=localStorage.getItem('alajo-theme')==='dark';setDark(d);document.documentElement.classList.toggle('dark',d)},[])
+ const authPage=pathname==='/login'||pathname==='/signup'||pathname==='/forgot-password'||pathname.startsWith('/reset-password')
+ useEffect(()=>{if(authPage)return;fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.name)setFirstName(s.name.trim().split(/\s+/)[0])}).catch(()=>{});const d=localStorage.getItem('alajo-theme')==='dark';setDark(d);document.documentElement.classList.toggle('dark',d)},[authPage])
  const toggleTheme=()=>{const n=!dark;setDark(n);localStorage.setItem('alajo-theme',n?'dark':'light');document.documentElement.classList.toggle('dark',n);setAccountOpen(false)}
+ if(authPage)return null
  const initial=firstName.charAt(0).toUpperCase()
  return <div className="lg:hidden">
   <header className="fixed top-0 inset-x-0 h-16 bg-transparent border-b border-transparent z-[100] flex items-center justify-between px-4 pointer-events-auto">
