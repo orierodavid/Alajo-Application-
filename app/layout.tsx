@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
     shortcut: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
-    apple: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
   },
   appleWebApp: { capable: true, title: 'Alajo', statusBarStyle: 'default' },
 }
