@@ -4,7 +4,8 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-const TEST_VALUES = { bvn: '00000000000', nin: '11111111111' } as const;
+const TEST_VALUES = { bvn: '0000000000', nin: '1111111111' } as const;
+const KYC_DIGITS = 10;
 
 export default function KycPage() {
   const router = useRouter();
@@ -17,8 +18,8 @@ export default function KycPage() {
     e.preventDefault();
     setError('');
 
-    if (!/^\d{11}$/.test(value)) {
-      setError(`Enter a valid 11-digit ${type.toUpperCase()}.`);
+    if (!/^\d{10}$/.test(value)) {
+      setError(`Enter a valid ${KYC_DIGITS}-digit ${type.toUpperCase()} for development testing.`);
       return;
     }
 
@@ -79,10 +80,10 @@ export default function KycPage() {
               <input
                 required
                 inputMode="numeric"
-                maxLength={11}
+                maxLength={KYC_DIGITS}
                 value={value}
-                onChange={e => setValue(e.target.value.replace(/\D/g, ''))}
-                placeholder={`Enter your 11-digit ${type.toUpperCase()}`}
+                onChange={e => setValue(e.target.value.replace(/\D/g, '').slice(0, KYC_DIGITS))}
+                placeholder={`Enter your ${KYC_DIGITS}-digit ${type.toUpperCase()}`}
               />
             </label>
 
