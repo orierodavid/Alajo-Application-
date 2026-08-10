@@ -20,25 +20,20 @@ function BrandPanel() {
 }
 
 function MobileWelcome({ onLogin }: { onLogin: () => void }) {
-  return <section className="lg:hidden relative min-h-[100svh] overflow-hidden bg-[#03160d] text-white flex flex-col items-center px-6 pt-[max(52px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(31,92,48,.48),transparent_34%),linear-gradient(145deg,#071b11_0%,#03160d_55%,#02100a_100%)]" />
-    <div className="absolute -right-28 top-[55%] w-[150%] h-40 rotate-[-14deg] rounded-[50%] border border-[#4f8b3c]/30 shadow-[0_0_45px_rgba(54,130,53,.12)]" />
-    <div className="absolute -right-40 top-[63%] w-[150%] h-48 rotate-[-14deg] rounded-[50%] border border-[#1f6d35]/20" />
-    <div className="relative z-10 w-full flex justify-center">
-      <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center text-[11px] font-medium tracking-[.18em] text-white/60">9:41</div>
-    </div>
-    <div className="relative z-10 flex-1 w-full flex flex-col items-center justify-center -mt-4">
-      <div className="relative w-[174px] h-[174px] flex items-center justify-center">
-        <div className="absolute inset-0 rounded-full bg-[#4d9b3d]/10 blur-2xl" />
-        <img src="/icons/alajo-mark.svg" alt="Alajo" className="relative w-[150px] h-[150px] drop-shadow-[0_10px_24px_rgba(234,179,8,.22)]" />
+  return <section className="lg:hidden relative min-h-[100svh] overflow-hidden bg-[#0b2313] text-white flex flex-col items-center px-6 pt-[max(24px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(22,163,74,.28),transparent_42%),linear-gradient(160deg,#123524_0%,#0b2313_58%,#071a0e_100%)]" />
+    <div className="absolute -right-32 top-[58%] w-[155%] h-44 rotate-[-14deg] rounded-[50%] border border-[#16a34a]/20" />
+    <div className="absolute -right-40 top-[66%] w-[155%] h-52 rotate-[-14deg] rounded-[50%] border border-[#16a34a]/10" />
+    <div className="relative z-10 flex-1 w-full max-w-[390px] flex flex-col items-center justify-center text-center">
+      <div className="relative w-[156px] h-[156px] flex items-center justify-center">
+        <div className="absolute inset-0 rounded-full bg-[#16a34a]/15 blur-2xl" />
+        <img src="/icons/alajo-mark.svg" alt="Alajo" className="relative w-[138px] h-[138px] drop-shadow-[0_10px_24px_rgba(234,179,8,.18)]" />
       </div>
-      <div className="mt-2 text-[42px] leading-none font-semibold tracking-[.18em] text-[#f5c542]">ALAJO</div>
-      <div className="mt-7 w-36 h-px bg-gradient-to-r from-transparent via-[#eab308] to-transparent relative"><span className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 rounded-full bg-[#f5c542] shadow-[0_0_14px_4px_rgba(245,197,66,.5)]" /></div>
-      <p className="mt-6 text-[18px] font-light tracking-wide text-white/90">Smart Rotational Savings</p>
-    </div>
-    <div className="relative z-10 w-full max-w-[390px] pb-3">
-      <button type="button" onClick={onLogin} className="w-full h-[58px] rounded-2xl border border-[#80b74d]/80 bg-gradient-to-b from-[#5d9d36] to-[#184923] text-white text-[18px] font-semibold shadow-[0_10px_35px_rgba(49,133,47,.28),inset_0_1px_0_rgba(255,255,255,.18)] active:scale-[.99] transition">Login <span className="float-right mr-5 text-2xl leading-none">›</span></button>
-      <p className="mt-6 text-center text-[15px] text-white/75">New to Alajo? <Link href="/signup" className="text-[#f5c542] font-medium">Create an account</Link></p>
+      <div className="mt-3 text-[40px] leading-none font-semibold tracking-[.17em] text-[#f5c542]">ALAJO</div>
+      <div className="mt-6 w-32 h-px bg-gradient-to-r from-transparent via-[#eab308] to-transparent relative"><span className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 rounded-full bg-[#f5c542] shadow-[0_0_14px_4px_rgba(245,197,66,.45)]" /></div>
+      <p className="mt-5 text-[17px] font-light tracking-wide text-white/90">Smart Rotational Savings</p>
+      <button type="button" onClick={onLogin} className="mt-9 w-full max-w-[330px] h-[54px] rounded-xl bg-[#16a34a] text-white text-[17px] font-semibold shadow-[0_10px_28px_rgba(22,163,74,.25)] active:scale-[.99] transition hover:bg-[#15803d]">Login</button>
+      <p className="mt-4 text-center text-[14px] text-white/70">New to Alajo? <Link href="/signup" className="text-[#f5c542] font-medium">Create an account</Link></p>
     </div>
   </section>
 }
