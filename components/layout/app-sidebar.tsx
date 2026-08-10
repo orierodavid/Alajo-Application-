@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 
 const nav = [
   ['dashboard','/dashboard','Dashboard'], ['groups','/groups','Groups'], ['contributions','/contributions','Contributions'],
@@ -14,10 +15,13 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   return <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[250px] shrink-0 bg-[#0b2313] text-white p-5 flex-col">
-    <Link href="/dashboard" className="px-2 flex items-center gap-2 text-[22px] font-extrabold tracking-tight">
-      <span className="font-display">Alajo</span>
-      <span className="text-yellow-400 text-lg" aria-hidden="true">◌</span>
-    </Link>
+    <div className="flex items-center justify-between px-2">
+      <Link href="/dashboard" className="flex items-center gap-2 text-[22px] font-extrabold tracking-tight">
+        <span className="font-display">Alajo</span>
+        <span className="text-yellow-400 text-lg" aria-hidden="true">◌</span>
+      </Link>
+      <ThemeToggle />
+    </div>
     <nav className="mt-8 flex-1 space-y-1 text-[14px] font-medium">
       {nav.map(([icon, href, label]) => {
         const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))
