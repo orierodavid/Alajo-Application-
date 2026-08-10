@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
+import SignOutButton from '@/app/dashboard/sign-out-button'
 
 const nav = [
   ['dashboard','/dashboard','Dashboard'], ['groups','/groups','Groups'], ['contributions','/contributions','Contributions'],
@@ -36,8 +37,6 @@ export function AppSidebar() {
       <p className="text-[12px] text-gray-300 mt-1">Stay consistent and reach your savings goals.</p>
       <Link href="/invite-earn" className="mt-3 inline-block bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends →</Link>
     </div>
-    <Link href="/login" className="flex items-center gap-3 text-gray-300 px-3 py-2.5 rounded-lg hover:bg-white/5">
-      <AlajoIcon name="logout" size={18}/><span>Logout</span>
-    </Link>
+    <SignOutButton />
   </aside>
 }
