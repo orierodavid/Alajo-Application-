@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+function finishDateFor(startDate: string, months: number) {
+  const [year, month] = startDate.split('-').map(Number)
+  const finish = new Date(Date.UTC(year, month - 1 + months, 29))
+  return finish.toISOString().slice(0, 10)
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,11 +37,9 @@ export async function POST(request: Request) {
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return NextResponse.json({ error: 'Enter a valid start date.' }, { status: 400 })
   const start = new Date(`${startDate}T00:00:00Z`)
-  if (Number.isNaN(start.getTime()) || start.getUTCDate() !== Number(startDate.slice(8, 10))) return NextResponse.json({ error: 'Enter a valid start date.' }, { status: 400 })
+  if (Number.isNaN(start.getTime()) || start.toISOString().slice(0, 10) !== startDate) return NextResponse.json({ error: 'Enter a valid start date.' }, { status: 400 })
 
-  const { data: finishDate, error: finishError } = await supabase.rpc('calculate_group_finish_date', { p_start_date: startDate, p_cycle_months: cycle })
-  if (finishError) return NextResponse.json({ error: 'Unable to calculate the group finish date.' }, { status: 500 })
-
+  const finishDate = finishDateFor(startDate, cycle)
   const { data: group, error } = await supabase.from('groups').insert({
     name,
     description,
