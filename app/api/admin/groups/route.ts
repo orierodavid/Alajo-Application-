@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 function finishDateFor(startDate: string, months: number) {
   const [year, month] = startDate.split('-').map(Number)
-  const finish = new Date(Date.UTC(year, month - 1 + months, 0))
+  const finish = new Date(Date.UTC(year, month - 1 + months - 1, 29))
   return finish.toISOString().slice(0, 10)
 }
 
