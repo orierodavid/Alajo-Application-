@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/contributions",
       "schedule": "5 0 * * *"
+    },
+    {
+      "path": "/api/cron/payouts",
+      "schedule": "15 0 * * *"
     }
   ]
 }
