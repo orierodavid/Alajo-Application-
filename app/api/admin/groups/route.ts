@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 function finishDateFor(startDate: string, months: number) {
   const [year, month] = startDate.split('-').map(Number)
-  const finish = new Date(Date.UTC(year, month - 1 + months, 29))
+  const finish = new Date(Date.UTC(year, month - 1 + months, 0))
   return finish.toISOString().slice(0, 10)
 }
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   if (!name || name.length > 120) return NextResponse.json({ error: 'Enter a valid group name.' }, { status: 400 })
   if (!Number.isFinite(contributionAmount) || contributionAmount <= 0) return NextResponse.json({ error: 'Contribution amount must be greater than zero.' }, { status: 400 })
-  if (![6, 10].includes(cycle)) return NextResponse.json({ error: 'Cycle must be 6 or 10 months.' }, { status: 400 })
+  if (![5, 10].includes(cycle)) return NextResponse.json({ error: 'Cycle must be 5 or 10 months.' }, { status: 400 })
   if (!Number.isInteger(slotCount) || slotCount < 1 || slotCount > 10) return NextResponse.json({ error: 'Slots must be between 1 and 10.' }, { status: 400 })
 
   let startDate = requestedStart
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const { data: group, error } = await supabase.from('groups').insert({
     name,
     description,
-    cycle: cycle === 6 ? 'six_month' : 'ten_month',
+    cycle: cycle === 5 ? 'five_month' : 'ten_month',
     contribution_amount: contributionAmount,
     slot_count: slotCount,
     start_date: startDate,
