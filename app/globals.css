@@ -4,23 +4,46 @@
 html.dark { color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { min-height: 100%; width: 100%; }
-body { margin: 0; background: #fff; color: #111827; font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; transition: background-color .2s ease, color .2s ease; }
+body { margin: 0; background: #f3f8f5; color: #111827; font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; transition: background-color .25s ease, color .25s ease; }
 button, input, select, textarea { font: inherit; }
 img, svg { max-width: 100%; }
 
 html.dark body { background: #07150c; color: #f4f8f5; }
 html.dark main { color: #f4f8f5; }
 
-/* Alajo dark surfaces: deep green background, elevated cards, crisp white hairlines. */
-html.dark .bg-white { background-color: #102519 !important; }
-html.dark [class~="bg-white/90"] { background-color: rgba(16,37,25,.94) !important; }
-html.dark .bg-gray-50 { background-color: #0c1f13 !important; }
-html.dark .bg-gray-100 { background-color: #142d1d !important; }
-html.dark .bg-gray-200 { background-color: #1b3825 !important; }
-html.dark .bg-\[\#f7f8f9\] { background-color: #07150c !important; }
-html.dark .bg-\[\#f6f8f7\] { background-color: #07150c !important; }
+/* Alajo glass design language */
+.alajo-glass {
+  background: rgba(255,255,255,.38);
+  border: 1px solid rgba(255,255,255,.62);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 12px 35px rgba(15,61,35,.08), inset 0 1px 0 rgba(255,255,255,.45);
+}
+html.dark .alajo-glass {
+  background: rgba(255,255,255,.055);
+  border-color: rgba(255,255,255,.20);
+  box-shadow: 0 16px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07);
+}
 
-/* Consistent 1px white border around every existing card surface. */
+.alajo-interactive {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, opacity .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.alajo-interactive:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15,61,35,.10); }
+.alajo-interactive:active { transform: translateY(1px) scale(.985); }
+.alajo-interactive:focus-visible { outline: 2px solid rgba(22,163,74,.55); outline-offset: 2px; }
+
+/* Make common existing cards feel like one coherent Alajo system. */
+.rounded-xl.border, .rounded-2xl.border, .rounded-3xl.border { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease; }
+
+/* Dark surfaces: deep green with crisp white hairlines. */
+html.dark .bg-white { background-color: rgba(16,37,25,.78) !important; }
+html.dark [class~="bg-white/90"] { background-color: rgba(16,37,25,.72) !important; }
+html.dark .bg-gray-50 { background-color: rgba(12,31,19,.72) !important; }
+html.dark .bg-gray-100 { background-color: rgba(20,45,29,.72) !important; }
+html.dark .bg-gray-200 { background-color: rgba(27,56,37,.72) !important; }
+html.dark .bg-\[\#f7f8f9\], html.dark .bg-\[\#f6f8f7\] { background-color: #07150c !important; }
+
 html.dark .rounded-2xl.border-gray-100,
 html.dark .rounded-xl.border-gray-100,
 html.dark .rounded-2xl.border-gray-200,
@@ -38,9 +61,9 @@ html.dark .border-gray-50 { border-color: rgba(255,255,255,.06) !important; }
 html.dark .border-gray-100 { border-color: rgba(255,255,255,.12) !important; }
 html.dark .border-gray-200 { border-color: rgba(255,255,255,.14) !important; }
 html.dark .border-gray-300 { border-color: rgba(255,255,255,.18) !important; }
-
-html.dark input, html.dark select, html.dark textarea { background-color: #102519; color: #f3f7f4; border-color: rgba(255,255,255,.14); }
+html.dark input, html.dark select, html.dark textarea { background-color: rgba(255,255,255,.055); color: #f3f7f4; border-color: rgba(255,255,255,.18); backdrop-filter: blur(18px); }
 html.dark input::placeholder, html.dark textarea::placeholder { color: #7f9385; }
+html.dark option { background: #102519; color: #f4f8f5; }
 html.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,.24) !important; }
 html.dark .shadow, html.dark .shadow-md { box-shadow: 0 8px 24px rgba(0,0,0,.24) !important; }
 html.dark .shadow-lg { box-shadow: 0 14px 34px rgba(0,0,0,.28) !important; }
@@ -60,11 +83,9 @@ html.dark .shadow-xl, html.dark .shadow-2xl { box-shadow: 0 20px 50px rgba(0,0,0
 }
 
 @media (max-width: 1023px) {
-  body > div > main,
-  body > div > div > main { padding-top: 4rem; }
+  body > div > main, body > div > div > main { padding-top: 4rem; }
 }
 
 @media (min-width: 1024px) {
-  body > div > main,
-  body > div > div > main { padding-top: 0; }
+  body > div > main, body > div > div > main { padding-top: 0; }
 }
