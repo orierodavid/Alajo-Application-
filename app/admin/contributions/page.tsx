@@ -1,127 +1,82 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-type Group = { id: string; name: string; contribution_amount: number; cycle: string; start_date: string | null }
-type Member = { id: string; group_id: string; user_id: string; status: string; name: string; email: string }
+type Contribution = { id: string; group_member_id: string; period_number: number; due_date: string; amount: number; service_fee_amount: number; delay_fee_amount: number; total_due: number; outstanding_amount: number; status: string; paid_at: string | null }
+type Member = { id: string; group_id: string; user_id: string; name: string; email: string }
+type Group = { id: string; name: string }
 
-const money = (value: number) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
+const tabs = ['All', 'Pending', 'Processing', 'Paid', 'Failed', 'Missed'] as const
+type Tab = typeof tabs[number]
+const money = (n: number) => `₦${Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
+
+function normalStatus(status: string, dueDate: string) {
+  const s = String(status || '').toLowerCase()
+  if (['paid', 'completed', 'success', 'successful'].includes(s)) return 'paid'
+  if (['processing', 'in_progress'].includes(s)) return 'processing'
+  if (['failed', 'error'].includes(s)) return 'failed'
+  if (dueDate && new Date(`${dueDate}T23:59:59`) < new Date() && !['paid','completed','successful'].includes(s)) return 'missed'
+  return 'pending'
+}
 
 export default function AdminContributionsPage() {
   const supabase = createClient()
-  const [groups, setGroups] = useState<Group[]>([])
+  const [rows, setRows] = useState<Contribution[]>([])
   const [members, setMembers] = useState<Member[]>([])
-  const [groupId, setGroupId] = useState('')
-  const [memberId, setMemberId] = useState('')
-  const [cycleMonths, setCycleMonths] = useState<6 | 10>(6)
-  const [amount, setAmount] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [dueDay, setDueDay] = useState('1')
+  const [groups, setGroups] = useState<Group[]>([])
+  const [tab, setTab] = useState<Tab>('All')
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    let active = true
-    async function load() {
-      setLoading(true)
-      setError('')
+  async function load() {
+    setLoading(true); setError('')
+    try {
       const { data: auth } = await supabase.auth.getUser()
-      if (!auth.user) { if (active) setError('Please sign in as an administrator.'); setLoading(false); return }
-      const { data: role, error: roleError } = await supabase.from('user_roles').select('role').eq('user_id', auth.user.id).maybeSingle()
-      if (roleError || !['admin', 'super_admin'].includes(role?.role || '')) { if (active) setError('Administrator access is required to create contribution schedules.'); setLoading(false); return }
-      const [{ data: groupRows, error: groupError }, { data: memberRows, error: memberError }] = await Promise.all([
-        supabase.from('groups').select('id,name,contribution_amount,cycle,start_date,contribution_due_day').order('name'),
-        supabase.from('group_members').select('id,group_id,user_id,status').order('created_at')
+      if (!auth.user) throw new Error('Please sign in as an administrator.')
+      const { data: role } = await supabase.from('user_roles').select('role').eq('user_id', auth.user.id).maybeSingle()
+      if (!['admin', 'super_admin'].includes(role?.role || '')) throw new Error('Administrator access is required.')
+
+      const [{ data: contributionRows, error: contributionError }, { data: memberRows, error: memberError }, { data: groupRows, error: groupError }] = await Promise.all([
+        supabase.from('contribution_schedules').select('id,group_member_id,period_number,due_date,amount,service_fee_amount,delay_fee_amount,total_due,outstanding_amount,status,paid_at').order('due_date', { ascending: false }),
+        supabase.from('group_members').select('id,group_id,user_id').order('created_at'),
+        supabase.from('groups').select('id,name').order('name')
       ])
-      if (groupError || memberError) { if (active) setError(groupError?.message || memberError?.message || 'Unable to load groups and members.'); setLoading(false); return }
+      if (contributionError || memberError || groupError) throw new Error(contributionError?.message || memberError?.message || groupError?.message || 'Unable to load contributions.')
+
       const userIds = [...new Set((memberRows || []).map((m: any) => m.user_id))]
-      const { data: profiles } = userIds.length ? await supabase.from('profiles').select('id,full_name,email').in('id', userIds) : { data: [] as any[] }
+      const { data: profiles, error: profilesError } = userIds.length ? await supabase.from('profiles').select('id,full_name,email').in('id', userIds) : { data: [], error: null }
+      if (profilesError) throw new Error(profilesError.message)
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]))
-      const normalized = (memberRows || []).map((m: any) => { const p = profileMap.get(m.user_id); return { ...m, name: p?.full_name || 'Member', email: p?.email || '' } })
-      if (active) { setGroups(groupRows || []); setMembers(normalized); if (groupRows?.[0]) { setGroupId(groupRows[0].id); setAmount(String(groupRows[0].contribution_amount || '')); setStartDate(groupRows[0].start_date || ''); setDueDay(String(groupRows[0].contribution_due_day || 1)) } }
-      setLoading(false)
-    }
-    load(); return () => { active = false }
-  }, [])
-
-  const selectedGroup: any = groups.find(g => g.id === groupId)
-  const groupMembers = useMemo(() => members.filter(m => m.group_id === groupId && ['active', 'pending'].includes(m.status)), [members, groupId])
-
-  function changeGroup(id: string) {
-    setGroupId(id); setMemberId('')
-    const group: any = groups.find(g => g.id === id)
-    setAmount(group ? String(group.contribution_amount || '') : '')
-    setStartDate(group?.start_date || '')
-    setDueDay(String(group?.contribution_due_day || 1))
+      const normalizedMembers = (memberRows || []).map((m: any) => { const p = profileMap.get(m.user_id); return { ...m, name: p?.full_name || 'Member', email: p?.email || '' } })
+      setRows((contributionRows || []) as Contribution[]); setMembers(normalizedMembers); setGroups((groupRows || []) as Group[])
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load contributions.') }
+    finally { setLoading(false) }
   }
 
-  function datesForCycle() {
-    if (!startDate) return [] as string[]
-    const base = new Date(`${startDate}T00:00:00`)
-    return Array.from({ length: cycleMonths }, (_, index) => {
-      const d = new Date(base)
-      d.setMonth(base.getMonth() + index)
-      const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
-      d.setDate(Math.min(Number(dueDay) || 1, lastDay))
-      return d.toISOString().slice(0, 10)
-    })
-  }
+  useEffect(() => { load() }, [])
 
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setError(''); setMessage('')
-    if (!memberId || !amount || !startDate) { setError('Select a member and provide the amount and start date.'); return }
-    setSaving(true)
-    const value = Number(amount)
-    const dueDates = datesForCycle()
-    const rows = dueDates.map((date, index) => ({ group_member_id: memberId, period_number: index + 1, due_date: date, amount: value, outstanding_amount: value, status: 'pending' }))
+  const memberMap = useMemo(() => new Map(members.map(m => [m.id, m])), [members])
+  const groupMap = useMemo(() => new Map(groups.map(g => [g.id, g])), [groups])
+  const filtered = useMemo(() => rows.filter(r => {
+    const status = normalStatus(r.status, r.due_date)
+    const member = memberMap.get(r.group_member_id)
+    const group = member ? groupMap.get(member.group_id) : undefined
+    const q = search.trim().toLowerCase()
+    const matchesSearch = !q || member?.name?.toLowerCase().includes(q) || member?.email?.toLowerCase().includes(q) || group?.name?.toLowerCase().includes(q)
+    return (tab === 'All' || status === tab.toLowerCase()) && matchesSearch
+  }), [rows, memberMap, groupMap, tab, search])
+  const count = (name: Tab) => rows.filter(r => name === 'All' || normalStatus(r.status, r.due_date) === name.toLowerCase()).length
 
-    // A schedule may already contain some periods (for example Month 1 was
-    // created during an earlier test). Only create the missing periods.
-    const { data: existing, error: existingError } = await supabase
-      .from('contribution_schedules')
-      .select('id,period_number')
-      .eq('group_member_id', memberId)
-      .in('period_number', rows.map(r => r.period_number))
+  const statusClass = (status: string) => status === 'paid' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : status === 'failed' || status === 'missed' ? 'bg-red-500/15 text-red-700 dark:text-red-300' : status === 'processing' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-white/30 dark:bg-white/10 text-gray-700 dark:text-gray-200'
 
-    if (existingError) { setError(existingError.message); setSaving(false); return }
-
-    const existingPeriods = new Set((existing || []).map((row: any) => Number(row.period_number)))
-    const missingRows = rows.filter(row => !existingPeriods.has(row.period_number))
-
-    if (!missingRows.length) {
-      setMessage(`All ${cycleMonths} periods already exist for this member. No duplicate schedules were created.`)
-      setSaving(false)
-      return
-    }
-
-    const { error: insertError } = await supabase.from('contribution_schedules').insert(missingRows)
-    if (insertError) {
-      setError(insertError.message)
-    } else {
-      const skipped = rows.length - missingRows.length
-      setMessage(`${cycleMonths}-month contribution schedule is ready. Created ${missingRows.length} missing period${missingRows.length === 1 ? '' : 's'}${skipped ? ` and kept ${skipped} existing period${skipped === 1 ? '' : 's'}` : ''}.`)
-    }
-    setSaving(false)
-  }
-
-  if (loading) return <main className="min-h-screen bg-[#f8faf9] flex items-center justify-center text-gray-500">Loading admin contribution tools…</main>
-
-  return <main className="min-h-screen bg-[#f8faf9] text-gray-900 p-5 sm:p-8"><div className="max-w-5xl mx-auto">
-    <div className="mb-8"><p className="text-sm font-semibold text-[#16a34a]">ADMINISTRATION</p><h1 className="text-3xl font-bold mt-2">Create Contribution Schedule</h1><p className="text-gray-500 mt-2">The administrator-defined cycle is the source of truth for this schedule.</p></div>
-    {error && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-    {message && <div className="mb-5 rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-green-800">{message}</div>}
-    <form onSubmit={submit} className="grid lg:grid-cols-3 gap-6"><section className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-6">
-      <h2 className="text-xl font-bold">Schedule details</h2><div className="mt-6 grid sm:grid-cols-2 gap-5">
-        <label className="text-sm font-medium">Savings Group<select value={groupId} onChange={e => changeGroup(e.target.value)} className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white">{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>
-        <label className="text-sm font-medium">Member<select value={memberId} onChange={e => setMemberId(e.target.value)} className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white"><option value="">Select member</option>{groupMembers.map(m => <option key={m.id} value={m.id}>{m.name}{m.email ? ` — ${m.email}` : ''}</option>)}</select></label>
-        <label className="text-sm font-medium">Admin-defined Cycle<select value={cycleMonths} onChange={e => setCycleMonths(Number(e.target.value) as 6 | 10)} className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white"><option value="6">6 Months</option><option value="10">10 Months</option></select></label>
-        <label className="text-sm font-medium">Contribution Amount<input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3" /></label>
-        <label className="text-sm font-medium">Schedule Start Date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3" /></label>
-        <label className="text-sm font-medium">Monthly Due Day<select value={dueDay} onChange={e => setDueDay(e.target.value)} className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white">{Array.from({length:28},(_,i)=><option key={i+1} value={i+1}>{i+1}{[1,21].includes(i+1)?'st':[2,22].includes(i+1)?'nd':[3,23].includes(i+1)?'rd':'th'}</option>)}</select></label>
-      </div><button disabled={saving} className="mt-7 w-full rounded-xl bg-[#14532d] hover:bg-[#123f24] disabled:opacity-60 text-white py-3 font-semibold">{saving ? 'Generating Schedule…' : `Create ${cycleMonths}-Month Contribution Schedule`}</button>
-    </section><aside className="bg-white rounded-2xl border border-gray-100 p-6 h-fit"><h3 className="font-bold text-lg">Schedule Preview</h3><div className="mt-5 space-y-4 text-sm"><div className="flex justify-between gap-4"><span className="text-gray-500">Group</span><span className="font-semibold text-right">{selectedGroup?.name || '—'}</span></div><div className="flex justify-between gap-4"><span className="text-gray-500">Member</span><span className="font-semibold text-right">{groupMembers.find(m => m.id === memberId)?.name || '—'}</span></div><div className="flex justify-between gap-4"><span className="text-gray-500">Cycle</span><span className="font-semibold">{cycleMonths} Months</span></div><div className="flex justify-between gap-4"><span className="text-gray-500">Periods</span><span className="font-semibold">{cycleMonths}</span></div><div className="flex justify-between gap-4"><span className="text-gray-500">Amount / period</span><span className="font-semibold">{money(Number(amount))}</span></div><div className="flex justify-between gap-4"><span className="text-gray-500">Start</span><span className="font-semibold">{startDate || '—'}</span></div><div className="pt-3 border-t border-gray-100"><p className="text-gray-500 mb-2">Generated due dates</p><div className="space-y-1 max-h-52 overflow-auto">{datesForCycle().map((date,i)=><p key={date} className="flex justify-between"><span>Month {i+1}</span><span className="font-medium">{date}</span></p>)}</div></div></div></aside></form>
-  </div></main>
+  return <main className="min-h-screen bg-gradient-to-br from-[#f5faf7] via-[#eef8f1] to-[#e8f5ec] dark:from-[#06130b] dark:via-[#081a10] dark:to-[#0a2115] text-gray-900 dark:text-gray-100 p-5 sm:p-8 lg:p-10">
+    <div className="max-w-[1500px] mx-auto">
+      <div className="mb-7"><p className="text-sm font-semibold text-[#16a34a] tracking-[.16em]">ADMINISTRATION</p><h1 className="text-3xl font-bold mt-1">Contributions</h1><p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Monitor every member contribution. Schedules are generated automatically from the group cycle.</p></div>
+      <div className="flex flex-col lg:flex-row gap-3 mb-5 lg:items-center lg:justify-between"><div className="flex flex-wrap gap-2">{tabs.map(name => <button key={name} onClick={() => setTab(name)} className={`rounded-xl border border-white/50 dark:border-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition duration-200 hover:-translate-y-0.5 active:scale-95 ${tab === name ? 'bg-[#16a34a]/20 text-[#15803d] dark:text-[#86efac] shadow-[0_8px_25px_rgba(22,163,74,.12)]' : 'bg-white/30 dark:bg-white/[0.06] text-gray-600 dark:text-gray-300'}`}>{name} <span className="ml-1 opacity-60">{count(name)}</span></button>)}</div><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search user or group…" className="w-full lg:w-72 rounded-xl border border-white/50 dark:border-white/15 bg-white/35 dark:bg-white/[0.06] backdrop-blur-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#16a34a]/30" /></div>
+      {error && <div className="mb-5 rounded-xl border border-red-200/60 dark:border-red-900/50 bg-red-50/60 dark:bg-red-950/30 backdrop-blur p-4 text-sm text-red-700 dark:text-red-300">{error}</div>}
+      <div className="overflow-hidden rounded-2xl border border-white/50 dark:border-white/15 bg-white/45 dark:bg-white/[0.06] backdrop-blur-xl shadow-[0_15px_45px_rgba(0,0,0,.07)]"><div className="overflow-x-auto"><table className="w-full min-w-[1250px] text-sm"><thead className="bg-white/30 dark:bg-white/[0.06] border-b border-white/50 dark:border-white/15"><tr>{['User','Group','Period','Amount','Service fee','Delay fee','Total due','Due date','Outstanding','Status','Paid'].map(h => <th key={h} className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">{h}</th>)}</tr></thead><tbody className="divide-y divide-white/40 dark:divide-white/10">{loading ? <tr><td colSpan={11} className="px-4 py-10 text-center text-gray-500">Loading contributions…</td></tr> : filtered.length === 0 ? <tr><td colSpan={11} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">No contributions in this view.</td></tr> : filtered.map(r => { const member = memberMap.get(r.group_member_id); const group = member ? groupMap.get(member.group_id) : undefined; const status = normalStatus(r.status, r.due_date); return <tr key={r.id} className="transition duration-150 hover:bg-white/35 dark:hover:bg-white/[0.05]"><td className="px-4 py-4"><p className="font-semibold">{member?.name || 'Member'}</p><p className="text-xs text-gray-500 dark:text-gray-400">{member?.email || '—'}</p></td><td className="px-4 py-4">{group?.name || 'Savings group'}</td><td className="px-4 py-4">{r.period_number}</td><td className="px-4 py-4 font-medium whitespace-nowrap">{money(r.amount)}</td><td className="px-4 py-4 whitespace-nowrap">{money(r.service_fee_amount)}</td><td className="px-4 py-4 whitespace-nowrap">{money(r.delay_fee_amount)}</td><td className="px-4 py-4 font-semibold whitespace-nowrap">{money(r.total_due || Number(r.amount) + Number(r.service_fee_amount || 0) + Number(r.delay_fee_amount || 0))}</td><td className="px-4 py-4 whitespace-nowrap">{r.due_date}</td><td className="px-4 py-4 whitespace-nowrap">{money(r.outstanding_amount)}</td><td className="px-4 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClass(status)}`}>{status}</span></td><td className="px-4 py-4 whitespace-nowrap">{r.paid_at ? new Date(r.paid_at).toLocaleDateString('en-NG') : '—'}</td></tr>})}</tbody></table></div></div>
+    </div>
+  </main>
 }
