@@ -14,13 +14,31 @@ html.dark main { color: #f4f8f5; }
 html.dark .alajo-glass { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.20); box-shadow: 0 16px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07); }
 main .rounded-xl.border, main .rounded-2xl.border, main .rounded-3xl.border { background: rgba(255,255,255,.30); border-color: rgba(255,255,255,.60); backdrop-filter: blur(20px) saturate(135%); -webkit-backdrop-filter: blur(20px) saturate(135%); }
 html.dark main .rounded-xl.border, html.dark main .rounded-2xl.border, html.dark main .rounded-3xl.border { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.20); }
-button, a[href] { -webkit-tap-highlight-color: transparent; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, opacity .18s ease, color .18s ease; }
+
+/* Alajo 2026 interaction language: restrained lift, magnetic glow and tactile press. */
+button, a[href] { -webkit-tap-highlight-color: transparent; transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .22s ease, background-color .22s ease, opacity .22s ease, color .22s ease, filter .22s ease; }
 button:hover, a[href]:hover { transform: translateY(-1px); }
 button:active, a[href]:active { transform: translateY(1px) scale(.985); }
-button:focus-visible, a[href]:focus-visible { outline: 2px solid rgba(22,163,74,.55); outline-offset: 2px; }
-.alajo-interactive { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, opacity .18s ease; -webkit-tap-highlight-color: transparent; }
-.alajo-interactive:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15,61,35,.10); }
+button:focus-visible, a[href]:focus-visible { outline: 2px solid rgba(22,163,74,.60); outline-offset: 3px; }
+button:not(:disabled):hover, a[href]:hover { filter: brightness(1.04); }
+button:not(:disabled)::after, a[href]::after { pointer-events:none; }
+.alajo-interactive { transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .22s ease, background-color .22s ease, opacity .22s ease; -webkit-tap-highlight-color: transparent; }
+.alajo-interactive:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(15,61,35,.12), 0 0 0 1px rgba(34,197,94,.10); }
 .alajo-interactive:active { transform: translateY(1px) scale(.985); }
+.alajo-glow { box-shadow: 0 0 0 1px rgba(34,197,94,.16), 0 0 28px rgba(34,197,94,.10); }
+
+/* Futuristic button treatment for controls that explicitly opt in. */
+.alajo-button { position:relative; isolation:isolate; overflow:hidden; transform:translateZ(0); }
+.alajo-button::before { content:""; position:absolute; inset:-2px; z-index:-1; background:linear-gradient(110deg,transparent 20%,rgba(134,239,172,.18) 48%,transparent 78%); transform:translateX(-120%); transition:transform .65s cubic-bezier(.22,1,.36,1); }
+.alajo-button:hover::before { transform:translateX(120%); }
+.alajo-button:active { transform:translateY(1px) scale(.975); }
+
+/* Universal futuristic switch. Existing toggles can opt in with .alajo-switch. */
+.alajo-switch { position:relative; display:inline-flex; width:48px; height:28px; flex:0 0 auto; align-items:center; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); box-shadow:inset 0 1px 2px rgba(0,0,0,.18), 0 0 0 transparent; transition:background .25s ease, border-color .25s ease, box-shadow .3s ease; }
+.alajo-switch[data-state="on"], .alajo-switch[aria-checked="true"], .alajo-switch[aria-pressed="true"] { background:linear-gradient(135deg,rgba(22,163,74,.92),rgba(34,197,94,.72)); border-color:rgba(134,239,172,.38); box-shadow:0 0 22px rgba(34,197,94,.20), inset 0 1px 0 rgba(255,255,255,.22); }
+.alajo-switch > span { position:absolute; left:3px; width:20px; height:20px; border-radius:50%; background:#f8fffb; box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.55); transition:transform .3s cubic-bezier(.22,1,.36,1); }
+.alajo-switch[data-state="on"] > span, .alajo-switch[aria-checked="true"] > span, .alajo-switch[aria-pressed="true"] > span { transform:translateX(20px); }
+
 main input, main select, main textarea { background: rgba(255,255,255,.20); border-color: rgba(255,255,255,.48); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 main input:focus, main select:focus, main textarea:focus { background: rgba(255,255,255,.28); }
 main select option { background: #eaf5ee; color: #173221; }
@@ -51,17 +69,25 @@ html.dark .shadow, html.dark .shadow-md { box-shadow: 0 8px 24px rgba(0,0,0,.24)
 html.dark .shadow-lg { box-shadow: 0 14px 34px rgba(0,0,0,.28) !important; }
 html.dark .shadow-xl, html.dark .shadow-2xl { box-shadow: 0 20px 50px rgba(0,0,0,.35) !important; }
 
-/* Futuristic Alajo admin shell. Scoped by the admin navigation so the user app keeps its own layout. */
-aside:has(a[href="/admin/settings"]) { background: rgba(244,250,246,.72) !important; border-right-color: rgba(255,255,255,.62) !important; backdrop-filter: blur(28px) saturate(150%); -webkit-backdrop-filter: blur(28px) saturate(150%); box-shadow: 12px 0 50px rgba(8,50,25,.06); }
-aside:has(a[href="/admin/settings"]) + main { background: radial-gradient(circle at 80% 0%, rgba(22,163,74,.10), transparent 28%), linear-gradient(135deg,#f4faf6,#eaf5ee); }
-aside:has(a[href="/admin/settings"]) nav a { border: 1px solid transparent !important; }
-aside:has(a[href="/admin/settings"]) nav a:hover { background: rgba(255,255,255,.48) !important; border-color: rgba(255,255,255,.60) !important; box-shadow: 0 8px 25px rgba(10,60,30,.06); }
-html.dark aside:has(a[href="/admin/settings"]) { background: rgba(7,21,12,.78) !important; border-right-color: rgba(255,255,255,.12) !important; box-shadow: 12px 0 55px rgba(0,0,0,.24); }
-html.dark aside:has(a[href="/admin/settings"]) + main { background: radial-gradient(circle at 80% 0%, rgba(22,163,74,.11), transparent 28%), linear-gradient(135deg,#06130b,#0a2115); }
-html.dark aside:has(a[href="/admin/settings"]) nav a:hover { background: rgba(255,255,255,.055) !important; border-color: rgba(255,255,255,.12) !important; }
-aside:has(a[href="/admin/settings"]) > div:last-child { background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.62); border-radius: 20px; backdrop-filter: blur(22px); }
-html.dark aside:has(a[href="/admin/settings"]) > div:last-child { background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.13); }
+/* Futuristic Alajo admin shell. */
+aside:has(a[href="/admin/settings"]) { background:rgba(8,28,17,.88) !important; border-right-color:rgba(134,239,172,.10) !important; backdrop-filter:blur(30px) saturate(155%); -webkit-backdrop-filter:blur(30px) saturate(155%); box-shadow:16px 0 60px rgba(0,0,0,.20); }
+aside:has(a[href="/admin/settings"]) + main { background:radial-gradient(circle at 78% 0%,rgba(34,197,94,.12),transparent 30%),radial-gradient(circle at 10% 90%,rgba(22,163,74,.06),transparent 26%),linear-gradient(135deg,#06130b,#0a2115); }
+aside:has(a[href="/admin/settings"]) nav a { position:relative; border:1px solid transparent !important; color:rgba(229,241,233,.68) !important; transition:transform .22s cubic-bezier(.22,1,.36,1),background .22s ease,border-color .22s ease,color .22s ease,box-shadow .22s ease !important; }
+aside:has(a[href="/admin/settings"]) nav a:hover { transform:translateX(3px); background:rgba(255,255,255,.055) !important; border-color:rgba(134,239,172,.10) !important; color:#fff !important; box-shadow:0 8px 26px rgba(0,0,0,.14),0 0 18px rgba(34,197,94,.05); }
+aside:has(a[href="/admin/settings"]) > div:first-child { background:linear-gradient(180deg,rgba(255,255,255,.04),transparent); }
+aside:has(a[href="/admin/settings"]) > div:last-child { background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.10); border-radius:20px; backdrop-filter:blur(24px); }
+html:not(.dark) aside:has(a[href="/admin/settings"]) { background:rgba(7,21,12,.96) !important; }
 
-@media (max-width: 1023px) { main { width: 100%; min-width: 0; } input, select, textarea, button { max-width: 100%; } table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; } main > header > div:last-child { display: none !important; } body > div > main, body > div > div > main { padding-top: 4rem; } }
-@media (max-width: 639px) { .dashboard-card { min-width: 0; } h1, h2, h3 { overflow-wrap: anywhere; } }
-@media (min-width: 1024px) { body > div > main, body > div > div > main { padding-top: 0; } }
+/* Mobile navigation: never use a bright white drawer/overlay over the futuristic app. */
+@media (max-width:1023px) {
+ main { width:100%; min-width:0; }
+ input,select,textarea,button { max-width:100%; }
+ table { display:block; width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+ main > header > div:last-child { display:none !important; }
+ body > div > main, body > div > div > main { padding-top:4rem; }
+ .alajo-mobile-drawer { background:rgba(6,19,11,.96) !important; border-right:1px solid rgba(134,239,172,.12); backdrop-filter:blur(30px) saturate(155%); -webkit-backdrop-filter:blur(30px) saturate(155%); box-shadow:18px 0 60px rgba(0,0,0,.35); }
+ .alajo-mobile-overlay { background:rgba(0,0,0,.62) !important; backdrop-filter:blur(6px); }
+}
+@media (max-width:639px) { .dashboard-card { min-width:0; } h1,h2,h3 { overflow-wrap:anywhere; } }
+@media (min-width:1024px) { body > div > main, body > div > div > main { padding-top:0; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
