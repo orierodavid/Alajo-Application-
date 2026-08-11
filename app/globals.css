@@ -4,90 +4,98 @@
 html.dark { color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { min-height: 100%; width: 100%; }
-body { margin: 0; background: #f3f8f5; color: #111827; font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; transition: background-color .25s ease, color .25s ease; }
-button, input, select, textarea { font: inherit; }
-img, svg { max-width: 100%; }
-html.dark body { background: #07150c; color: #f4f8f5; }
-html.dark main { color: #f4f8f5; }
+body { margin: 0; background:#f5f7f5; color:#111814; font-family:Arial,Helvetica,sans-serif; overflow-x:hidden; transition:background-color .2s ease,color .2s ease; }
+button,input,select,textarea { font:inherit; }
+img,svg { max-width:100%; }
+html.dark body { background:#08150d; color:#f4f8f5; }
+html.dark main { color:#f4f8f5; }
 
-.alajo-glass { background: rgba(255,255,255,.38); border: 1px solid rgba(255,255,255,.62); backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); box-shadow: 0 12px 35px rgba(15,61,35,.08), inset 0 1px 0 rgba(255,255,255,.45); }
-html.dark .alajo-glass { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.20); box-shadow: 0 16px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07); }
-main .rounded-xl.border, main .rounded-2xl.border, main .rounded-3xl.border { background: rgba(255,255,255,.30); border-color: rgba(255,255,255,.60); backdrop-filter: blur(20px) saturate(135%); -webkit-backdrop-filter: blur(20px) saturate(135%); }
-html.dark main .rounded-xl.border, html.dark main .rounded-2xl.border, html.dark main .rounded-3xl.border { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.20); }
+/* Alajo 2026: clean surfaces, compact density, green-led visual hierarchy. No glassmorphism. */
+.alajo-glass { background:#fff; border:1px solid #e5ebe7; box-shadow:0 8px 24px rgba(12,49,28,.06); backdrop-filter:none; -webkit-backdrop-filter:none; }
+html.dark .alajo-glass { background:#102419; border-color:#213b2b; box-shadow:0 10px 28px rgba(0,0,0,.20); }
+main .rounded-xl.border,main .rounded-2xl.border,main .rounded-3xl.border { background:#fff; border-color:#e3e9e5; backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 7px 22px rgba(12,49,28,.045); }
+html.dark main .rounded-xl.border,html.dark main .rounded-2xl.border,html.dark main .rounded-3xl.border { background:#102419; border-color:#213b2b; box-shadow:0 9px 26px rgba(0,0,0,.18); }
 
-/* Alajo 2026 interaction language: restrained lift, magnetic glow and tactile press. */
-button, a[href] { -webkit-tap-highlight-color: transparent; transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .22s ease, background-color .22s ease, opacity .22s ease, color .22s ease, filter .22s ease; }
-button:hover, a[href]:hover { transform: translateY(-1px); }
-button:active, a[href]:active { transform: translateY(1px) scale(.985); }
-button:focus-visible, a[href]:focus-visible { outline: 2px solid rgba(22,163,74,.60); outline-offset: 3px; }
-button:not(:disabled):hover, a[href]:hover { filter: brightness(1.04); }
-button:not(:disabled)::after, a[href]::after { pointer-events:none; }
-.alajo-interactive { transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .22s ease, background-color .22s ease, opacity .22s ease; -webkit-tap-highlight-color: transparent; }
-.alajo-interactive:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(15,61,35,.12), 0 0 0 1px rgba(34,197,94,.10); }
-.alajo-interactive:active { transform: translateY(1px) scale(.985); }
-.alajo-glow { box-shadow: 0 0 0 1px rgba(34,197,94,.16), 0 0 28px rgba(34,197,94,.10); }
-
-/* Futuristic button treatment for controls that explicitly opt in. */
+/* Universal 2026 interaction language. */
+button,a[href] { -webkit-tap-highlight-color:transparent; transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s ease,border-color .18s ease,background-color .18s ease,color .18s ease,opacity .18s ease,filter .18s ease; }
+button:hover,a[href]:hover { transform:translateY(-1px); }
+button:active,a[href]:active { transform:translateY(1px) scale(.985); }
+button:focus-visible,a[href]:focus-visible { outline:2px solid rgba(22,163,74,.55); outline-offset:3px; }
+.alajo-interactive:hover { transform:translateY(-2px); box-shadow:0 10px 26px rgba(12,49,28,.10); }
+.alajo-interactive:active { transform:translateY(1px) scale(.985); }
+.alajo-glow { box-shadow:0 0 0 1px rgba(34,197,94,.18),0 8px 26px rgba(34,197,94,.08); }
 .alajo-button { position:relative; isolation:isolate; overflow:hidden; transform:translateZ(0); }
-.alajo-button::before { content:""; position:absolute; inset:-2px; z-index:-1; background:linear-gradient(110deg,transparent 20%,rgba(134,239,172,.18) 48%,transparent 78%); transform:translateX(-120%); transition:transform .65s cubic-bezier(.22,1,.36,1); }
+.alajo-button::before { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(100deg,transparent 25%,rgba(134,239,172,.20) 50%,transparent 75%); transform:translateX(-120%); transition:transform .55s cubic-bezier(.22,1,.36,1); }
 .alajo-button:hover::before { transform:translateX(120%); }
 .alajo-button:active { transform:translateY(1px) scale(.975); }
 
-/* Universal futuristic switch. Existing toggles can opt in with .alajo-switch. */
-.alajo-switch { position:relative; display:inline-flex; width:48px; height:28px; flex:0 0 auto; align-items:center; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08); box-shadow:inset 0 1px 2px rgba(0,0,0,.18), 0 0 0 transparent; transition:background .25s ease, border-color .25s ease, box-shadow .3s ease; }
-.alajo-switch[data-state="on"], .alajo-switch[aria-checked="true"], .alajo-switch[aria-pressed="true"] { background:linear-gradient(135deg,rgba(22,163,74,.92),rgba(34,197,94,.72)); border-color:rgba(134,239,172,.38); box-shadow:0 0 22px rgba(34,197,94,.20), inset 0 1px 0 rgba(255,255,255,.22); }
-.alajo-switch > span { position:absolute; left:3px; width:20px; height:20px; border-radius:50%; background:#f8fffb; box-shadow:0 2px 8px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.55); transition:transform .3s cubic-bezier(.22,1,.36,1); }
-.alajo-switch[data-state="on"] > span, .alajo-switch[aria-checked="true"] > span, .alajo-switch[aria-pressed="true"] > span { transform:translateX(20px); }
+/* Correct compact futuristic switch. */
+.alajo-switch { position:relative; display:inline-flex; width:44px; height:24px; flex:0 0 auto; align-items:center; border-radius:999px; border:1px solid #cbd7cf; background:#dfe6e1; box-shadow:inset 0 1px 2px rgba(0,0,0,.10); transition:background .22s ease,border-color .22s ease,box-shadow .22s ease; }
+.alajo-switch[data-state="on"],.alajo-switch[aria-checked="true"],.alajo-switch[aria-pressed="true"] { background:#16a34a; border-color:#16a34a; box-shadow:0 4px 14px rgba(22,163,74,.20); }
+.alajo-switch > span { position:absolute; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.20); transition:transform .25s cubic-bezier(.22,1,.36,1); }
+.alajo-switch[data-state="on"] > span,.alajo-switch[aria-checked="true"] > span,.alajo-switch[aria-pressed="true"] > span { transform:translateX(20px); }
+html.dark .alajo-switch { background:#263a2d; border-color:#385242; }
+html.dark .alajo-switch[data-state="on"],html.dark .alajo-switch[aria-checked="true"],html.dark .alajo-switch[aria-pressed="true"] { background:#22c55e; border-color:#22c55e; }
 
-main input, main select, main textarea { background: rgba(255,255,255,.20); border-color: rgba(255,255,255,.48); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
-main input:focus, main select:focus, main textarea:focus { background: rgba(255,255,255,.28); }
-main select option { background: #eaf5ee; color: #173221; }
-html.dark main input, html.dark main select, html.dark main textarea { background: rgba(255,255,255,.055); color: #f3f7f4; border-color: rgba(255,255,255,.18); backdrop-filter: blur(18px); }
-html.dark main input:focus, html.dark main select:focus, html.dark main textarea:focus { background: rgba(255,255,255,.09); }
-html.dark main select option { background: #102519; color: #f4f8f5; }
-html.dark .bg-white { background-color: rgba(16,37,25,.78) !important; }
-html.dark [class~="bg-white/90"] { background-color: rgba(16,37,25,.72) !important; }
-html.dark .bg-gray-50 { background-color: rgba(12,31,19,.72) !important; }
-html.dark .bg-gray-100 { background-color: rgba(20,45,29,.72) !important; }
-html.dark .bg-gray-200 { background-color: rgba(27,56,37,.72) !important; }
-html.dark .bg-\[\#f7f8f9\], html.dark .bg-\[\#f6f8f7\] { background-color: #07150c !important; }
-html.dark .rounded-2xl.border-gray-100, html.dark .rounded-xl.border-gray-100, html.dark .rounded-2xl.border-gray-200, html.dark .rounded-xl.border-gray-200 { border-color: rgba(255,255,255,.20) !important; }
-html.dark .text-gray-950, html.dark .text-gray-900 { color: #f4f8f5 !important; }
-html.dark .text-gray-800 { color: #e8f0eb !important; }
-html.dark .text-gray-700 { color: #d3dfd7 !important; }
-html.dark .text-gray-600 { color: #bdcbbf !important; }
-html.dark .text-gray-500 { color: #9eafa3 !important; }
-html.dark .text-gray-400 { color: #8fa196 !important; }
-html.dark .text-gray-300 { color: #c3d0c8 !important; }
-html.dark .border-gray-50 { border-color: rgba(255,255,255,.06) !important; }
-html.dark .border-gray-100 { border-color: rgba(255,255,255,.12) !important; }
-html.dark .border-gray-200 { border-color: rgba(255,255,255,.14) !important; }
-html.dark .border-gray-300 { border-color: rgba(255,255,255,.18) !important; }
-html.dark input::placeholder, html.dark textarea::placeholder { color: #7f9385; }
-html.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,.24) !important; }
-html.dark .shadow, html.dark .shadow-md { box-shadow: 0 8px 24px rgba(0,0,0,.24) !important; }
-html.dark .shadow-lg { box-shadow: 0 14px 34px rgba(0,0,0,.28) !important; }
-html.dark .shadow-xl, html.dark .shadow-2xl { box-shadow: 0 20px 50px rgba(0,0,0,.35) !important; }
+main input,main select,main textarea { background:#fff; border-color:#dce5df; backdrop-filter:none; -webkit-backdrop-filter:none; transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease; }
+main input:focus,main select:focus,main textarea:focus { background:#fff; border-color:#22a052; box-shadow:0 0 0 3px rgba(34,160,82,.10); }
+main select option { background:#fff;color:#173221; }
+html.dark main input,html.dark main select,html.dark main textarea { background:#12271b;color:#f3f7f4;border-color:#294533;backdrop-filter:none; }
+html.dark main input:focus,html.dark main select:focus,html.dark main textarea:focus { background:#152d20; }
+html.dark main select option { background:#12271b;color:#f4f8f5; }
+html.dark .bg-white { background-color:#102419 !important; }
+html.dark [class~="bg-white/90"] { background-color:#102419 !important; }
+html.dark .bg-gray-50 { background-color:#0d1d13 !important; }
+html.dark .bg-gray-100 { background-color:#152a1d !important; }
+html.dark .bg-gray-200 { background-color:#1c3625 !important; }
+html.dark .bg-\[\#f7f8f9\],html.dark .bg-\[\#f6f8f7\] { background-color:#08150d !important; }
+html.dark .rounded-2xl.border-gray-100,html.dark .rounded-xl.border-gray-100,html.dark .rounded-2xl.border-gray-200,html.dark .rounded-xl.border-gray-200 { border-color:#294533 !important; }
+html.dark .text-gray-950,html.dark .text-gray-900 { color:#f4f8f5 !important; }
+html.dark .text-gray-800 { color:#e8f0eb !important; }
+html.dark .text-gray-700 { color:#d3dfd7 !important; }
+html.dark .text-gray-600 { color:#bdcbbf !important; }
+html.dark .text-gray-500 { color:#9eafa3 !important; }
+html.dark .text-gray-400 { color:#8fa196 !important; }
+html.dark .text-gray-300 { color:#c3d0c8 !important; }
+html.dark .border-gray-50 { border-color:#1b3022 !important; }
+html.dark .border-gray-100 { border-color:#243d2d !important; }
+html.dark .border-gray-200 { border-color:#294533 !important; }
+html.dark .border-gray-300 { border-color:#385242 !important; }
+html.dark input::placeholder,html.dark textarea::placeholder { color:#7f9385; }
 
-/* Futuristic Alajo admin shell. */
-aside:has(a[href="/admin/settings"]) { background:rgba(8,28,17,.88) !important; border-right-color:rgba(134,239,172,.10) !important; backdrop-filter:blur(30px) saturate(155%); -webkit-backdrop-filter:blur(30px) saturate(155%); box-shadow:16px 0 60px rgba(0,0,0,.20); }
-aside:has(a[href="/admin/settings"]) + main { background:radial-gradient(circle at 78% 0%,rgba(34,197,94,.12),transparent 30%),radial-gradient(circle at 10% 90%,rgba(22,163,74,.06),transparent 26%),linear-gradient(135deg,#06130b,#0a2115); }
-aside:has(a[href="/admin/settings"]) nav a { position:relative; border:1px solid transparent !important; color:rgba(229,241,233,.68) !important; transition:transform .22s cubic-bezier(.22,1,.36,1),background .22s ease,border-color .22s ease,color .22s ease,box-shadow .22s ease !important; }
-aside:has(a[href="/admin/settings"]) nav a:hover { transform:translateX(3px); background:rgba(255,255,255,.055) !important; border-color:rgba(134,239,172,.10) !important; color:#fff !important; box-shadow:0 8px 26px rgba(0,0,0,.14),0 0 18px rgba(34,197,94,.05); }
-aside:has(a[href="/admin/settings"]) > div:first-child { background:linear-gradient(180deg,rgba(255,255,255,.04),transparent); }
-aside:has(a[href="/admin/settings"]) > div:last-child { background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.10); border-radius:20px; backdrop-filter:blur(24px); }
-html:not(.dark) aside:has(a[href="/admin/settings"]) { background:rgba(7,21,12,.96) !important; }
+/* Clean sidebar system inspired by the supplied benchmark: white surface, green active rail, compact spacing. */
+aside { background:#fff !important; border-right:1px solid #e6ebe8 !important; box-shadow:6px 0 24px rgba(12,49,28,.035) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+aside nav a { color:#66736b !important; border-radius:10px; position:relative; }
+aside nav a:hover { color:#163c27 !important; background:#f1f7f3 !important; transform:translateX(2px); }
+aside nav a[aria-current="page"],aside nav a.active { color:#126b39 !important; background:#eef8f1 !important; font-weight:700; }
+aside nav a[aria-current="page"]::before,aside nav a.active::before { content:""; position:absolute; left:-1px; top:7px; bottom:7px; width:3px; border-radius:0 5px 5px 0; background:#16a34a; box-shadow:0 0 12px rgba(22,163,74,.22); }
+aside > div:first-child { background:#fff !important; }
+aside > div:last-child { background:#f7faf8 !important; border:1px solid #e6ebe8; border-radius:14px; }
+html.dark aside { background:#0d1d13 !important; border-right-color:#1d3324 !important; box-shadow:6px 0 28px rgba(0,0,0,.20) !important; }
+html.dark aside nav a { color:#9eafa3 !important; }
+html.dark aside nav a:hover { color:#f4f8f5 !important; background:#14291d !important; }
+html.dark aside nav a[aria-current="page"],html.dark aside nav a.active { color:#86efac !important; background:#123421 !important; }
+html.dark aside > div:first-child { background:#0d1d13 !important; }
+html.dark aside > div:last-child { background:#112419 !important; border-color:#203b2a; }
 
-/* Mobile navigation: never use a bright white drawer/overlay over the futuristic app. */
+/* Admin content: clean workspace rather than glass. */
+aside:has(a[href="/admin/settings"]) + main { background:#f5f7f5; }
+html.dark aside:has(a[href="/admin/settings"]) + main { background:#08150d; }
+aside:has(a[href="/admin/settings"]) nav a { color:#66736b !important; }
+aside:has(a[href="/admin/settings"]) nav a:hover { background:#f1f7f3 !important; border-color:#dbe8df !important; color:#163c27 !important; box-shadow:none; }
+html.dark aside:has(a[href="/admin/settings"]) nav a { color:#9eafa3 !important; }
+html.dark aside:has(a[href="/admin/settings"]) nav a:hover { background:#14291d !important; border-color:#294533 !important; color:#fff !important; box-shadow:none; }
+
 @media (max-width:1023px) {
  main { width:100%; min-width:0; }
  input,select,textarea,button { max-width:100%; }
  table { display:block; width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
  main > header > div:last-child { display:none !important; }
- body > div > main, body > div > div > main { padding-top:4rem; }
- .alajo-mobile-drawer { background:rgba(6,19,11,.96) !important; border-right:1px solid rgba(134,239,172,.12); backdrop-filter:blur(30px) saturate(155%); -webkit-backdrop-filter:blur(30px) saturate(155%); box-shadow:18px 0 60px rgba(0,0,0,.35); }
- .alajo-mobile-overlay { background:rgba(0,0,0,.62) !important; backdrop-filter:blur(6px); }
+ body > div > main,body > div > div > main { padding-top:4rem; }
+ .alajo-mobile-drawer { background:#fff !important; border-right:1px solid #e5ebe7; box-shadow:16px 0 40px rgba(0,0,0,.12); backdrop-filter:none !important; }
+ .alajo-mobile-overlay { background:rgba(7,21,12,.48) !important; backdrop-filter:none !important; }
+ html.dark .alajo-mobile-drawer { background:#0d1d13 !important; border-right-color:#203b2a; }
 }
-@media (max-width:639px) { .dashboard-card { min-width:0; } h1,h2,h3 { overflow-wrap:anywhere; } }
-@media (min-width:1024px) { body > div > main, body > div > div > main { padding-top:0; } }
-@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
+@media (max-width:639px) { .dashboard-card{min-width:0;} h1,h2,h3{overflow-wrap:anywhere;} }
+@media (min-width:1024px) { body > div > main,body > div > div > main{padding-top:0;} }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after{scroll-behavior:auto !important;animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;} }
