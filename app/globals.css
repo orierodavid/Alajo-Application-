@@ -7,30 +7,13 @@ html, body { min-height: 100%; width: 100%; }
 body { margin: 0; background: #f3f8f5; color: #111827; font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; transition: background-color .25s ease, color .25s ease; }
 button, input, select, textarea { font: inherit; }
 img, svg { max-width: 100%; }
-
 html.dark body { background: #07150c; color: #f4f8f5; }
 html.dark main { color: #f4f8f5; }
 
-/* Alajo glass design language */
-.alajo-glass {
-  background: rgba(255,255,255,.38);
-  border: 1px solid rgba(255,255,255,.62);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  box-shadow: 0 12px 35px rgba(15,61,35,.08), inset 0 1px 0 rgba(255,255,255,.45);
-}
+.alajo-glass { background: rgba(255,255,255,.38); border: 1px solid rgba(255,255,255,.62); backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); box-shadow: 0 12px 35px rgba(15,61,35,.08), inset 0 1px 0 rgba(255,255,255,.45); }
 html.dark .alajo-glass { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.20); box-shadow: 0 16px 40px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.07); }
-
-/* Existing cards inherit the same premium surface without requiring page-by-page rewrites. */
-main .rounded-xl.border, main .rounded-2xl.border, main .rounded-3xl.border {
-  background: rgba(255,255,255,.30);
-  border-color: rgba(255,255,255,.60);
-  backdrop-filter: blur(20px) saturate(135%);
-  -webkit-backdrop-filter: blur(20px) saturate(135%);
-}
+main .rounded-xl.border, main .rounded-2xl.border, main .rounded-3xl.border { background: rgba(255,255,255,.30); border-color: rgba(255,255,255,.60); backdrop-filter: blur(20px) saturate(135%); -webkit-backdrop-filter: blur(20px) saturate(135%); }
 html.dark main .rounded-xl.border, html.dark main .rounded-2xl.border, html.dark main .rounded-3xl.border { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.20); }
-
-/* Premium interaction language for every clickable control. */
 button, a[href] { -webkit-tap-highlight-color: transparent; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, opacity .18s ease, color .18s ease; }
 button:hover, a[href]:hover { transform: translateY(-1px); }
 button:active, a[href]:active { transform: translateY(1px) scale(.985); }
@@ -38,16 +21,12 @@ button:focus-visible, a[href]:focus-visible { outline: 2px solid rgba(22,163,74,
 .alajo-interactive { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background-color .18s ease, opacity .18s ease; -webkit-tap-highlight-color: transparent; }
 .alajo-interactive:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15,61,35,.10); }
 .alajo-interactive:active { transform: translateY(1px) scale(.985); }
-
-/* Glass controls and consistent selected/native option colors. */
 main input, main select, main textarea { background: rgba(255,255,255,.20); border-color: rgba(255,255,255,.48); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 main input:focus, main select:focus, main textarea:focus { background: rgba(255,255,255,.28); }
 main select option { background: #eaf5ee; color: #173221; }
 html.dark main input, html.dark main select, html.dark main textarea { background: rgba(255,255,255,.055); color: #f3f7f4; border-color: rgba(255,255,255,.18); backdrop-filter: blur(18px); }
 html.dark main input:focus, html.dark main select:focus, html.dark main textarea:focus { background: rgba(255,255,255,.09); }
 html.dark main select option { background: #102519; color: #f4f8f5; }
-
-/* Dark surfaces: deep green with crisp white hairlines. */
 html.dark .bg-white { background-color: rgba(16,37,25,.78) !important; }
 html.dark [class~="bg-white/90"] { background-color: rgba(16,37,25,.72) !important; }
 html.dark .bg-gray-50 { background-color: rgba(12,31,19,.72) !important; }
@@ -55,7 +34,6 @@ html.dark .bg-gray-100 { background-color: rgba(20,45,29,.72) !important; }
 html.dark .bg-gray-200 { background-color: rgba(27,56,37,.72) !important; }
 html.dark .bg-\[\#f7f8f9\], html.dark .bg-\[\#f6f8f7\] { background-color: #07150c !important; }
 html.dark .rounded-2xl.border-gray-100, html.dark .rounded-xl.border-gray-100, html.dark .rounded-2xl.border-gray-200, html.dark .rounded-xl.border-gray-200 { border-color: rgba(255,255,255,.20) !important; }
-
 html.dark .text-gray-950, html.dark .text-gray-900 { color: #f4f8f5 !important; }
 html.dark .text-gray-800 { color: #e8f0eb !important; }
 html.dark .text-gray-700 { color: #d3dfd7 !important; }
@@ -73,12 +51,17 @@ html.dark .shadow, html.dark .shadow-md { box-shadow: 0 8px 24px rgba(0,0,0,.24)
 html.dark .shadow-lg { box-shadow: 0 14px 34px rgba(0,0,0,.28) !important; }
 html.dark .shadow-xl, html.dark .shadow-2xl { box-shadow: 0 20px 50px rgba(0,0,0,.35) !important; }
 
-@media (max-width: 1023px) {
-  main { width: 100%; min-width: 0; }
-  input, select, textarea, button { max-width: 100%; }
-  table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  main > header > div:last-child { display: none !important; }
-  body > div > main, body > div > div > main { padding-top: 4rem; }
-}
+/* Futuristic Alajo admin shell. Scoped by the admin navigation so the user app keeps its own layout. */
+aside:has(a[href="/admin/settings"]) { background: rgba(244,250,246,.72) !important; border-right-color: rgba(255,255,255,.62) !important; backdrop-filter: blur(28px) saturate(150%); -webkit-backdrop-filter: blur(28px) saturate(150%); box-shadow: 12px 0 50px rgba(8,50,25,.06); }
+aside:has(a[href="/admin/settings"]) + main { background: radial-gradient(circle at 80% 0%, rgba(22,163,74,.10), transparent 28%), linear-gradient(135deg,#f4faf6,#eaf5ee); }
+aside:has(a[href="/admin/settings"]) nav a { border: 1px solid transparent !important; }
+aside:has(a[href="/admin/settings"]) nav a:hover { background: rgba(255,255,255,.48) !important; border-color: rgba(255,255,255,.60) !important; box-shadow: 0 8px 25px rgba(10,60,30,.06); }
+html.dark aside:has(a[href="/admin/settings"]) { background: rgba(7,21,12,.78) !important; border-right-color: rgba(255,255,255,.12) !important; box-shadow: 12px 0 55px rgba(0,0,0,.24); }
+html.dark aside:has(a[href="/admin/settings"]) + main { background: radial-gradient(circle at 80% 0%, rgba(22,163,74,.11), transparent 28%), linear-gradient(135deg,#06130b,#0a2115); }
+html.dark aside:has(a[href="/admin/settings"]) nav a:hover { background: rgba(255,255,255,.055) !important; border-color: rgba(255,255,255,.12) !important; }
+aside:has(a[href="/admin/settings"]) > div:last-child { background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.62); border-radius: 20px; backdrop-filter: blur(22px); }
+html.dark aside:has(a[href="/admin/settings"]) > div:last-child { background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.13); }
+
+@media (max-width: 1023px) { main { width: 100%; min-width: 0; } input, select, textarea, button { max-width: 100%; } table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; } main > header > div:last-child { display: none !important; } body > div > main, body > div > div > main { padding-top: 4rem; } }
 @media (max-width: 639px) { .dashboard-card { min-width: 0; } h1, h2, h3 { overflow-wrap: anywhere; } }
 @media (min-width: 1024px) { body > div > main, body > div > div > main { padding-top: 0; } }
