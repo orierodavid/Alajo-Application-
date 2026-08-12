@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
-import { verifyPaystackTransaction } from '@/lib/paystack'
+import { verifyPaystackTransaction, paystackEnvironmentFromSecret } from '@/lib/paystack'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -10,13 +10,6 @@ async function requireAdmin() {
   const { data: role, error: roleError } = await supabase.rpc('get_my_admin_role')
   if (roleError || !role) return { error: NextResponse.json({ error: 'Admin access required.' }, { status: 403 }) }
   return { user, admin: createAdminClient() }
-}
-
-function expectedPaystackEnvironment() {
-  const key = process.env.PAYSTACK_SECRET_KEY ?? ''
-  if (key.startsWith('sk_live_')) return 'live'
-  if (key.startsWith('sk_test_')) return 'test'
-  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
 }
 
 function metadataRecord(value: unknown) {
@@ -45,8 +38,13 @@ export async function POST(request: Request) {
 
     const reference = suppliedReference || payment.provider_reference
     const verified = await verifyPaystackTransaction(reference)
-    const expectedEnvironment = expectedPaystackEnvironment()
-    const amountMatches = Number(verified.amount) === Math.round(Number(payment.amount) * 100)
+    const expectedEnvironment = paystackEnvironmentFromSecret()
+    const expectedAmountKobo = Math.round(Number(payment.amount) * 100)
+    // Paystack can report the total amount charged to the customer separately
+    // from the original requested transaction amount (for example when fees are
+    // passed through). Wallet credit must always equal Alajo's requested amount.
+    const requestedAmount = Number(verified.requested_amount ?? verified.amount)
+    const amountMatches = requestedAmount === expectedAmountKobo
     const currencyMatches = String(verified.currency).toUpperCase() === String(payment.currency).toUpperCase()
     const referenceMatchesStored = verified.reference === payment.provider_reference
     const domainMatches = verified.domain === expectedEnvironment
@@ -67,7 +65,9 @@ export async function POST(request: Request) {
         paystack_status: verified.status,
         domain: verified.domain,
         amount: verified.amount,
+        requested_amount: verified.requested_amount ?? null,
         currency: verified.currency,
+        expected_amount_kobo: expectedAmountKobo,
         reference_matches_stored: referenceMatchesStored,
         metadata_identity_matches: userIdentityMatches,
       },
@@ -89,6 +89,7 @@ export async function POST(request: Request) {
           reference: verified.reference,
           status: verified.status,
           amount: verified.amount,
+          requestedAmount: verified.requested_amount ?? null,
           currency: verified.currency,
           domain: verified.domain,
           gatewayResponse: verified.gateway_response ?? null,
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
     if (verified.status === 'success') {
       const { data: result, error: creditError } = await admin.rpc('credit_wallet_from_paystack', {
         p_provider_reference: payment.provider_reference,
-        p_verified_amount_kobo: Number(verified.amount),
+        p_verified_amount_kobo: expectedAmountKobo,
         p_currency: verified.currency,
         p_provider_payload: verified,
       })
