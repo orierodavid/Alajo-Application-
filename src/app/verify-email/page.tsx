@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 8;
 
 export default function VerifyEmailPage() {
   const [email, setEmail] = useState('');
@@ -65,7 +65,7 @@ export default function VerifyEmailPage() {
     setMessage('');
 
     const supabase = createClient();
-    const { error: verifyError } = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+    const { error: verifyError } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
 
     setLoading(false);
     if (verifyError) {
@@ -103,7 +103,7 @@ export default function VerifyEmailPage() {
 
   return (
     <main className="min-h-screen bg-[#f7faf8] flex items-center justify-center px-4 py-8">
-      <section className="w-full max-w-md">
+      <section className="w-full max-w-lg">
         <div className="text-center mb-7">
           <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-[#15221b]">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#16a34a] text-white">A</span>
@@ -111,16 +111,16 @@ export default function VerifyEmailPage() {
           </Link>
         </div>
 
-        <div className="rounded-3xl bg-white border border-[#e5ebe7] shadow-[0_20px_60px_rgba(15,35,25,0.08)] px-6 py-8 sm:px-10 sm:py-10 text-center">
+        <div className="rounded-3xl bg-white border border-[#e5ebe7] shadow-[0_20px_60px_rgba(15,35,25,0.08)] px-5 py-8 sm:px-10 sm:py-10 text-center">
           {!verified ? (
             <>
               <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-full bg-[#ecfdf3] text-[#16a34a] text-2xl" aria-hidden="true">✉</div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#15221b]">Verify your email</h1>
               <p className="mt-3 text-[#65726b]">We sent a verification code to</p>
               <p className="mt-1 font-semibold text-[#15221b] break-all">{email || 'your email address'}</p>
-              <p className="mt-2 text-sm text-[#65726b]">Enter the 6-digit code below to continue.</p>
+              <p className="mt-2 text-sm text-[#65726b]">Enter the 8-digit code below to continue.</p>
 
-              <div className="mt-7 flex justify-center gap-2 sm:gap-3" aria-label="Email verification code">
+              <div className="mt-7 flex flex-wrap justify-center gap-2 sm:gap-3" aria-label="Email verification code">
                 {code.map((digit, index) => (
                   <input
                     key={index}
@@ -133,7 +133,7 @@ export default function VerifyEmailPage() {
                     autoComplete={index === 0 ? 'one-time-code' : 'off'}
                     maxLength={1}
                     aria-label={`Verification digit ${index + 1}`}
-                    className={`h-14 w-11 sm:h-16 sm:w-12 rounded-xl border text-center text-xl font-bold text-[#15221b] outline-none transition-all ${digit ? 'border-[#16a34a] bg-[#f0fdf4] ring-2 ring-[#dcfce7]' : 'border-[#d9e2dc] bg-white'} focus:border-[#16a34a] focus:ring-2 focus:ring-[#dcfce7]`}
+                    className={`h-14 w-10 sm:h-16 sm:w-11 rounded-xl border text-center text-xl font-bold text-[#15221b] outline-none transition-all ${digit ? 'border-[#16a34a] bg-[#f0fdf4] ring-2 ring-[#dcfce7]' : 'border-[#d9e2dc] bg-white'} focus:border-[#16a34a] focus:ring-2 focus:ring-[#dcfce7]`}
                   />
                 ))}
               </div>
