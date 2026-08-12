@@ -21,11 +21,13 @@ export async function POST(request: Request) {
 
     const userId = authData.user.id
     const reference = `alajo-wallet-${crypto.randomUUID()}`
+    const paymentId = crypto.randomUUID()
     const admin = createAdminClient()
     const environment = paystackEnvironment()
+    const now = new Date().toISOString()
 
     const { error: insertError } = await admin.from('payments').insert({
-      id: crypto.randomUUID(),
+      id: paymentId,
       user_id: userId,
       group_id: null,
       contribution_id: null,
@@ -35,8 +37,8 @@ export async function POST(request: Request) {
       provider_reference: reference,
       status: 'pending',
       metadata: { source: 'wallet_funding', user_id: userId, environment },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
     })
 
     if (insertError) throw insertError
@@ -52,9 +54,19 @@ export async function POST(request: Request) {
         metadata: { source: 'wallet_funding', user_id: userId, payment_reference: reference, environment },
       })
     } catch {
-      await admin.from('payments').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('provider', 'paystack').eq('provider_reference', reference).eq('user_id', userId)
+      await admin.from('payments').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('id', paymentId).eq('status', 'pending')
       return NextResponse.json({ error: 'Unable to start payment.' }, { status: 502 })
     }
+
+    await admin.from('notifications').insert({
+      id: crypto.randomUUID(),
+      user_id: userId,
+      type: 'payment',
+      title: 'Wallet funding started',
+      body: `Your ${environment === 'live' ? 'Paystack' : 'Paystack test'} wallet funding of ₦${amount.toLocaleString('en-NG')} is awaiting payment verification.`,
+      metadata: { payment_id: paymentId, provider_reference: reference, status: 'pending', environment },
+      created_at: now,
+    })
 
     return NextResponse.json({ authorizationUrl: checkout.authorization_url, reference })
   } catch (error) {
