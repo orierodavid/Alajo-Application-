@@ -40,12 +40,12 @@ export async function GET(request: Request) {
 
     if (creditError || !result?.success) {
       console.error('Paystack wallet credit error:', creditError)
-      return NextResponse.redirect(new URL('/wallet/success?status=failed', url.origin))
+      return NextResponse.redirect(new URL('/wallet/success?status=reconciliation', url.origin))
     }
 
     return NextResponse.redirect(new URL('/wallet/success?status=success', url.origin))
   } catch (error) {
     console.error('Paystack callback verification error:', error)
-    return NextResponse.redirect(new URL('/wallet/success?status=failed', url.origin))
+    return NextResponse.redirect(new URL('/wallet/success?status=reconciliation', url.origin))
   }
 }
