@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { AppSidebar } from '@/components/layout/app-sidebar'
+import { useEffect, useState } from 'react'
+import { UserPageShell } from '@/components/layout/user-page-shell'
 
-const sample = [
-  { id: 'welcome', title: 'Welcome to Alajo', body: 'Stay on top of your savings, contributions and payouts from one place.', time: 'Today', unread: true },
-  { id: 'security', title: 'Account security', body: 'Keep your login details private and never share verification codes.', time: 'Today', unread: false },
-]
-
-export default function NotificationsPage() {
-  const [items, setItems] = useState(sample)
-  const unread = items.filter((item) => item.unread).length
-  return <div className="min-h-screen bg-[#f7f8f9] text-gray-900"><AppSidebar/><main className="lg:ml-[250px] min-h-screen"><header className="h-[76px] bg-white border-b border-gray-100 px-5 sm:px-8 flex items-center justify-between"><div><p className="text-gray-400 text-xs uppercase tracking-[.16em] font-semibold">Account</p><h1 className="font-bold text-[21px] mt-1">Notifications</h1><p className="text-sm text-gray-500 mt-1">Important updates from Alajo.</p></div><span className="rounded-full bg-green-50 text-[#16a34a] px-3 py-1 text-xs font-semibold">{unread} unread</span></header><section className="p-5 sm:p-8 max-w-4xl"><div className="flex justify-end mb-4"><button onClick={() => setItems((current) => current.map((item) => ({ ...item, unread: false })))} className="text-sm font-semibold text-[#14532d]">Mark all as read</button></div><div className="bg-white rounded-2xl border border-gray-100 divide-y">{items.map((item) => <article key={item.id} className={`p-5 flex gap-4 ${item.unread ? 'bg-green-50/30' : ''}`}><div className="w-10 h-10 rounded-xl bg-green-50 text-[#16a34a] flex items-center justify-center shrink-0"><span className="text-lg">●</span></div><div className="flex-1"><div className="flex justify-between gap-4"><h2 className="font-semibold text-sm">{item.title}</h2><span className="text-xs text-gray-400">{item.time}</span></div><p className="text-sm text-gray-500 mt-1">{item.body}</p>{item.unread && <span className="inline-block mt-3 text-[10px] uppercase tracking-wider font-bold text-[#16a34a]">New</span>}</div></article>)}</div></section></main></div>
+export default function NotificationsPage(){
+ const[items,setItems]=useState<any[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState('')
+ const load=()=>{setLoading(true);fetch('/api/notifications',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to load notifications');setItems(d.notifications??[])}).catch(e=>setError(e.message)).finally(()=>setLoading(false))}
+ useEffect(load,[])
+ const markRead=async(id:string)=>{await fetch('/api/notifications',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});setItems(v=>v.map(n=>n.id===id?{...n,read_at:new Date().toISOString()}:n))}
+ const markAll=async()=>{await fetch('/api/notifications',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({all:true})});setItems(v=>v.map(n=>({...n,read_at:new Date().toISOString()})))}
+ const unread=items.filter(n=>!n.read_at).length
+ return <UserPageShell eyebrow="Account" title="Notifications" description="Important updates from Alajo." actions={<span className="rounded-full bg-[#eaf7ef] text-[#15803d] px-3 py-1 text-xs font-semibold">{unread} unread</span>}><div className="mx-auto w-full max-w-[1180px]"><div className="flex justify-end mb-4"><button onClick={markAll} disabled={!unread} className="text-xs font-bold text-[#14532d] disabled:text-gray-400">Mark all as read</button></div><section className="bg-white rounded-2xl border border-[#e3e9e5] divide-y divide-[#edf0ee] overflow-hidden">{loading?<p className="p-8 text-sm text-gray-500">Loading notifications…</p>:error?<p className="p-8 text-sm text-red-600">{error}</p>:items.length===0?<p className="p-10 text-center text-sm text-gray-500">No notifications yet.</p>:items.map(n=><article key={n.id} onClick={()=>!n.read_at&&markRead(n.id)} className={`p-5 flex gap-4 cursor-pointer transition hover:bg-[#fafcfb] ${!n.read_at?'bg-[#eaf7ef]/35':''}`}><div className="w-10 h-10 rounded-xl bg-[#eaf7ef] text-[#16a34a] flex items-center justify-center shrink-0">●</div><div className="flex-1"><div className="flex justify-between gap-4"><h2 className="font-bold text-sm text-[#183526]">{n.title}</h2><span className="text-xs text-gray-400 whitespace-nowrap">{new Date(n.created_at).toLocaleString('en-NG')}</span></div><p className="text-sm text-gray-500 mt-1">{n.body}</p>{!n.read_at&&<span className="inline-block mt-3 text-[10px] uppercase tracking-wider font-bold text-[#16a34a]">New</span>}</div></article>)}</section></div></UserPageShell>
 }
