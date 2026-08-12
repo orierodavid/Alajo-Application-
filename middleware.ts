@@ -15,6 +15,12 @@ function isUserProtected(pathname: string) {
   return USER_PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
 
+function privateResponseHeaders(response: NextResponse) {
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
+  response.headers.set('Cache-Control', 'private, no-store, max-age=0')
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -51,7 +57,7 @@ export async function middleware(request: NextRequest) {
     if (roleError || !role) return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  return response
+  return privateResponseHeaders(response)
 }
 
 export const config = {
