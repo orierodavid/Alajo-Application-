@@ -10,13 +10,13 @@ img,svg { max-width:100%; }
 html.dark body { background:#08150d; color:#f4f8f5; }
 html.dark main { color:#f4f8f5; }
 
-/* Alajo 2026 benchmark: compact editorial workspace, solid surfaces, green-led hierarchy. */
+/* Alajo benchmark: compact editorial workspace, solid surfaces, green-led hierarchy. */
 .alajo-glass { background:#fff; border:1px solid #e5ebe7; box-shadow:0 8px 24px rgba(12,49,28,.06); backdrop-filter:none; -webkit-backdrop-filter:none; }
 html.dark .alajo-glass { background:#102419; border-color:#213b2b; box-shadow:0 10px 28px rgba(0,0,0,.20); }
 main .rounded-xl.border,main .rounded-2xl.border,main .rounded-3xl.border { backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 7px 22px rgba(12,49,28,.045); }
 html.dark main .rounded-xl.border,html.dark main .rounded-2xl.border,html.dark main .rounded-3xl.border { box-shadow:0 9px 26px rgba(0,0,0,.18); }
 
-/* Universal 2026 interaction language. */
+/* Universal interaction language. */
 button,a[href] { -webkit-tap-highlight-color:transparent; transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s ease,border-color .18s ease,background-color .18s ease,color .18s ease,opacity .18s ease,filter .18s ease; }
 button:hover,a[href]:hover { transform:translateY(-1px); }
 button:active,a[href]:active { transform:translateY(1px) scale(.985); }
@@ -28,7 +28,7 @@ button:focus-visible,a[href]:focus-visible { outline:2px solid rgba(22,163,74,.5
 .alajo-button:hover::before { transform:translateX(120%); }
 .alajo-button:active { transform:translateY(1px) scale(.975); }
 
-/* One contained switch for every user/admin toggle, including legacy role=switch controls. */
+/* Contained switch for every user/admin toggle. */
 .alajo-switch,button[role="switch"] { position:relative; display:inline-flex; width:44px; height:24px; flex:0 0 auto; align-items:center; justify-content:flex-start; padding:0; border-radius:999px; border:1px solid #cbd7cf; background:#dfe6e1; box-shadow:inset 0 1px 2px rgba(0,0,0,.10); overflow:hidden; }
 .alajo-switch:hover,button[role="switch"]:hover { transform:none; }
 .alajo-switch[data-state="on"],.alajo-switch[aria-checked="true"],.alajo-switch[aria-pressed="true"],button[role="switch"][aria-checked="true"] { background:#16a34a; border-color:#16a34a; box-shadow:0 4px 14px rgba(22,163,74,.20); }
@@ -63,7 +63,7 @@ html.dark .border-gray-200 { border-color:#294533 !important; }
 html.dark .border-gray-300 { border-color:#385242 !important; }
 html.dark input::placeholder,html.dark textarea::placeholder { color:#7f9385; }
 
-/* Benchmark sidebar: clean white surface, compact spacing, green active rail. */
+/* Benchmark sidebar. */
 aside { background:#fff !important; border-right:1px solid #e6ebe8 !important; box-shadow:6px 0 24px rgba(12,49,28,.035) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 aside nav a { color:#66736b !important; border-radius:10px; position:relative; }
 aside nav a:hover { color:#163c27 !important; background:#f1f7f3 !important; transform:translateX(2px); }
@@ -85,7 +85,56 @@ html.dark .admin-workspace { background:#08150d !important; color:#f4f8f5 !impor
 html.dark .admin-workspace .admin-muted { color:#9eafa3; }
 html.dark .admin-workspace .admin-surface { background:#102419; border-color:#213b2b; box-shadow:0 9px 26px rgba(0,0,0,.18); }
 
-@media (max-width:1023px){main{width:100%;min-width:0}input,select,textarea,button{max-width:100%}table{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}main>header>div:last-child{display:none!important}body>div>main,body>div>div>main{padding-top:4rem}.alajo-mobile-drawer{background:#fff!important;border-right:1px solid #e5ebe7;box-shadow:16px 0 40px rgba(0,0,0,.12);backdrop-filter:none!important}.alajo-mobile-overlay{background:rgba(7,21,12,.48)!important;backdrop-filter:none!important}html.dark .alajo-mobile-drawer{background:#0d1d13!important;border-right-color:#203b2a}}
-@media (max-width:639px){.dashboard-card{min-width:0}h1,h2,h3{overflow-wrap:anywhere}}
+/* USER PLATFORM BENCHMARK: shared across every route that renders AppSidebar. */
+.alajo-user-ui { background:#f5f7f5; }
+.alajo-user-ui main { background:#f5f7f5; color:#142019; }
+.alajo-user-ui main section { max-width:1400px; }
+.alajo-user-ui main h1 { color:#101812; letter-spacing:-.025em; }
+.alajo-user-ui main h2 { color:#142019; letter-spacing:-.018em; }
+.alajo-user-ui main h3 { color:#193025; }
+.alajo-user-ui main p { color:#65736a; }
+.alajo-user-ui main .text-white { color:#fff !important; }
+.alajo-user-ui main .text-white\/90 { color:rgba(255,255,255,.9) !important; }
+.alajo-user-ui main .text-white\/80 { color:rgba(255,255,255,.8) !important; }
+.alajo-user-ui main .text-white\/70 { color:rgba(255,255,255,.7) !important; }
+.alajo-user-ui main .text-white\/60 { color:rgba(255,255,255,.6) !important; }
+.alajo-user-ui main .text-white\/50 { color:rgba(20,32,25,.58) !important; }
+.alajo-user-ui main .text-white\/40 { color:rgba(20,32,25,.46) !important; }
+.alajo-user-ui main .text-white\/35 { color:rgba(20,32,25,.42) !important; }
+.alajo-user-ui main .bg-white\/5,.alajo-user-ui main .bg-white\/\[0\.025\],.alajo-user-ui main .bg-white\/\[0\.035\],.alajo-user-ui main .bg-white\/\[0\.045\],.alajo-user-ui main .bg-white\/\[0\.05\],.alajo-user-ui main .bg-white\/\[0\.06\],.alajo-user-ui main .bg-white\/\[0\.07\],.alajo-user-ui main .bg-white\/10 { background:#fff !important; }
+.alajo-user-ui main .border-white\/\[0\.08\],.alajo-user-ui main .border-white\/\[0\.09\],.alajo-user-ui main .border-white\/10 { border-color:#e2e9e4 !important; }
+.alajo-user-ui main .bg-\[\#06130b\],.alajo-user-ui main .bg-\[\#08150d\],.alajo-user-ui main .bg-\[\#07180e\],.alajo-user-ui main .bg-\[\#0a2114\],.alajo-user-ui main .bg-\[\#0c2a18\] { background:#f5f7f5 !important; }
+.alajo-user-ui main .bg-gradient-to-br { background:#fff !important; }
+.alajo-user-ui main .bg-\[\#081a10\] { background:#f8faf8 !important; }
+.alajo-user-ui main .shadow-\[0_15px_45px_rgba\(0\,0\,0\,.16\)\],.alajo-user-ui main .shadow-\[0_20px_70px_rgba\(0\,0\,0\,.28\)\] { box-shadow:0 8px 24px rgba(12,49,28,.06) !important; }
+.alajo-user-ui main a:not(.user-sidebar a) { color:#176b3b; }
+.alajo-user-ui main a:not(.user-sidebar a):hover { color:#0f512d; }
+.alajo-user-ui main button:not(.alajo-switch):not([role="switch"]) { border-radius:10px; }
+.alajo-user-ui main .rounded-3xl { border-radius:18px; }
+.alajo-user-ui main .rounded-2xl { border-radius:14px; }
+.alajo-user-ui main .rounded-xl { border-radius:10px; }
+.alajo-user-ui main table { background:#fff; border:1px solid #e3e9e5; border-radius:14px; overflow:hidden; }
+.alajo-user-ui main th { background:#f5f8f6; color:#4f5f55; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.alajo-user-ui main td { color:#25352b; border-color:#edf1ee; font-size:13px; }
+.alajo-user-ui main tr:hover td { background:#f7faf8; }
+.alajo-user-ui .user-sidebar { background:#fff !important; }
+
+/* Green-led benchmark cards: primary information uses a deliberate dark-green surface. */
+.alajo-user-ui .alajo-primary,.alajo-user-ui main .bg-\[\#0f5b32\],.alajo-user-ui main .bg-\[\#0f6b3b\],.alajo-user-ui main .bg-emerald-700 { background:#0f5b32 !important; color:#fff !important; }
+.alajo-user-ui .alajo-primary p,.alajo-user-ui main .bg-\[\#0f5b32\] p,.alajo-user-ui main .bg-\[\#0f6b3b\] p { color:rgba(255,255,255,.72) !important; }
+
+html.dark .alajo-user-ui { background:#08150d; }
+html.dark .alajo-user-ui main { background:#08150d; color:#f4f8f5; }
+html.dark .alajo-user-ui main h1,html.dark .alajo-user-ui main h2,html.dark .alajo-user-ui main h3 { color:#f4f8f5; }
+html.dark .alajo-user-ui main p { color:#9eafa3; }
+html.dark .alajo-user-ui main .bg-white\/5,html.dark .alajo-user-ui main .bg-white\/\[0\.025\],html.dark .alajo-user-ui main .bg-white\/\[0\.035\],html.dark .alajo-user-ui main .bg-white\/\[0\.045\],html.dark .alajo-user-ui main .bg-white\/\[0\.05\],html.dark .alajo-user-ui main .bg-white\/\[0\.06\],html.dark .alajo-user-ui main .bg-white\/\[0\.07\],html.dark .alajo-user-ui main .bg-white\/10 { background:#102419 !important; }
+html.dark .alajo-user-ui main .border-white\/\[0\.08\],html.dark .alajo-user-ui main .border-white\/\[0\.09\],html.dark .alajo-user-ui main .border-white\/10 { border-color:#294533 !important; }
+html.dark .alajo-user-ui main table { background:#102419; border-color:#294533; }
+html.dark .alajo-user-ui main th { background:#152a1d; color:#b7c7bc; }
+html.dark .alajo-user-ui main td { color:#e2ebe5; border-color:#203b2a; }
+html.dark .alajo-user-ui main tr:hover td { background:#14291d; }
+
+@media (max-width:1023px){main{width:100%;min-width:0}input,select,textarea,button{max-width:100%}table{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}main>header>div:last-child{display:none!important}body>div>main,body>div>div>main{padding-top:4rem}.alajo-mobile-drawer{background:#fff!important;border-right:1px solid #e5ebe7;box-shadow:16px 0 40px rgba(0,0,0,.12);backdrop-filter:none!important}.alajo-mobile-overlay{background:rgba(7,21,12,.48)!important;backdrop-filter:none!important}html.dark .alajo-mobile-drawer{background:#0d1d13!important;border-right-color:#203b2a}.alajo-user-ui main section{padding-left:16px;padding-right:16px}.alajo-user-ui main .grid{gap:12px}}
+@media (max-width:639px){.dashboard-card{min-width:0}h1,h2,h3{overflow-wrap:anywhere}.alajo-user-ui main h1{font-size:26px}.alajo-user-ui main h2{font-size:18px}}
 @media (min-width:1024px){body>div>main,body>div>div>main{padding-top:0}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
