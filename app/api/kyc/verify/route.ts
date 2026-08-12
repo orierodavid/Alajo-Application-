@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '../../../../src/lib/supabase/server'
-import { createAdminClient } from '../../../../src/lib/supabase/admin'
 
 type KycType = 'bvn' | 'nin'
 
@@ -39,21 +38,9 @@ export async function POST(request: Request) {
       return jsonError(`${type.toUpperCase()} must contain exactly 10 digits.`, 400, 'INVALID_LENGTH')
     }
 
-    // MOCK MODE: no BVN/NIN provider is called yet. Any syntactically valid
-    // 10-digit value is accepted for development/testing only.
+    // MOCK MODE: no BVN/NIN provider is called yet. Any valid 10-digit value
+    // is accepted for development/testing only.
     const reference = `mock_${type}_${Date.now()}`
-    const admin = createAdminClient()
-    const { data: existing, error: lookupError } = await admin
-      .from('kyc_records')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (lookupError) {
-      console.error('KYC lookup failed:', lookupError)
-      return jsonError('KYC verification could not access your record. Please try again.', 503, 'KYC_LOOKUP_FAILED')
-    }
-
     const now = new Date().toISOString()
     const payload = {
       user_id: user.id,
@@ -64,13 +51,24 @@ export async function POST(request: Request) {
       reviewed_at: now,
     }
 
+    const { data: existing, error: lookupError } = await supabase
+      .from('kyc_records')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (lookupError) {
+      console.error('KYC lookup failed:', lookupError)
+      return jsonError('KYC record lookup failed. Please try again.', 503, 'KYC_LOOKUP_FAILED')
+    }
+
     const write = existing
-      ? await admin.from('kyc_records').update(payload).eq('id', existing.id)
-      : await admin.from('kyc_records').insert(payload)
+      ? await supabase.from('kyc_records').update(payload).eq('id', existing.id)
+      : await supabase.from('kyc_records').insert(payload)
 
     if (write.error) {
       console.error('KYC persistence failed:', write.error)
-      return jsonError('Test identity was accepted, but the KYC record could not be saved. Please try again.', 503, 'KYC_PERSIST_FAILED')
+      return jsonError('Test identity was accepted, but the KYC record could not be saved.', 503, 'KYC_PERSIST_FAILED')
     }
 
     return NextResponse.json({
