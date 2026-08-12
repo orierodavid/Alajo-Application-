@@ -26,6 +26,11 @@ export async function middleware(request: NextRequest) {
 
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next()
 
+  // API responses are never indexable, but API authentication remains route-specific.
+  if (pathname === '/api' || pathname.startsWith('/api/')) {
+    return privateResponseHeaders(NextResponse.next())
+  }
+
   const isAdmin = pathname.startsWith('/admin')
   const isUser = isUserProtected(pathname)
   if (!isAdmin && !isUser) return NextResponse.next()
@@ -61,5 +66,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*', '/groups/:path*', '/join-group/:path*', '/contributions/:path*', '/payouts/:path*', '/wallet/:path*', '/transactions/:path*', '/notifications/:path*', '/settings/:path*', '/help-center/:path*', '/onboarding/:path*'],
+  matcher: ['/api/:path*', '/admin/:path*', '/dashboard/:path*', '/groups/:path*', '/join-group/:path*', '/contributions/:path*', '/payouts/:path*', '/wallet/:path*', '/transactions/:path*', '/notifications/:path*', '/settings/:path*', '/help-center/:path*', '/onboarding/:path*'],
 }
