@@ -2,11 +2,35 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { MobileNavigation } from '@/components/layout/mobile-navigation'
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://alajo-application.vercel.app'
+
 export const metadata: Metadata = {
-  title: 'Alajo — Smart Rotational Savings',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Alajo — Smart Rotational Savings',
+    template: '%s | Alajo',
+  },
   description: 'Structured rotational savings for everyone.',
   applicationName: 'Alajo',
   manifest: '/manifest.webmanifest',
+  alternates: { canonical: '/' },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Alajo',
+    title: 'Alajo — Smart Rotational Savings',
+    description: 'Structured rotational savings for everyone.',
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Alajo — Smart Rotational Savings',
+    description: 'Structured rotational savings for everyone.',
+  },
   icons: {
     icon: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
     shortcut: [{ url: '/icons/alajo.svg', type: 'image/svg+xml' }],
