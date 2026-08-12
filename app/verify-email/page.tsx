@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 const OTP_LENGTH = 8;
+const SUCCESS_DISPLAY_MS = 2600;
 
 export default function VerifyEmailPage() {
   const [email, setEmail] = useState('');
@@ -26,6 +27,12 @@ export default function VerifyEmailPage() {
     const timer = window.setInterval(() => setResendSeconds(value => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [resendSeconds]);
+
+  useEffect(() => {
+    if (!verified) return;
+    const timer = window.setTimeout(() => { window.location.href = '/dashboard'; }, SUCCESS_DISPLAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [verified]);
 
   function setDigits(value: string) {
     const digits = value.replace(/\D/g, '').slice(0, OTP_LENGTH);
@@ -104,33 +111,39 @@ export default function VerifyEmailPage() {
   return (
     <main className="min-h-screen bg-[#f7faf8] flex items-center justify-center px-4 py-8">
       <style jsx>{`
-        @keyframes alajoSuccessPop {
-          0% { opacity: 0; transform: scale(.55); }
-          65% { opacity: 1; transform: scale(1.08); }
+        @keyframes alajoSuccessCircle {
+          0% { opacity: 0; transform: scale(.35); }
+          55% { opacity: 1; transform: scale(1.12); }
+          75% { transform: scale(.96); }
           100% { opacity: 1; transform: scale(1); }
         }
-        @keyframes alajoSuccessRing {
-          0% { opacity: 0; transform: scale(.65); }
-          100% { opacity: 1; transform: scale(1); }
+        @keyframes alajoSuccessPulse {
+          0%, 100% { transform: scale(1); opacity: .65; }
+          50% { transform: scale(1.18); opacity: .18; }
         }
         @keyframes alajoSuccessCheck {
-          0% { stroke-dashoffset: 30; opacity: 0; }
-          20% { opacity: 1; }
+          0% { stroke-dashoffset: 34; opacity: 0; }
+          15% { opacity: 1; }
           100% { stroke-dashoffset: 0; opacity: 1; }
         }
-        @keyframes alajoFadeUp {
-          0% { opacity: 0; transform: translateY(10px); }
+        @keyframes alajoSuccessText {
+          0% { opacity: 0; transform: translateY(18px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        .alajo-success-icon { animation: alajoSuccessPop .55s cubic-bezier(.2,.8,.2,1) both; }
-        .alajo-success-ring { animation: alajoSuccessRing .45s ease-out .05s both; }
-        .alajo-success-check { stroke-dasharray: 30; stroke-dashoffset: 30; animation: alajoSuccessCheck .55s ease-out .28s forwards; }
-        .alajo-success-copy { animation: alajoFadeUp .45s ease-out .35s both; }
-        .alajo-success-button { animation: alajoFadeUp .45s ease-out .5s both; }
+        @keyframes alajoSuccessButton {
+          0% { opacity: 0; transform: translateY(14px) scale(.98); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .alajo-success-circle { animation: alajoSuccessCircle .75s cubic-bezier(.2,.9,.25,1) both; }
+        .alajo-success-pulse { animation: alajoSuccessPulse 1.5s ease-in-out infinite; }
+        .alajo-success-check { stroke-dasharray: 34; stroke-dashoffset: 34; animation: alajoSuccessCheck .65s ease-out .45s forwards; }
+        .alajo-success-text { animation: alajoSuccessText .55s ease-out .65s both; }
+        .alajo-success-button { animation: alajoSuccessButton .55s ease-out 1s both; }
         @media (prefers-reduced-motion: reduce) {
-          .alajo-success-icon, .alajo-success-ring, .alajo-success-check, .alajo-success-copy, .alajo-success-button { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
+          .alajo-success-circle, .alajo-success-pulse, .alajo-success-check, .alajo-success-text, .alajo-success-button { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
         }
       `}</style>
+
       <section className="w-full max-w-lg">
         <div className="text-center mb-7">
           <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-[#15221b]">
@@ -138,6 +151,7 @@ export default function VerifyEmailPage() {
             Alajo
           </Link>
         </div>
+
         <div className="rounded-3xl bg-white border border-[#e5ebe7] shadow-[0_20px_60px_rgba(15,35,25,0.08)] px-5 py-8 sm:px-10 sm:py-10 text-center">
           {!verified ? (
             <>
@@ -146,33 +160,56 @@ export default function VerifyEmailPage() {
               <p className="mt-3 text-[#65726b]">We sent a verification code to</p>
               <p className="mt-1 font-semibold text-[#15221b] break-all">{email || 'your email address'}</p>
               <p className="mt-2 text-sm text-[#65726b]">Enter the 8-digit code below to continue.</p>
+
               <div className="mt-7 flex flex-wrap justify-center gap-2 sm:gap-3" aria-label="Email verification code">
                 {code.map((digit, index) => (
-                  <input key={index} ref={element => { inputs.current[index] = element; }} value={digit} onChange={event => updateDigit(index, event.target.value)} onKeyDown={event => handleKeyDown(index, event)} onPaste={handlePaste} inputMode="numeric" autoComplete={index === 0 ? 'one-time-code' : 'off'} maxLength={1} aria-label={`Verification digit ${index + 1}`} className={`h-14 w-10 sm:h-16 sm:w-11 rounded-xl border text-center text-xl font-bold text-[#15221b] outline-none transition-all ${digit ? 'border-[#16a34a] bg-[#f0fdf4] ring-2 ring-[#dcfce7]' : 'border-[#d9e2dc] bg-white'} focus:border-[#16a34a] focus:ring-2 focus:ring-[#dcfce7]`} />
+                  <input
+                    key={index}
+                    ref={element => { inputs.current[index] = element; }}
+                    value={digit}
+                    onChange={event => updateDigit(index, event.target.value)}
+                    onKeyDown={event => handleKeyDown(index, event)}
+                    onPaste={handlePaste}
+                    inputMode="numeric"
+                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                    maxLength={1}
+                    aria-label={`Verification digit ${index + 1}`}
+                    className={`h-14 w-10 sm:h-16 sm:w-11 rounded-xl border text-center text-xl font-bold text-[#15221b] outline-none transition-all ${digit ? 'border-[#16a34a] bg-[#f0fdf4] ring-2 ring-[#dcfce7]' : 'border-[#d9e2dc] bg-white'} focus:border-[#16a34a] focus:ring-2 focus:ring-[#dcfce7]`}
+                  />
                 ))}
               </div>
+
               {loading && <p className="mt-5 text-sm text-[#65726b]">Verifying your code…</p>}
               {message && <div className="mt-5 rounded-xl bg-[#ecfdf3] px-4 py-3 text-sm font-medium text-[#15803d]">{message}</div>}
               {error && <div role="alert" className="mt-5 rounded-xl bg-[#fff1f2] px-4 py-3 text-sm font-medium text-[#be123c]">{error}</div>}
-              <button type="button" onClick={resend} disabled={loading || resendSeconds > 0} className="mt-6 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50">{resendSeconds > 0 ? `Resend code in ${resendSeconds}s` : 'Resend code'}</button>
+
+              <button type="button" onClick={resend} disabled={loading || resendSeconds > 0} className="mt-6 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50">
+                {resendSeconds > 0 ? `Resend code in ${resendSeconds}s` : 'Resend code'}
+              </button>
               <Link href="/signup" className="mt-5 inline-block text-sm font-medium text-[#16a34a] hover:underline">← Back to sign up</Link>
             </>
           ) : (
-            <div className="py-3">
-              <div className="alajo-success-icon relative mx-auto mb-7 grid h-24 w-24 place-items-center" aria-hidden="true">
-                <div className="alajo-success-ring absolute inset-0 rounded-full bg-[#dcfce7]" />
-                <div className="relative grid h-16 w-16 place-items-center rounded-full bg-[#16a34a] text-white shadow-lg shadow-green-200">
-                  <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="2.8">
+            <div className="py-3" aria-live="polite">
+              <div className="relative mx-auto mb-8 h-32 w-32 flex items-center justify-center" aria-hidden="true">
+                <div className="alajo-success-pulse absolute inset-0 rounded-full bg-[#86efac]" />
+                <div className="alajo-success-circle relative grid h-24 w-24 place-items-center rounded-full bg-[#16a34a] shadow-[0_12px_30px_rgba(22,163,74,0.28)]">
+                  <svg viewBox="0 0 24 24" className="h-12 w-12 text-white" fill="none" stroke="currentColor" strokeWidth="2.8">
                     <path className="alajo-success-check" d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </div>
-              <div className="alajo-success-copy">
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#15221b]">Verified successfully</h1>
-                <p className="mt-3 text-[#65726b]">Your email has been verified. Your Alajo account is ready.</p>
+
+              <div className="alajo-success-text">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#16a34a]">Email verified</p>
+                <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-[#15221b]">Verified successfully</h1>
+                <p className="mt-3 text-[#65726b]">Your email has been verified. Welcome to Alajo.</p>
               </div>
+
               <div className="alajo-success-button">
-                <button type="button" onClick={() => { window.location.href = '/dashboard'; }} className="mt-8 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#15803d] hover:shadow-lg hover:shadow-green-100">Continue to Alajo</button>
+                <button type="button" onClick={() => { window.location.href = '/dashboard'; }} className="mt-8 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#15803d] hover:shadow-lg hover:shadow-green-100">
+                  Continue to Alajo
+                </button>
+                <p className="mt-3 text-xs text-[#8a958f]">Taking you to your dashboard…</p>
               </div>
             </div>
           )}
