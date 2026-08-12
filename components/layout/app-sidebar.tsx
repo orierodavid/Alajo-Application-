@@ -10,7 +10,7 @@ import SignOutButton from '@/app/dashboard/sign-out-button'
 const nav = [
   ['dashboard','/dashboard','Dashboard'], ['groups','/groups','Groups'], ['contributions','/contributions','Contributions'],
   ['payouts','/payouts','Payouts'], ['wallet','/wallet','Wallet'], ['transactions','/transactions','Transactions'],
-  ['invite','/invite-earn','Invite & Earn'], ['notifications','/notifications','Notifications'], ['settings','/settings','Settings'], ['help','/help-center','Help Center'],
+  ['notifications','/notifications','Notifications'], ['settings','/settings','Settings'], ['help','/help-center','Help Center'],
 ] as const
 
 export function AppSidebar() {
@@ -38,11 +38,6 @@ export function AppSidebar() {
         </Link>
       })}
     </nav>
-    <div className="bg-[#0f5b32] text-white rounded-2xl p-4 mb-3 shadow-[0_10px_25px_rgba(15,91,50,.12)]">
-      <p className="font-semibold text-[13px]">Grow your savings</p>
-      <p className="text-[10px] text-white/70 mt-1 leading-4">Invite friends and build stronger savings cycles together.</p>
-      <Link href="/invite-earn" className="mt-3 inline-flex bg-white text-[#0b2313] text-[11px] font-semibold px-3 py-2 rounded-lg">Invite Friends <span className="ml-1">↗</span></Link>
-    </div>
     <div className="pt-2 border-t border-[#edf0ee]"><SignOutButton /></div>
   </aside>
 }
