@@ -34,12 +34,15 @@ export async function GET(request: Request) {
 
   let reconciled = 0
   let failed = 0
+  const expectedDomain = expectedPaystackDomain()
+  const now = new Date().toISOString()
   const { data: pendingPayments, error: pendingError } = await supabase
     .from('payments')
-    .select('id,amount,currency,status,provider,provider_reference')
+    .select('id,amount,currency,status,provider,provider_reference,metadata')
     .eq('provider', 'paystack')
     .in('status', ['pending', 'processing'])
     .filter('metadata->>source', 'eq', 'wallet_funding')
+    .filter('metadata->>environment', 'eq', expectedDomain)
     .order('created_at', { ascending: true })
     .limit(25)
 
@@ -49,7 +52,19 @@ export async function GET(request: Request) {
     for (const payment of pendingPayments ?? []) {
       try {
         const verified = await verifyPaystackTransaction(payment.provider_reference)
-        if (verified.domain !== expectedPaystackDomain() || verified.reference !== payment.provider_reference || verified.currency !== payment.currency || verified.amount !== Math.round(Number(payment.amount) * 100)) {
+        const referenceMatches = verified.reference === payment.provider_reference
+        const amountMatches = verified.amount === Math.round(Number(payment.amount) * 100)
+        const currencyMatches = String(verified.currency).toUpperCase() === String(payment.currency).toUpperCase()
+        const domainMatches = verified.domain === expectedDomain
+
+        if (!referenceMatches || !amountMatches || !currencyMatches || !domainMatches) {
+          console.warn('Paystack reconciliation verification mismatch', {
+            paymentId: payment.id,
+            referenceMatches,
+            amountMatches,
+            currencyMatches,
+            domainMatches,
+          })
           continue
         }
 
@@ -64,10 +79,25 @@ export async function GET(request: Request) {
             console.error('Paystack reconciliation credit failed:', creditError)
           } else {
             reconciled += 1
+            console.log('Paystack wallet funding reconciled successfully', { paymentId: payment.id })
           }
         } else if (verified.status === 'failed' || verified.status === 'reversed') {
-          await supabase.from('payments').update({ status: verified.status, updated_at: new Date().toISOString(), metadata: { provider_status: verified.status, provider_payload: verified } }).eq('id', payment.id)
-          failed += 1
+          const { error: updateError } = await supabase
+            .from('payments')
+            .update({
+              status: verified.status,
+              updated_at: now,
+              metadata: {
+                ...(payment.metadata as Record<string, unknown> ?? {}),
+                provider_status: verified.status,
+                provider_payload: verified,
+                reconciled_at: now,
+              },
+            })
+            .eq('id', payment.id)
+            .in('status', ['pending', 'processing'])
+          if (!updateError) failed += 1
+          else console.error('Paystack reconciliation status update failed:', updateError)
         }
       } catch (reconcileError) {
         console.error(`Paystack reconciliation failed for ${payment.provider_reference}:`, reconcileError)
