@@ -22,22 +22,32 @@ export async function POST(request: Request) {
     if (!title || !message) return NextResponse.json({ error: 'Title and message are required.' }, { status: 400 })
     if (title.length > 120 || message.length > 2000) return NextResponse.json({ error: 'Message is too long.' }, { status: 400 })
 
-    const { data: users, error: usersError } = await auth.admin.auth.admin.listUsers({ perPage: 1000 })
-    if (usersError) throw usersError
-    const userIds = (users?.users ?? []).map(u => u.id)
+    const admin = auth.admin
+    const userIds: string[] = []
+    for (let page = 1; ; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error) throw error
+      const users = data?.users ?? []
+      userIds.push(...users.map(u => u.id))
+      if (users.length < 1000) break
+    }
     if (!userIds.length) return NextResponse.json({ sent: 0 })
 
-    const rows = userIds.map(user_id => ({
-      user_id,
-      type: 'admin_broadcast',
-      title,
-      body: message,
-      read_at: null,
-      metadata: { source: 'admin_broadcast', sender_user_id: auth.user.id },
-    }))
-    const { error } = await auth.admin.from('notifications').insert(rows)
-    if (error) throw error
-    return NextResponse.json({ sent: rows.length })
+    let sent = 0
+    for (let offset = 0; offset < userIds.length; offset += 500) {
+      const rows = userIds.slice(offset, offset + 500).map(user_id => ({
+        user_id,
+        type: 'admin_broadcast',
+        title,
+        body: message,
+        read_at: null,
+        metadata: { source: 'admin_broadcast', sender_user_id: auth.user.id },
+      }))
+      const { error } = await admin.from('notifications').insert(rows)
+      if (error) throw error
+      sent += rows.length
+    }
+    return NextResponse.json({ sent })
   } catch (error) {
     console.error('Admin broadcast notification error:', error)
     return NextResponse.json({ error: 'Unable to send notification.' }, { status: 500 })
