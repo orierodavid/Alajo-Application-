@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
 import { verifyPaystackTransaction } from '@/lib/paystack'
 
+function expectedPaystackDomain() {
+  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const reference = url.searchParams.get('reference')
@@ -18,7 +22,7 @@ export async function GET(request: Request) {
       .maybeSingle()
 
     if (paymentError || !payment) return NextResponse.redirect(new URL('/wallet/success?status=failed', url.origin))
-    if (verified.domain !== 'test' || verified.reference !== reference || verified.currency !== payment.currency || verified.amount !== Math.round(Number(payment.amount) * 100)) {
+    if (verified.domain !== expectedPaystackDomain() || verified.reference !== reference || verified.currency !== payment.currency || verified.amount !== Math.round(Number(payment.amount) * 100)) {
       return NextResponse.redirect(new URL('/wallet/success?status=failed', url.origin))
     }
 
