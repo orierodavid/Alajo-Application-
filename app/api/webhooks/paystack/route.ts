@@ -1,11 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
-import { verifyPaystackTransaction } from '@/lib/paystack'
-
-function expectedPaystackDomain() {
-  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
-}
+import { paystackEnvironmentFromSecret, verifyPaystackTransaction } from '@/lib/paystack'
 
 export async function POST(request: Request) {
   const secret = process.env.PAYSTACK_SECRET_KEY
@@ -32,14 +28,38 @@ export async function POST(request: Request) {
   try {
     const reference = event.data.reference
     const verified = await verifyPaystackTransaction(reference)
-    if (verified.domain !== expectedPaystackDomain() || verified.status !== 'success' || verified.reference !== reference || verified.currency !== 'NGN') {
+    const admin = createAdminClient()
+    const { data: payment } = await admin
+      .from('payments')
+      .select('id,amount,currency,user_id,provider_reference,status')
+      .eq('provider', 'paystack')
+      .eq('provider_reference', reference)
+      .maybeSingle()
+
+    if (!payment) return NextResponse.json({ received: true })
+
+    const requestedAmount = Number(verified.requested_amount ?? verified.amount)
+    const expectedAmountKobo = Math.round(Number(payment.amount) * 100)
+    if (
+      verified.domain !== paystackEnvironmentFromSecret() ||
+      verified.status !== 'success' ||
+      verified.reference !== reference ||
+      String(verified.currency).toUpperCase() !== String(payment.currency).toUpperCase() ||
+      requestedAmount !== expectedAmountKobo
+    ) {
       return NextResponse.json({ received: true })
     }
 
-    const admin = createAdminClient()
+    const verifiedMetadata = verified.metadata && typeof verified.metadata === 'object'
+      ? verified.metadata as Record<string, unknown>
+      : {}
+    if (verifiedMetadata.user_id !== payment.user_id || verifiedMetadata.payment_reference !== payment.provider_reference) {
+      return NextResponse.json({ received: true })
+    }
+
     const { data: result, error } = await admin.rpc('credit_wallet_from_paystack', {
       p_provider_reference: reference,
-      p_verified_amount_kobo: verified.amount,
+      p_verified_amount_kobo: expectedAmountKobo,
       p_currency: verified.currency,
       p_provider_payload: verified,
     })
