@@ -35,9 +35,7 @@ export async function POST(request: Request) {
 
     await admin.from('audit_logs').insert({ id: crypto.randomUUID(), actor_user_id: user.id, action: 'payment_requery', entity_type: 'payment', entity_id: payment.id, previous_state: payment, new_state: { paystack_status: verified.status, domain: verified.domain, amount: verified.amount, currency: verified.currency }, reason: 'Admin manually requeried Paystack transaction.' })
 
-    if (!referenceMatches || !amountMatches || !currencyMatches || !domainMatches) {
-      return NextResponse.json({ status: 'verification_failed', message: 'Paystack verification did not match the Alajo payment.', checks: { referenceMatches, amountMatches, currencyMatches, domainMatches } }, { status: 422 })
-    }
+    if (!referenceMatches || !amountMatches || !currencyMatches || !domainMatches) return NextResponse.json({ status: 'verification_failed', message: 'Paystack verification did not match the Alajo payment.', checks: { referenceMatches, amountMatches, currencyMatches, domainMatches } }, { status: 422 })
 
     if (verified.status === 'success') {
       const { data: result, error: creditError } = await admin.rpc('credit_wallet_from_paystack', { p_provider_reference: payment.provider_reference, p_verified_amount_kobo: Number(verified.amount), p_currency: verified.currency, p_provider_payload: verified })
@@ -45,9 +43,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: 'settled', result })
     }
 
+    if (verified.status === 'refunded') {
+      const { error } = await admin.from('payments').update({ status: 'refunded', updated_at: new Date().toISOString(), metadata: { ...(payment.metadata as Record<string, unknown> ?? {}), paystack_status: verified.status, reconciled_at: new Date().toISOString() } }).eq('id', payment.id).eq('status', payment.status)
+      if (error) throw error
+      return NextResponse.json({ status: 'refunded', paystackStatus: verified.status })
+    }
+
     if (['failed','reversed'].includes(verified.status)) {
-      const nextStatus = verified.status === 'reversed' ? 'failed' : 'failed'
-      const { error } = await admin.from('payments').update({ status: nextStatus, updated_at: new Date().toISOString(), metadata: { ...(payment.metadata as Record<string, unknown> ?? {}), paystack_status: verified.status, reconciled_at: new Date().toISOString() } }).eq('id', payment.id).eq('status', payment.status)
+      const { error } = await admin.from('payments').update({ status: 'failed', updated_at: new Date().toISOString(), metadata: { ...(payment.metadata as Record<string, unknown> ?? {}), paystack_status: verified.status, reconciled_at: new Date().toISOString() } }).eq('id', payment.id).eq('status', payment.status)
       if (error) throw error
       return NextResponse.json({ status: 'not_credited', paystackStatus: verified.status })
     }
