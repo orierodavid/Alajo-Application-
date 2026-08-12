@@ -12,6 +12,13 @@ async function requireAdmin() {
   return { user, admin: createAdminClient() }
 }
 
+function expectedPaystackEnvironment() {
+  const key = process.env.PAYSTACK_SECRET_KEY ?? ''
+  if (key.startsWith('sk_live_')) return 'live'
+  if (key.startsWith('sk_test_')) return 'test'
+  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+}
+
 export async function POST(request: Request) {
   try {
     const auth = await requireAdmin()
@@ -27,7 +34,7 @@ export async function POST(request: Request) {
     if (!['pending','processing'].includes(payment.status)) return NextResponse.json({ error: `Payment is already ${payment.status}.`, status: payment.status }, { status: 409 })
 
     const verified = await verifyPaystackTransaction(payment.provider_reference)
-    const expectedEnvironment = process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+    const expectedEnvironment = expectedPaystackEnvironment()
     const amountMatches = Number(verified.amount) === Math.round(Number(payment.amount) * 100)
     const currencyMatches = String(verified.currency).toUpperCase() === String(payment.currency).toUpperCase()
     const referenceMatches = verified.reference === payment.provider_reference
@@ -35,7 +42,13 @@ export async function POST(request: Request) {
 
     await admin.from('audit_logs').insert({ id: crypto.randomUUID(), actor_user_id: user.id, action: 'payment_requery', entity_type: 'payment', entity_id: payment.id, previous_state: payment, new_state: { paystack_status: verified.status, domain: verified.domain, amount: verified.amount, currency: verified.currency }, reason: 'Admin manually requeried Paystack transaction.' })
 
-    if (!referenceMatches || !amountMatches || !currencyMatches || !domainMatches) return NextResponse.json({ status: 'verification_failed', message: 'Paystack verification did not match the Alajo payment.', checks: { referenceMatches, amountMatches, currencyMatches, domainMatches } }, { status: 422 })
+    if (!referenceMatches || !amountMatches || !currencyMatches || !domainMatches) {
+      return NextResponse.json({
+        status: 'verification_failed',
+        message: 'Paystack verification did not match the Alajo payment.',
+        checks: { referenceMatches, amountMatches, currencyMatches, domainMatches },
+      }, { status: 422 })
+    }
 
     if (verified.status === 'success') {
       const { data: result, error: creditError } = await admin.rpc('credit_wallet_from_paystack', { p_provider_reference: payment.provider_reference, p_verified_amount_kobo: Number(verified.amount), p_currency: verified.currency, p_provider_payload: verified })
