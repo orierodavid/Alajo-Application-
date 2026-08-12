@@ -7,9 +7,19 @@ import Link from 'next/link'
 const TEST_VALUES = { bvn: '0000000000', nin: '1111111111' } as const
 const KYC_DIGITS = 10
 
+type KycType = 'bvn' | 'nin'
+
+type ApiResult = {
+  status?: string
+  persisted?: boolean
+  error?: string
+  message?: string
+  code?: string
+}
+
 export default function KycPage() {
   const router = useRouter()
-  const [type, setType] = useState<'bvn' | 'nin'>('bvn')
+  const [type, setType] = useState<KycType>('bvn')
   const [value, setValue] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,19 +31,37 @@ export default function KycPage() {
       setError(`Enter a valid ${KYC_DIGITS}-digit ${type.toUpperCase()} for development testing.`)
       return
     }
+
     setLoading(true)
     try {
       const response = await fetch('/api/kyc/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
         body: JSON.stringify({ type, value }),
       })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error || result.message || 'Verification could not be completed.')
-      if (result.status !== 'approved' || !result.persisted) throw new Error(result.message || 'Identity verification was not approved.')
+
+      const text = await response.text()
+      let result: ApiResult = {}
+      try {
+        result = text ? JSON.parse(text) as ApiResult : {}
+      } catch {
+        throw new Error(`The verification service returned an invalid response (${response.status}). Please try again.`)
+      }
+
+      if (!response.ok) throw new Error(result.error || result.message || `Verification could not be completed (${response.status}).`)
+      if (result.status !== 'approved' || result.persisted !== true) {
+        throw new Error(result.message || 'Identity verification was not saved. Please try again.')
+      }
+
       router.replace('/bank-details')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Verification failed.')
+      if (err instanceof TypeError && /fetch/i.test(err.message)) {
+        setError('We could not reach the verification service. Check your connection and try again.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Verification failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
