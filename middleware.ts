@@ -1,9 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from '@supabase/ssr'
 import { createServerClient } from '@supabase/ssr'
 
 const PUBLIC_PATHS = new Set([
   '/admin/login', '/login', '/signup', '/forgot-password', '/reset-password',
   '/verify-email', '/auth/callback', '/',
+])
+
+const PUBLIC_API_PATHS = new Set([
+  '/api/wallet/fund/callback',
+  '/api/webhooks/paystack',
 ])
 
 const USER_PROTECTED_PREFIXES = [
@@ -25,6 +30,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next()
+
+  // Paystack callback/webhook must be reachable without a browser session.
+  if (PUBLIC_API_PATHS.has(pathname)) {
+    return privateResponseHeaders(NextResponse.next())
+  }
 
   // API responses are never indexable, but API authentication remains route-specific.
   if (pathname === '/api' || pathname.startsWith('/api/')) {
