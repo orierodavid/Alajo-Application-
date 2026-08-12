@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyPaystackTransaction } from '@/lib/paystack'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+function expectedPaystackDomain() {
+  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+}
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET
@@ -27,5 +32,48 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: 'Auto-debit processing failed.' }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, result: data })
+  let reconciled = 0
+  let failed = 0
+  const { data: pendingPayments, error: pendingError } = await supabase
+    .from('payments')
+    .select('id,amount,currency,status,provider,provider_reference')
+    .eq('provider', 'paystack')
+    .in('status', ['pending', 'processing'])
+    .filter('metadata->>source', 'eq', 'wallet_funding')
+    .order('created_at', { ascending: true })
+    .limit(25)
+
+  if (pendingError) {
+    console.error('Paystack reconciliation lookup failed:', pendingError)
+  } else {
+    for (const payment of pendingPayments ?? []) {
+      try {
+        const verified = await verifyPaystackTransaction(payment.provider_reference)
+        if (verified.domain !== expectedPaystackDomain() || verified.reference !== payment.provider_reference || verified.currency !== payment.currency || verified.amount !== Math.round(Number(payment.amount) * 100)) {
+          continue
+        }
+
+        if (verified.status === 'success') {
+          const { data: result, error: creditError } = await supabase.rpc('credit_wallet_from_paystack', {
+            p_provider_reference: payment.provider_reference,
+            p_verified_amount_kobo: verified.amount,
+            p_currency: verified.currency,
+            p_provider_payload: verified,
+          })
+          if (creditError || !result?.success) {
+            console.error('Paystack reconciliation credit failed:', creditError)
+          } else {
+            reconciled += 1
+          }
+        } else if (verified.status === 'failed' || verified.status === 'reversed') {
+          await supabase.from('payments').update({ status: verified.status, updated_at: new Date().toISOString(), metadata: { provider_status: verified.status, provider_payload: verified } }).eq('id', payment.id)
+          failed += 1
+        }
+      } catch (reconcileError) {
+        console.error(`Paystack reconciliation failed for ${payment.provider_reference}:`, reconcileError)
+      }
+    }
+  }
+
+  return NextResponse.json({ success: true, result: data, paystackReconciliation: { reconciled, failed } })
 }
