@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/contributions",
-      "schedule": "5 0 * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/payouts",
