@@ -4,17 +4,15 @@
 html.dark { color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { min-height: 100%; width: 100%; }
-body { margin: 0; background:#f5f7f5; color:#111814; font-family:Arial,Helvetica,sans-serif; overflow-x:hidden; transition:background-color .2s ease,color .2s ease; }
+body { margin:0; background:#f5f7f5; color:#111814; font-family:Arial,Helvetica,sans-serif; overflow-x:hidden; transition:background-color .2s ease,color .2s ease; }
 button,input,select,textarea { font:inherit; }
 img,svg { max-width:100%; }
 html.dark body { background:#08150d; color:#f4f8f5; }
 html.dark main { color:#f4f8f5; }
 
-/* Alajo 2026 benchmark: compact editorial dashboard, solid surfaces, green-led hierarchy. */
+/* Alajo 2026 benchmark: compact editorial workspace, solid surfaces, green-led hierarchy. */
 .alajo-glass { background:#fff; border:1px solid #e5ebe7; box-shadow:0 8px 24px rgba(12,49,28,.06); backdrop-filter:none; -webkit-backdrop-filter:none; }
 html.dark .alajo-glass { background:#102419; border-color:#213b2b; box-shadow:0 10px 28px rgba(0,0,0,.20); }
-
-/* Do not globally repaint cards: explicit page surfaces must win, especially green primary cards with white text. */
 main .rounded-xl.border,main .rounded-2xl.border,main .rounded-3xl.border { backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:0 7px 22px rgba(12,49,28,.045); }
 html.dark main .rounded-xl.border,html.dark main .rounded-2xl.border,html.dark main .rounded-3xl.border { box-shadow:0 9px 26px rgba(0,0,0,.18); }
 
@@ -30,18 +28,19 @@ button:focus-visible,a[href]:focus-visible { outline:2px solid rgba(22,163,74,.5
 .alajo-button:hover::before { transform:translateX(120%); }
 .alajo-button:active { transform:translateY(1px) scale(.975); }
 
-/* Compact, contained switch. */
-.alajo-switch { position:relative; display:inline-flex; width:44px; height:24px; flex:0 0 auto; align-items:center; border-radius:999px; border:1px solid #cbd7cf; background:#dfe6e1; box-shadow:inset 0 1px 2px rgba(0,0,0,.10); transition:background .22s ease,border-color .22s ease,box-shadow .22s ease; }
-.alajo-switch[data-state="on"],.alajo-switch[aria-checked="true"],.alajo-switch[aria-pressed="true"] { background:#16a34a; border-color:#16a34a; box-shadow:0 4px 14px rgba(22,163,74,.20); }
-.alajo-switch > span { position:absolute; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.20); transition:transform .25s cubic-bezier(.22,1,.36,1); }
-.alajo-switch[data-state="on"] > span,.alajo-switch[aria-checked="true"] > span,.alajo-switch[aria-pressed="true"] > span { transform:translateX(20px); }
-html.dark .alajo-switch { background:#263a2d; border-color:#385242; }
-html.dark .alajo-switch[data-state="on"],html.dark .alajo-switch[aria-checked="true"],html.dark .alajo-switch[aria-pressed="true"] { background:#22c55e; border-color:#22c55e; }
+/* One contained switch for every user/admin toggle, including legacy role=switch controls. */
+.alajo-switch,button[role="switch"] { position:relative; display:inline-flex; width:44px; height:24px; flex:0 0 auto; align-items:center; justify-content:flex-start; padding:0; border-radius:999px; border:1px solid #cbd7cf; background:#dfe6e1; box-shadow:inset 0 1px 2px rgba(0,0,0,.10); overflow:hidden; }
+.alajo-switch:hover,button[role="switch"]:hover { transform:none; }
+.alajo-switch[data-state="on"],.alajo-switch[aria-checked="true"],.alajo-switch[aria-pressed="true"],button[role="switch"][aria-checked="true"] { background:#16a34a; border-color:#16a34a; box-shadow:0 4px 14px rgba(22,163,74,.20); }
+.alajo-switch > span,button[role="switch"] > span { position:absolute; left:3px; top:3px; width:16px; height:16px; margin:0; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.20); transition:transform .25s cubic-bezier(.22,1,.36,1); display:block; }
+.alajo-switch[data-state="on"] > span,.alajo-switch[aria-checked="true"] > span,.alajo-switch[aria-pressed="true"] > span,button[role="switch"][aria-checked="true"] > span { transform:translateX(20px); }
+html.dark .alajo-switch,html.dark button[role="switch"] { background:#263a2d; border-color:#385242; }
+html.dark .alajo-switch[data-state="on"],html.dark .alajo-switch[aria-checked="true"],html.dark button[role="switch"][aria-checked="true"] { background:#22c55e; border-color:#22c55e; }
 
 main input,main select,main textarea { background:#fff; border-color:#dce5df; backdrop-filter:none; -webkit-backdrop-filter:none; transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease; color:#18251d; }
 main input:focus,main select:focus,main textarea:focus { background:#fff; border-color:#22a052; box-shadow:0 0 0 3px rgba(34,160,82,.10); }
 main select option { background:#fff;color:#173221; }
-html.dark main input,html.dark main select,html.dark main textarea { background:#12271b;color:#f3f7f4;border-color:#294533;backdrop-filter:none; }
+html.dark main input,html.dark main select,html.dark main textarea { background:#12271b;color:#f3f7f4;border-color:#294533; }
 html.dark main input:focus,html.dark main select:focus,html.dark main textarea:focus { background:#152d20; }
 html.dark main select option { background:#12271b;color:#f4f8f5; }
 html.dark .bg-white { background-color:#102419 !important; }
@@ -79,7 +78,6 @@ html.dark aside nav a[aria-current="page"],html.dark aside nav a.active { color:
 html.dark aside > div:first-child { background:#0d1d13 !important; }
 html.dark aside > div:last-child { background:#112419 !important; border-color:#203b2a; }
 
-/* Admin workspace uses the same clean benchmark instead of the old dark glass shell. */
 .admin-workspace { background:#f5f7f5 !important; color:#111814 !important; }
 .admin-workspace .admin-muted { color:#748078; }
 .admin-workspace .admin-surface { background:#fff; border:1px solid #e3e9e5; box-shadow:0 7px 22px rgba(12,49,28,.045); }
@@ -87,16 +85,7 @@ html.dark .admin-workspace { background:#08150d !important; color:#f4f8f5 !impor
 html.dark .admin-workspace .admin-muted { color:#9eafa3; }
 html.dark .admin-workspace .admin-surface { background:#102419; border-color:#213b2b; box-shadow:0 9px 26px rgba(0,0,0,.18); }
 
-@media (max-width:1023px) {
- main { width:100%; min-width:0; }
- input,select,textarea,button { max-width:100%; }
- table { display:block; width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
- main > header > div:last-child { display:none !important; }
- body > div > main,body > div > div > main { padding-top:4rem; }
- .alajo-mobile-drawer { background:#fff !important; border-right:1px solid #e5ebe7; box-shadow:16px 0 40px rgba(0,0,0,.12); backdrop-filter:none !important; }
- .alajo-mobile-overlay { background:rgba(7,21,12,.48) !important; backdrop-filter:none !important; }
- html.dark .alajo-mobile-drawer { background:#0d1d13 !important; border-right-color:#203b2a; }
-}
-@media (max-width:639px) { .dashboard-card{min-width:0;} h1,h2,h3{overflow-wrap:anywhere;} }
-@media (min-width:1024px) { body > div > main,body > div > div > main{padding-top:0;} }
-@media (prefers-reduced-motion:reduce) { *,*::before,*::after{scroll-behavior:auto !important;animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;} }
+@media (max-width:1023px){main{width:100%;min-width:0}input,select,textarea,button{max-width:100%}table{display:block;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}main>header>div:last-child{display:none!important}body>div>main,body>div>div>main{padding-top:4rem}.alajo-mobile-drawer{background:#fff!important;border-right:1px solid #e5ebe7;box-shadow:16px 0 40px rgba(0,0,0,.12);backdrop-filter:none!important}.alajo-mobile-overlay{background:rgba(7,21,12,.48)!important;backdrop-filter:none!important}html.dark .alajo-mobile-drawer{background:#0d1d13!important;border-right-color:#203b2a}}
+@media (max-width:639px){.dashboard-card{min-width:0}h1,h2,h3{overflow-wrap:anywhere}}
+@media (min-width:1024px){body>div>main,body>div>div>main{padding-top:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
