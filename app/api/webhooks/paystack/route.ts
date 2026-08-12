@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
 import { verifyPaystackTransaction } from '@/lib/paystack'
 
+function expectedPaystackDomain() {
+  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+}
+
 export async function POST(request: Request) {
   const secret = process.env.PAYSTACK_SECRET_KEY
   if (!secret) return NextResponse.json({ error: 'Webhook unavailable.' }, { status: 503 })
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
   try {
     const reference = event.data.reference
     const verified = await verifyPaystackTransaction(reference)
-    if (verified.domain !== 'test' || verified.status !== 'success' || verified.reference !== reference || verified.currency !== 'NGN') {
+    if (verified.domain !== expectedPaystackDomain() || verified.status !== 'success' || verified.reference !== reference || verified.currency !== 'NGN') {
       return NextResponse.json({ received: true })
     }
 
