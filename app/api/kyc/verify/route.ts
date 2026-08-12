@@ -21,15 +21,33 @@ export async function POST(request: Request) {
     if (result.status !== 'approved') return NextResponse.json(result, { status: 422 })
 
     const admin = createAdminClient()
-    const { data: existing, error: lookupError } = await admin.from('kyc_records').select('id').eq('user_id', user.id).maybeSingle()
+    const { data: existing, error: lookupError } = await admin
+      .from('kyc_records')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
     if (lookupError) throw lookupError
 
     const now = new Date().toISOString()
-    const payload = { user_id: user.id, status: 'approved', verification_level: type, provider_reference: result.reference, submitted_at: now, reviewed_at: now, rejection_reason: null, updated_at: now }
+    // Keep this payload limited to the fields required by the current KYC record contract.
+    // This avoids failing a valid verification because an optional/legacy column is absent.
+    const payload = {
+      user_id: user.id,
+      status: 'approved',
+      verification_level: type,
+      provider_reference: result.reference,
+      submitted_at: now,
+      reviewed_at: now,
+    }
+
     const write = existing
       ? await admin.from('kyc_records').update(payload).eq('id', existing.id)
       : await admin.from('kyc_records').insert(payload)
-    if (write.error) throw write.error
+
+    if (write.error) {
+      console.error('KYC record persistence failed:', write.error)
+      return NextResponse.json({ error: 'Identity was verified but could not be saved. Please try again.' }, { status: 500 })
+    }
 
     return NextResponse.json({ ...result, persisted: true })
   } catch (error) {
