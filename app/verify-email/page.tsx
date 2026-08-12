@@ -103,6 +103,34 @@ export default function VerifyEmailPage() {
 
   return (
     <main className="min-h-screen bg-[#f7faf8] flex items-center justify-center px-4 py-8">
+      <style jsx>{`
+        @keyframes alajoSuccessPop {
+          0% { opacity: 0; transform: scale(.55); }
+          65% { opacity: 1; transform: scale(1.08); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes alajoSuccessRing {
+          0% { opacity: 0; transform: scale(.65); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes alajoSuccessCheck {
+          0% { stroke-dashoffset: 30; opacity: 0; }
+          20% { opacity: 1; }
+          100% { stroke-dashoffset: 0; opacity: 1; }
+        }
+        @keyframes alajoFadeUp {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .alajo-success-icon { animation: alajoSuccessPop .55s cubic-bezier(.2,.8,.2,1) both; }
+        .alajo-success-ring { animation: alajoSuccessRing .45s ease-out .05s both; }
+        .alajo-success-check { stroke-dasharray: 30; stroke-dashoffset: 30; animation: alajoSuccessCheck .55s ease-out .28s forwards; }
+        .alajo-success-copy { animation: alajoFadeUp .45s ease-out .35s both; }
+        .alajo-success-button { animation: alajoFadeUp .45s ease-out .5s both; }
+        @media (prefers-reduced-motion: reduce) {
+          .alajo-success-icon, .alajo-success-ring, .alajo-success-check, .alajo-success-copy, .alajo-success-button { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
+        }
+      `}</style>
       <section className="w-full max-w-lg">
         <div className="text-center mb-7">
           <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-[#15221b]">
@@ -131,10 +159,21 @@ export default function VerifyEmailPage() {
             </>
           ) : (
             <div className="py-3">
-              <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-full bg-[#dcfce7] text-[#16a34a]" aria-hidden="true"><svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#15221b]">Verified successfully</h1>
-              <p className="mt-3 text-[#65726b]">Your email has been verified. Your Alajo account is ready.</p>
-              <button type="button" onClick={() => { window.location.href = '/dashboard'; }} className="mt-8 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#15803d]">Continue to Alajo</button>
+              <div className="alajo-success-icon relative mx-auto mb-7 grid h-24 w-24 place-items-center" aria-hidden="true">
+                <div className="alajo-success-ring absolute inset-0 rounded-full bg-[#dcfce7]" />
+                <div className="relative grid h-16 w-16 place-items-center rounded-full bg-[#16a34a] text-white shadow-lg shadow-green-200">
+                  <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="2.8">
+                    <path className="alajo-success-check" d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+              <div className="alajo-success-copy">
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#15221b]">Verified successfully</h1>
+                <p className="mt-3 text-[#65726b]">Your email has been verified. Your Alajo account is ready.</p>
+              </div>
+              <div className="alajo-success-button">
+                <button type="button" onClick={() => { window.location.href = '/dashboard'; }} className="mt-8 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#15803d] hover:shadow-lg hover:shadow-green-100">Continue to Alajo</button>
+              </div>
             </div>
           )}
         </div>
