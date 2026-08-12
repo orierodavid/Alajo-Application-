@@ -8,6 +8,13 @@ function getSecretKey() {
   return key
 }
 
+export function paystackEnvironmentFromSecret() {
+  const key = getSecretKey()
+  if (key.startsWith('sk_live_')) return 'live'
+  if (key.startsWith('sk_test_')) return 'test'
+  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+}
+
 export async function initializePaystackTransaction(input: {
   email: string
   amountKobo: number
@@ -56,6 +63,7 @@ export async function verifyPaystackTransaction(reference: string) {
     status: string
     reference: string
     amount: number
+    requested_amount?: number
     currency: string
     metadata?: unknown
     customer?: { email?: string | null }
