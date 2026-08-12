@@ -62,8 +62,10 @@ export async function POST(request: Request) {
 
     if (rpcError) {
       console.error('Contribution payment RPC error:', rpcError)
-      const message = String(rpcError.message || 'Payment could not be completed.')
-      return errorResponse(message)
+      // Never expose raw Supabase/Postgres/RPC errors to the browser. They can
+      // contain implementation details such as relation/function names or SQL
+      // diagnostics. The database result is the authoritative user-safe outcome.
+      return errorResponse('Payment could not be completed.', 400)
     }
 
     const result = Array.isArray(data) ? data[0] : data
