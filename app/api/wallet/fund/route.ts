@@ -3,6 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
 import { initializePaystackTransaction } from '@/lib/paystack'
 
+function paystackEnvironment() {
+  return process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live'
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
@@ -18,6 +22,7 @@ export async function POST(request: Request) {
     const userId = authData.user.id
     const reference = `alajo-wallet-${crypto.randomUUID()}`
     const admin = createAdminClient()
+    const environment = paystackEnvironment()
 
     const { error: insertError } = await admin.from('payments').insert({
       id: crypto.randomUUID(),
@@ -29,7 +34,7 @@ export async function POST(request: Request) {
       provider: 'paystack',
       provider_reference: reference,
       status: 'pending',
-      metadata: { source: 'wallet_funding', user_id: userId, environment: 'test' },
+      metadata: { source: 'wallet_funding', user_id: userId, environment },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -44,7 +49,7 @@ export async function POST(request: Request) {
         amountKobo: amount * 100,
         reference,
         callbackUrl: `${origin}/api/wallet/fund/callback`,
-        metadata: { source: 'wallet_funding', user_id: userId, payment_reference: reference },
+        metadata: { source: 'wallet_funding', user_id: userId, payment_reference: reference, environment },
       })
     } catch {
       await admin.from('payments').update({ status: 'failed', updated_at: new Date().toISOString() }).eq('provider', 'paystack').eq('provider_reference', reference).eq('user_id', userId)
