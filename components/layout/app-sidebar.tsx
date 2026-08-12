@@ -14,29 +14,29 @@ const nav = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-
-  return <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[250px] shrink-0 bg-[#0b2313] text-white p-5 flex-col">
-    <div className="flex items-center justify-between px-2">
-      <Link href="/dashboard" className="flex items-center gap-2 text-[22px] font-extrabold tracking-tight">
-        <span className="font-display">Alajo</span>
-        <span className="text-yellow-400 text-lg" aria-hidden="true">◌</span>
+  return <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[228px] shrink-0 bg-white text-[#5f6d64] p-4 flex-col border-r border-[#e6ebe8]">
+    <div className="flex items-center justify-between px-2 py-2">
+      <Link href="/dashboard" className="flex items-center gap-2 text-[21px] font-extrabold tracking-tight text-[#0d2d1b]">
+        <span className="h-8 w-8 rounded-xl bg-[#e8f6ed] text-[#15803d] flex items-center justify-center"><AlajoIcon name="dashboard" size={17}/></span>
+        <span>Alajo</span>
       </Link>
       <ThemeToggle />
     </div>
-    <nav className="mt-8 flex-1 space-y-1 text-[14px] font-medium">
+    <p className="mt-8 mb-2 px-3 text-[9px] font-bold uppercase tracking-[.2em] text-[#a1aaa5]">Menu</p>
+    <nav className="flex-1 space-y-0.5 text-[13px] font-medium">
       {nav.map(([icon, href, label]) => {
         const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))
-        return <Link key={label} href={href} aria-current={active ? 'page' : undefined} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${active ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-          <span className="w-6 flex justify-center"><AlajoIcon name={icon} size={18}/></span>
-          <span>{label}</span>
+        return <Link key={label} href={href} aria-current={active ? 'page' : undefined} className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition ${active ? 'bg-[#eaf7ef] text-[#126b39] font-semibold' : 'text-[#718078] hover:bg-[#f3f7f4] hover:text-[#173c28]'}`}>
+          {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#16a34a]"/>}
+          <span className="w-5 flex justify-center"><AlajoIcon name={icon} size={17}/></span><span>{label}</span>
         </Link>
       })}
     </nav>
-    <div className="bg-[#123524] rounded-xl p-4 mb-3">
-      <p className="font-semibold text-[14px]">Grow your savings with Alajo</p>
-      <p className="text-[12px] text-gray-300 mt-1">Stay consistent and reach your savings goals.</p>
-      <Link href="/invite-earn" className="mt-3 inline-block bg-white text-[#0b2313] text-[13px] font-semibold px-3 py-1.5 rounded-md">Invite Friends →</Link>
+    <div className="bg-[#0f5b32] text-white rounded-2xl p-4 mb-3 shadow-[0_10px_25px_rgba(15,91,50,.12)]">
+      <p className="font-semibold text-[13px]">Grow your savings</p>
+      <p className="text-[10px] text-white/70 mt-1 leading-4">Invite friends and build stronger savings cycles together.</p>
+      <Link href="/invite-earn" className="mt-3 inline-flex bg-white text-[#0b2313] text-[11px] font-semibold px-3 py-2 rounded-lg">Invite Friends <span className="ml-1">↗</span></Link>
     </div>
-    <SignOutButton />
+    <div className="pt-2 border-t border-[#edf0ee]"><SignOutButton /></div>
   </aside>
 }
