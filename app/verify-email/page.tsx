@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
 const OTP_LENGTH = 8;
-const SUCCESS_DISPLAY_MS = 2600;
+const SUCCESS_DISPLAY_MS = 4200;
 
 export default function VerifyEmailPage() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(''));
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [verified, setVerified] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -69,12 +68,11 @@ export default function VerifyEmailPage() {
     if (!email || token.length !== OTP_LENGTH || loading || verified) return;
     setLoading(true);
     setError('');
-    setMessage('');
 
     const supabase = createClient();
     const { error: verifyError } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
-
     setLoading(false);
+
     if (verifyError) {
       setError('That code is incorrect or has expired. Please check your email and try again.');
       setCode(Array(OTP_LENGTH).fill(''));
@@ -83,133 +81,109 @@ export default function VerifyEmailPage() {
     }
 
     setVerified(true);
-    setMessage('Your email has been verified successfully.');
     window.sessionStorage.removeItem('alajo_signup_email');
   }
 
   async function resend() {
     if (!email || resendSeconds > 0 || loading || verified) return;
     setLoading(true);
-    setMessage('');
     setError('');
-
     const supabase = createClient();
     const { error: resendError } = await supabase.auth.resend({ type: 'signup', email });
     setLoading(false);
-
     if (resendError) {
       setError('We could not send a new code. Please wait a moment and try again.');
       return;
     }
-
     setCode(Array(OTP_LENGTH).fill(''));
     setResendSeconds(30);
-    setMessage('A new verification code has been sent.');
     inputs.current[0]?.focus();
   }
 
   return (
-    <main className="min-h-screen bg-[#f7faf8] flex items-center justify-center px-4 py-8">
+    <main className="min-h-screen bg-[#070b10] text-white flex items-center justify-center px-4 py-8">
       <style jsx>{`
-        @keyframes alajoSuccessCircle {
-          0% { opacity: 0; transform: scale(.35); }
-          55% { opacity: 1; transform: scale(1.12); }
-          75% { transform: scale(.96); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes alajoSuccessPulse {
-          0%, 100% { transform: scale(1); opacity: .65; }
-          50% { transform: scale(1.18); opacity: .18; }
-        }
-        @keyframes alajoSuccessCheck {
-          0% { stroke-dashoffset: 34; opacity: 0; }
-          15% { opacity: 1; }
-          100% { stroke-dashoffset: 0; opacity: 1; }
-        }
-        @keyframes alajoSuccessText {
-          0% { opacity: 0; transform: translateY(18px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes alajoSuccessButton {
-          0% { opacity: 0; transform: translateY(14px) scale(.98); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .alajo-success-circle { animation: alajoSuccessCircle .75s cubic-bezier(.2,.9,.25,1) both; }
-        .alajo-success-pulse { animation: alajoSuccessPulse 1.5s ease-in-out infinite; }
-        .alajo-success-check { stroke-dasharray: 34; stroke-dashoffset: 34; animation: alajoSuccessCheck .65s ease-out .45s forwards; }
-        .alajo-success-text { animation: alajoSuccessText .55s ease-out .65s both; }
-        .alajo-success-button { animation: alajoSuccessButton .55s ease-out 1s both; }
+        @keyframes nodeAppear { from { opacity: 0; transform: scale(.35); } to { opacity: 1; transform: scale(1); } }
+        @keyframes nodeGlow { 0%,100% { box-shadow: 0 0 8px rgba(34,211,238,.15); } 50% { box-shadow: 0 0 22px rgba(34,211,238,.55); } }
+        @keyframes pathDraw { from { stroke-dashoffset: 400; opacity: 0; } to { stroke-dashoffset: 0; opacity: 1; } }
+        @keyframes pathTravel { from { stroke-dashoffset: 700; } to { stroke-dashoffset: 0; } }
+        @keyframes successBox { from { opacity: 0; transform: scale(.65); } 65% { transform: scale(1.07); } to { opacity: 1; transform: scale(1); } }
+        @keyframes checkDraw { from { stroke-dashoffset: 36; opacity: 0; } to { stroke-dashoffset: 0; opacity: 1; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .node { animation: nodeAppear .35s ease-out both, nodeGlow 1.7s ease-in-out infinite .4s; }
+        .node-path { stroke-dasharray: 400; stroke-dashoffset: 400; animation: pathDraw 1.2s ease-out .25s forwards; }
+        .success-box { animation: successBox .65s cubic-bezier(.2,.9,.2,1) both; }
+        .success-check { stroke-dasharray: 36; stroke-dashoffset: 36; animation: checkDraw .6s ease-out .4s forwards; }
+        .success-copy { animation: fadeUp .45s ease-out .65s both; }
+        .success-continue { animation: fadeUp .45s ease-out .9s both; }
         @media (prefers-reduced-motion: reduce) {
-          .alajo-success-circle, .alajo-success-pulse, .alajo-success-check, .alajo-success-text, .alajo-success-button { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
+          .node,.node-path,.success-box,.success-check,.success-copy,.success-continue { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
         }
       `}</style>
 
-      <section className="w-full max-w-lg">
-        <div className="text-center mb-7">
-          <Link href="/" className="inline-flex items-center gap-2 text-2xl font-bold text-[#15221b]">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#16a34a] text-white">A</span>
-            Alajo
-          </Link>
+      <section className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link href="/" className="text-2xl font-bold tracking-tight">Alajo</Link>
         </div>
 
-        <div className="rounded-3xl bg-white border border-[#e5ebe7] shadow-[0_20px_60px_rgba(15,35,25,0.08)] px-5 py-8 sm:px-10 sm:py-10 text-center">
+        <div className="rounded-[28px] border border-white/10 bg-[#0c1219] px-5 py-8 sm:px-9 sm:py-10 text-center shadow-2xl shadow-black/30">
           {!verified ? (
             <>
-              <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-full bg-[#ecfdf3] text-[#16a34a] text-2xl" aria-hidden="true">✉</div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#15221b]">Verify your email</h1>
-              <p className="mt-3 text-[#65726b]">We sent a verification code to</p>
-              <p className="mt-1 font-semibold text-[#15221b] break-all">{email || 'your email address'}</p>
-              <p className="mt-2 text-sm text-[#65726b]">Enter the 8-digit code below to continue.</p>
+              <div className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-full border border-cyan-400/40 bg-cyan-400/10 text-cyan-300">✉</div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Verify your email</h1>
+              <p className="mt-3 text-sm text-white/55">Enter the 8-digit code sent to</p>
+              <p className="mt-1 font-medium break-all text-white/85">{email || 'your email address'}</p>
 
-              <div className="mt-7 flex flex-wrap justify-center gap-2 sm:gap-3" aria-label="Email verification code">
-                {code.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={element => { inputs.current[index] = element; }}
-                    value={digit}
-                    onChange={event => updateDigit(index, event.target.value)}
-                    onKeyDown={event => handleKeyDown(index, event)}
-                    onPaste={handlePaste}
-                    inputMode="numeric"
-                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                    maxLength={1}
-                    aria-label={`Verification digit ${index + 1}`}
-                    className={`h-14 w-10 sm:h-16 sm:w-11 rounded-xl border text-center text-xl font-bold text-[#15221b] outline-none transition-all ${digit ? 'border-[#16a34a] bg-[#f0fdf4] ring-2 ring-[#dcfce7]' : 'border-[#d9e2dc] bg-white'} focus:border-[#16a34a] focus:ring-2 focus:ring-[#dcfce7]`}
-                  />
-                ))}
+              <div className="relative mx-auto mt-8 h-[220px] w-[250px]" aria-label="8-digit verification code">
+                <svg viewBox="0 0 250 220" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
+                  <path d="M125 30 L210 72 L210 148 L125 190 L40 148 L40 72 Z M40 72 L125 110 L210 72 M40 148 L125 110 L210 148" fill="none" stroke="rgba(34,211,238,.22)" strokeWidth="1.5" />
+                  <path className="node-path" d="M125 30 L210 72 L210 148 L125 190 L40 148 L40 72 Z M40 72 L125 110 L210 72 M40 148 L125 110 L210 148" fill="none" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+
+                {code.map((digit, index) => {
+                  const positions = [
+                    { x: '50%', y: '4%' }, { x: '84%', y: '23%' }, { x: '84%', y: '58%' }, { x: '50%', y: '78%' },
+                    { x: '16%', y: '58%' }, { x: '16%', y: '23%' }, { x: '50%', y: '50%' }, { x: '50%', y: '96%' },
+                  ];
+                  const position = positions[index];
+                  return (
+                    <input
+                      key={index}
+                      ref={element => { inputs.current[index] = element; }}
+                      value={digit}
+                      onChange={event => updateDigit(index, event.target.value)}
+                      onKeyDown={event => handleKeyDown(index, event)}
+                      onPaste={handlePaste}
+                      inputMode="numeric"
+                      autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                      maxLength={1}
+                      aria-label={`Verification digit ${index + 1}`}
+                      style={{ left: position.x, top: position.y, transform: 'translate(-50%, -50%)', animationDelay: `${index * 70}ms` }}
+                      className={`node absolute h-12 w-12 rounded-xl border text-center text-lg font-bold outline-none ${digit ? 'border-cyan-300 bg-cyan-400/15 text-cyan-100' : 'border-cyan-400/35 bg-[#101923] text-white'} focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20`}
+                    />
+                  );
+                })}
               </div>
 
-              {loading && <p className="mt-5 text-sm text-[#65726b]">Verifying your code…</p>}
-              {message && <div className="mt-5 rounded-xl bg-[#ecfdf3] px-4 py-3 text-sm font-medium text-[#15803d]">{message}</div>}
-              {error && <div role="alert" className="mt-5 rounded-xl bg-[#fff1f2] px-4 py-3 text-sm font-medium text-[#be123c]">{error}</div>}
-
-              <button type="button" onClick={resend} disabled={loading || resendSeconds > 0} className="mt-6 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50">
-                {resendSeconds > 0 ? `Resend code in ${resendSeconds}s` : 'Resend code'}
-              </button>
-              <Link href="/signup" className="mt-5 inline-block text-sm font-medium text-[#16a34a] hover:underline">← Back to sign up</Link>
+              {loading && <p className="mt-2 text-sm text-cyan-300">Verifying…</p>}
+              {error && <div role="alert" className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+              <button type="button" onClick={resend} disabled={loading || resendSeconds > 0} className="mt-5 text-sm text-cyan-300 disabled:text-white/30 disabled:cursor-not-allowed">{resendSeconds > 0 ? `Resend code in ${resendSeconds}s` : 'Resend code'}</button>
+              <div><Link href="/signup" className="mt-4 inline-block text-xs text-white/45 hover:text-white/80">← Back to sign up</Link></div>
             </>
           ) : (
-            <div className="py-3" aria-live="polite">
-              <div className="relative mx-auto mb-8 h-32 w-32 flex items-center justify-center" aria-hidden="true">
-                <div className="alajo-success-pulse absolute inset-0 rounded-full bg-[#86efac]" />
-                <div className="alajo-success-circle relative grid h-24 w-24 place-items-center rounded-full bg-[#16a34a] shadow-[0_12px_30px_rgba(22,163,74,0.28)]">
-                  <svg viewBox="0 0 24 24" className="h-12 w-12 text-white" fill="none" stroke="currentColor" strokeWidth="2.8">
-                    <path className="alajo-success-check" d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
+            <div className="py-5">
+              <div className="success-box mx-auto grid h-28 w-28 place-items-center rounded-3xl border border-cyan-300/70 bg-cyan-400/10 shadow-[0_0_55px_rgba(34,211,238,.28)]" aria-hidden="true">
+                <svg viewBox="0 0 24 24" className="h-14 w-14 text-cyan-300" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <path className="success-check" d="m5 12 4 4L19 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
-
-              <div className="alajo-success-text">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#16a34a]">Email verified</p>
-                <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-[#15221b]">Verified successfully</h1>
-                <p className="mt-3 text-[#65726b]">Your email has been verified. Welcome to Alajo.</p>
+              <div className="success-copy">
+                <p className="mt-7 text-xs uppercase tracking-[.25em] text-cyan-300">Verified successfully</p>
+                <h1 className="mt-2 text-2xl sm:text-3xl font-bold">Your email has been verified.</h1>
+                <p className="mt-3 text-sm text-white/55">Welcome to Alajo.</p>
               </div>
-
-              <div className="alajo-success-button">
-                <button type="button" onClick={() => { window.location.href = '/dashboard'; }} className="mt-8 w-full rounded-xl bg-[#16a34a] px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#15803d] hover:shadow-lg hover:shadow-green-100">
-                  Continue to Alajo
-                </button>
-                <p className="mt-3 text-xs text-[#8a958f]">Taking you to your dashboard…</p>
+              <div className="success-continue">
+                <button type="button" onClick={() => { window.location.href = '/dashboard'; }} className="mt-8 w-full rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-5 py-3.5 text-sm font-semibold text-cyan-200 hover:bg-cyan-400/20">Continue to Alajo</button>
               </div>
             </div>
           )}
