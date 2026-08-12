@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 
-export default function WalletSuccessPage() {
+function WalletSuccessContent() {
   const params = useSearchParams()
   const status = params.get('status')
   const success = status === 'success'
@@ -39,5 +40,26 @@ export default function WalletSuccessPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+function WalletSuccessFallback() {
+  return (
+    <div className="min-h-screen bg-[#f7f8f9] flex items-center justify-center p-5">
+      <main className="w-full max-w-md bg-white rounded-2xl border border-gray-100 shadow-sm p-7 text-center">
+        <div className="mx-auto w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
+          <AlajoIcon name="wallet" size={24} />
+        </div>
+        <p className="text-gray-500 text-sm mt-4">Checking payment status…</p>
+      </main>
+    </div>
+  )
+}
+
+export default function WalletSuccessPage() {
+  return (
+    <Suspense fallback={<WalletSuccessFallback />}>
+      <WalletSuccessContent />
+    </Suspense>
   )
 }
