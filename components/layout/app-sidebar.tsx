@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect } from 'react'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import SignOutButton from '@/app/dashboard/sign-out-button'
@@ -14,7 +15,12 @@ const nav = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  return <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-[228px] shrink-0 bg-white text-[#5f6d64] p-4 flex-col border-r border-[#e6ebe8]">
+  useEffect(() => {
+    document.body.classList.add('alajo-user-ui')
+    return () => document.body.classList.remove('alajo-user-ui')
+  }, [])
+
+  return <aside className="user-sidebar hidden lg:flex fixed inset-y-0 left-0 z-30 w-[228px] shrink-0 bg-white text-[#5f6d64] p-4 flex-col border-r border-[#e6ebe8]">
     <div className="flex items-center justify-between px-2 py-2">
       <Link href="/dashboard" className="flex items-center gap-2 text-[21px] font-extrabold tracking-tight text-[#0d2d1b]">
         <span className="h-8 w-8 rounded-xl bg-[#e8f6ed] text-[#15803d] flex items-center justify-center"><AlajoIcon name="dashboard" size={17}/></span>
