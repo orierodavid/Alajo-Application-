@@ -11,13 +11,14 @@ export async function GET(
 
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      return NextResponse.json({ error: 'Please log in again.' }, { status: 401 })
-    }
+    if (userError || !user) return NextResponse.json({ error: 'Please log in again.' }, { status: 401 })
+
+    await supabase.rpc('finalize_due_groups')
+    await supabase.rpc('activate_due_groups')
 
     const { data: group, error: groupError } = await supabase
       .from('groups')
-      .select('id,name,description,cycle,contribution_amount,slot_count,start_date,status')
+      .select('id,name,description,cycle,contribution_amount,slot_count,start_date,close_date,finalized_member_count,finalized_at,finish_date,status,lifecycle_managed')
       .eq('id', id)
       .maybeSingle()
 
@@ -25,7 +26,6 @@ export async function GET(
       console.error('Load group error:', groupError)
       return NextResponse.json({ error: 'Unable to load this group.' }, { status: 500 })
     }
-
     if (!group) return NextResponse.json({ error: 'Group not found.' }, { status: 404 })
 
     const { data: slots, error: slotsError } = await supabase
