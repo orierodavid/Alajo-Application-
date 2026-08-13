@@ -22,10 +22,7 @@ export default function GroupsPage() {
         if (!url || !key) throw new Error('Supabase configuration is missing.')
         const supabase = createBrowserClient(url, key)
         const { data: authData, error: authError } = await supabase.auth.getUser()
-        if (authError || !authData.user) {
-          router.replace('/login?error=session')
-          return
-        }
+        if (authError || !authData.user) { router.replace('/login?error=session'); return }
         if (!cancelled) setUserEmail(authData.user.email ?? '')
 
         await supabase.rpc('finalize_due_groups')
@@ -39,26 +36,24 @@ export default function GroupsPage() {
         if (membershipError) throw new Error(membershipError.message)
         const rows = groupRows ?? []
         const groupIds = rows.map((g) => g.id)
-        let slotRows: Array<{ group_id: string; status: string }> = []
+        let slotRows: Array<{ id: string; group_id: string; position: number; status: string }> = []
         if (groupIds.length) {
-          const { data, error: slotsError } = await supabase.from('group_slots').select('group_id,status').in('group_id', groupIds)
+          const { data, error: slotsError } = await supabase.from('group_slots').select('id,group_id,position,status').in('group_id', groupIds)
           if (slotsError) throw new Error(slotsError.message)
           slotRows = data ?? []
         }
         const counts = new Map<string, number>()
+        const slotPositionById = new Map<string, number>()
         for (const slot of slotRows) {
+          slotPositionById.set(slot.id, slot.position)
           if (slot.status === 'assigned' || slot.status === 'reserved') counts.set(slot.group_id, (counts.get(slot.group_id) ?? 0) + 1)
         }
+        const normalizedMemberships = (membershipRows ?? []).map((membership) => ({ ...membership, original_slot_position: slotPositionById.get(membership.slot_id) ?? null }))
         const normalized = rows.map((group) => ({ ...group, memberCount: counts.get(group.id) ?? 0 }))
-        if (!cancelled) {
-          setGroups(normalized)
-          setMemberships(membershipRows ?? [])
-        }
+        if (!cancelled) { setGroups(normalized); setMemberships(normalizedMemberships) }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load groups.')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+      } finally { if (!cancelled) setLoading(false) }
     }
     load()
     return () => { cancelled = true }
