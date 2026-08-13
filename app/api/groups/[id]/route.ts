@@ -39,7 +39,28 @@ export async function GET(
       return NextResponse.json({ error: 'Unable to load group slots.' }, { status: 500 })
     }
 
-    return NextResponse.json({ group, slots: slots ?? [] })
+    const { data: members, error: membersError } = await supabase
+      .from('group_members')
+      .select('slot_id,user_id,status,payout_position')
+      .eq('group_id', id)
+      .in('status', ['active', 'pending'])
+
+    if (membersError) {
+      console.error('Load group members error:', membersError)
+      return NextResponse.json({ error: 'Unable to load group members.' }, { status: 500 })
+    }
+
+    const memberBySlot = new Map((members ?? []).map((member) => [member.slot_id, member]))
+    const enrichedSlots = (slots ?? []).map((slot) => {
+      const member = memberBySlot.get(slot.id)
+      return {
+        ...slot,
+        payoutPosition: member?.payout_position ?? null,
+        payoutMonth: member?.payout_position ?? null,
+      }
+    })
+
+    return NextResponse.json({ group, slots: enrichedSlots })
   } catch (error) {
     console.error('Group details API error:', error)
     return NextResponse.json({ error: 'Something went wrong while loading the group.' }, { status: 500 })
