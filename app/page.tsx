@@ -2,41 +2,8 @@
 
 import Link from 'next/link'
 
-function MobileWelcome() {
-  return (
-    <section className="lg:hidden relative min-h-[100svh] h-[100svh] overflow-hidden bg-[#123524] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(22,163,74,.34),transparent_44%),linear-gradient(145deg,#1b4a32_0%,#123524_52%,#0b2313_100%)]" />
-      <div className="relative z-10 h-full w-full flex items-center justify-center px-6 py-[max(24px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
-        <div className="w-full max-w-[360px] flex flex-col items-center justify-center text-center -translate-y-3 sm:-translate-y-5">
-          <img src="/icons/alajo-mark.svg" alt="Alajo" className="w-[112px] h-[112px] object-contain" />
-          <div className="mt-4 text-[38px] leading-none font-semibold tracking-[.16em] text-[#f5c542]">ALAJO</div>
-          <div className="mt-5 w-24 h-px bg-gradient-to-r from-transparent via-[#eab308] to-transparent" />
-          <p className="mt-4 text-[16px] font-light tracking-wide text-white/90">Smart Rotational Savings</p>
-          <Link
-            href="/login"
-            className="mt-7 w-full max-w-[300px] h-[52px] rounded-xl bg-[#16a34a] text-white text-[16px] font-semibold shadow-[0_10px_28px_rgba(22,163,74,.28)] flex items-center justify-center active:scale-[.99] transition-transform"
-          >
-            Login
-          </Link>
-          <p className="mt-4 text-center text-[13px] text-white/70">
-            New to Alajo? <Link href="/signup" className="text-[#f5c542] font-medium">Create an account</Link>
-          </p>
-        </div>
-      </div>
-    </section>
-  )
-}
+function MobileWelcome(){return <section className="lg:hidden relative min-h-[100svh] h-[100svh] overflow-hidden bg-[#07111f] text-white"><div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(232,93,4,.22),transparent_44%),linear-gradient(145deg,#10243a_0%,#07111f_60%,#030812_100%)]"/><div className="relative z-10 h-full w-full flex items-center justify-center px-6 py-[max(24px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]"><div className="w-full max-w-[360px] flex flex-col items-center justify-center text-center -translate-y-3 sm:-translate-y-5"><img src="/icons/deotech-finance.svg" alt="Deotech Finance" className="w-[112px] h-[112px] object-contain rounded-3xl"/><div className="mt-4 text-[30px] leading-none font-extrabold tracking-[.08em]">DEOTECH <span className="text-[#ff9f1c]">FINANCE</span></div><div className="mt-5 w-24 h-px bg-gradient-to-r from-transparent via-[#ff9f1c] to-transparent"/><p className="mt-4 text-[16px] font-light tracking-wide text-white/90">Structured Rotational Savings</p><Link href="/login" className="mt-7 w-full max-w-[300px] h-[52px] rounded-xl bg-[#e85d04] text-white text-[16px] font-semibold flex items-center justify-center">Login</Link><p className="mt-4 text-center text-[13px] text-white/70">New to Deotech Finance? <Link href="/signup" className="text-[#ffb15c] font-medium">Create an account</Link></p><p className="mt-8 text-xs text-white/45"><Link href="/terms" className="underline">Terms</Link> · <Link href="/privacy" className="underline">Privacy</Link></p></div></div></section>}
 
-function DesktopHome() {
-  const groups = [['₦20,000 Group','6 Months Cycle','₦20,000','6 / 10'],['₦50,000 Group','6 Months Cycle','₦50,000','7 / 10'],['₦100,000 Group','10 Months Cycle','₦100,000','5 / 10']]
-  const stats = [['10K+','Active Users'],['500+','Savings Groups'],['₦250M+','Total Saved'],['99.9%','Success Rate']]
-  return <div className="hidden lg:block min-h-screen bg-white text-gray-900">
-    <header className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-6 lg:px-10"><Link href="/" className="flex items-center gap-1"><span className="text-[26px] font-extrabold tracking-tight text-gray-900">Alajo</span><span className="text-[#16a34a]">●</span></Link><div className="flex items-center gap-3"><Link href="/login" className="px-5 py-2 text-[15px] font-semibold rounded-md border border-gray-300">Login</Link><Link href="/signup" className="px-5 py-2 text-[15px] font-semibold rounded-md bg-[#14532d] text-white">Get Started</Link></div></header>
-    <section className="mx-auto grid max-w-[1200px] items-center gap-10 px-6 pb-14 pt-12 lg:px-10 lg:pt-16"><div><h1 className="font-bold text-[44px] leading-[1.15] max-w-[520px]">Smart Rotational Savings for Everyone</h1><p className="mt-6 text-[17px] leading-relaxed text-gray-500 max-w-[420px]">Join thousands of people already saving and growing together with Alajo.</p><div className="mt-8 flex items-center gap-4"><Link href="/signup" className="px-7 py-3 text-[15px] font-semibold rounded-md bg-[#14532d] text-white">Get Started</Link><a href="#how-it-works" className="px-7 py-3 text-[15px] font-semibold rounded-md border border-gray-900">Learn More</a></div></div><div className="relative h-[520px] hidden xl:block"><div className="absolute left-0 top-6 w-[420px] bg-[#1a1a1a] rounded-xl p-2 shadow-2xl"><div className="bg-white rounded-md h-[260px]"/></div><div className="absolute right-0 top-0 w-[220px] bg-black rounded-[22px] p-2.5 shadow-2xl"><div className="bg-white rounded-[14px] h-[400px]"/></div></div></section>
-    <section className="border-y border-gray-100 bg-white"><div className="mx-auto grid max-w-[1200px] grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">{stats.map(([value,label],i)=><div key={label} className="px-6 py-8 text-center"><div className={`text-[30px] font-extrabold tracking-tight ${i===0?'text-[#14532d]':i===1?'text-[#eab308]':i===2?'text-[#16a34a]':'text-[#14532d]'}`}>{value}</div><div className="mt-1 text-[13px] font-medium text-gray-500">{label}</div></div>)}</div></section>
-  </div>
-}
+function DesktopHome(){const stats=[['10K+','Active Users'],['500+','Savings Groups'],['₦250M+','Total Saved'],['99.9%','Success Rate']];return <div className="hidden lg:block min-h-screen bg-white text-gray-900"><header className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-6 lg:px-10"><Link href="/" className="flex items-center gap-3"><img src="/icons/deotech-finance.svg" alt="Deotech Finance" className="h-10 w-10 rounded-lg"/><span className="text-[22px] font-extrabold tracking-tight">DEOTECH <span className="text-[#e85d04]">FINANCE</span></span></Link><div className="flex items-center gap-3"><Link href="/terms" className="px-3 py-2 text-[14px] font-medium text-gray-600">Legal</Link><Link href="/login" className="px-5 py-2 text-[15px] font-semibold rounded-md border border-gray-300">Login</Link><Link href="/signup" className="px-5 py-2 text-[15px] font-semibold rounded-md bg-[#123524] text-white">Get Started</Link></div></header><section className="mx-auto grid max-w-[1200px] items-center gap-10 px-6 pb-14 pt-12 lg:px-10 lg:pt-16"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-[#e85d04]">DEOTECH FINANCE</p><h1 className="mt-3 font-bold text-[44px] leading-[1.15] max-w-[560px]">Smart Rotational Savings for Everyone</h1><p className="mt-6 text-[17px] leading-relaxed text-gray-500 max-w-[470px]">Save together, track contributions and manage your savings groups with clear rules, verified payments and secure account controls.</p><div className="mt-8 flex items-center gap-4"><Link href="/signup" className="px-7 py-3 text-[15px] font-semibold rounded-md bg-[#123524] text-white">Get Started</Link><Link href="/legal" className="px-7 py-3 text-[15px] font-semibold rounded-md border border-gray-900">Legal & Privacy</Link></div></div><div className="relative h-[420px] hidden xl:block"><div className="absolute left-0 top-6 w-[420px] bg-[#07111f] rounded-xl p-2 shadow-2xl"><div className="bg-white rounded-md h-[260px]"/></div><div className="absolute right-0 top-0 w-[220px] bg-black rounded-[22px] p-2.5 shadow-2xl"><div className="bg-white rounded-[14px] h-[330px]"/></div></div></section><section className="border-y border-gray-100 bg-white"><div className="mx-auto grid max-w-[1200px] grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">{stats.map(([value,label],i)=><div key={label} className="px-6 py-8 text-center"><div className={`text-[30px] font-extrabold tracking-tight ${i===1?'text-[#e85d04]':i===2?'text-[#15803d]':'text-[#123524]'}`}>{value}</div><div className="mt-1 text-[13px] font-medium text-gray-500">{label}</div></div>)}</div></section><footer className="mx-auto max-w-[1200px] px-6 py-8 lg:px-10 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500"><span>© 2026 Deotech Finance</span><Link href="/terms">Terms & Conditions</Link><Link href="/privacy">Privacy Policy</Link><Link href="/legal">Legal Centre</Link></footer></div>}
 
-export default function Home() {
-  return <main><MobileWelcome/><DesktopHome/></main>
-}
+export default function Home(){return <main><MobileWelcome/><DesktopHome/></main>}
