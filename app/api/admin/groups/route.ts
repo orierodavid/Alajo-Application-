@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-function finishDateFor(startDate: string, months: number) {
-  const [year, month, day] = startDate.split('-').map(Number)
-  const finish = new Date(Date.UTC(year, month - 1 + months - 1, day))
-  return finish.toISOString().slice(0, 10)
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -17,7 +11,7 @@ export async function POST(request: Request) {
 
   const body = await request.json()
   const name = String(body.name || '').trim()
-  const description = String(body.description || '').trim() || null
+  const description = String(body.description || '').trim()
   const contributionAmount = Number(body.contribution_amount)
   const requestedStart = body.start_date ? String(body.start_date) : null
 
@@ -36,26 +30,12 @@ export async function POST(request: Request) {
   if (Number.isNaN(start.getTime()) || start.toISOString().slice(0, 10) !== startDate) return NextResponse.json({ error: 'Enter a valid start date.' }, { status: 400 })
   if (start <= new Date()) return NextResponse.json({ error: 'Contribution start must be a future date.' }, { status: 400 })
 
-  const closeDate = new Date(start)
-  closeDate.setUTCDate(closeDate.getUTCDate() - 1)
-  const closeDateString = closeDate.toISOString().slice(0, 10)
-
-  const { data: group, error } = await supabase.from('groups').insert({
-    name,
-    description,
-    // Until finalization this is the maximum possible cycle. The database
-    // replaces it with the finalized 5–10 month cycle at group closure.
-    cycle: 'ten_month',
-    contribution_amount: contributionAmount,
-    slot_count: 10,
-    start_date: startDate,
-    close_date: closeDateString,
-    contribution_due_day: 29,
-    finish_date: finishDateFor(startDate, 10),
-    status: 'open',
-    lifecycle_managed: true,
-    created_by: user.id,
-  }).select('id,name,description,cycle,contribution_amount,slot_count,start_date,close_date,finalized_member_count,finish_date,status,lifecycle_managed').single()
+  const { data: group, error } = await supabase.rpc('create_group_with_slots', {
+    p_name: name,
+    p_description: description,
+    p_contribution_amount: contributionAmount,
+    p_start_date: startDate,
+  })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ group }, { status: 201 })
