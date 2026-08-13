@@ -1,14 +1,14 @@
 {
-  "name": "Alajo — Smart Rotational Savings",
-  "short_name": "Alajo",
-  "description": "Structured rotational savings for everyone.",
+  "name": "Deotech Finance — Rotational Savings",
+  "short_name": "Deotech Finance",
+  "description": "Structured rotational savings and financial tools from Deotech Finance.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f6f8f7",
-  "theme_color": "#0b2313",
+  "theme_color": "#07111f",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icons/alajo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/icons/deotech-finance.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
