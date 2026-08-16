@@ -13,7 +13,7 @@ export async function GET() {
     const userId = authData.user.id
     const { data: memberships, error: membershipError } = await supabase
       .from('group_members')
-      .select('id, status, joined_at, groups(id, name, status, contribution_amount, cycle, slot_count)')
+      .select('id, status, joined_at, payout_received_at, groups(id, name, status, contribution_amount, cycle, slot_count, finalized_member_count)')
       .eq('user_id', userId)
       .in('status', activeMembershipStatuses)
 
@@ -24,17 +24,19 @@ export async function GET() {
     const emptyIds = ['00000000-0000-0000-0000-000000000000']
     const ids = membershipIds.length ? membershipIds : emptyIds
 
-    const [walletResult, payoutResult, activityResult, contributionResult] = await Promise.all([
+    const [walletResult, payoutResult, activityResult, contributionResult, recoveryResult] = await Promise.all([
       supabase.from('wallets').select('balance, currency').eq('user_id', userId).maybeSingle(),
       supabase.from('payouts').select('id, group_id, group_member_id, period_number, scheduled_date, expected_amount, status, paid_at, groups(name)').in('group_member_id', ids).in('status', pendingPayoutStatuses).order('scheduled_date', { ascending: true }),
       supabase.from('ledger_transactions').select('id, type, status, amount, currency, description, created_at, group_id').eq('user_id', userId).order('created_at', { ascending: false }).limit(6),
       supabase.from('contribution_schedules').select('id, group_member_id, period_number, amount, due_date, status, outstanding_amount, paid_at').in('group_member_id', ids).order('due_date', { ascending: true }),
+      supabase.from('default_cases').select('id,group_id,group_member_id,status,outstanding_amount,payout_received,deotech_covered_amount,recovered_amount,defaulted_at,grace_until').in('group_member_id', ids).in('status', ['open','recovery']).order('created_at', { ascending: false }),
     ])
 
     if (walletResult.error) throw walletResult.error
     if (payoutResult.error) throw payoutResult.error
     if (activityResult.error) throw activityResult.error
     if (contributionResult.error) throw contributionResult.error
+    if (recoveryResult.error) throw recoveryResult.error
 
     const contributions = contributionResult.data ?? []
     const now = new Date()
@@ -54,7 +56,7 @@ export async function GET() {
       const schedules = contributions.filter((c) => c.group_member_id === m.id)
       const paidCount = schedules.filter((c) => c.status === 'paid').length
       const next = schedules.find((c) => ['pending', 'processing', 'overdue'].includes(c.status) && new Date(c.due_date) >= today)
-      const cycleLength = Number(g?.slot_count ?? schedules.length ?? 0)
+      const cycleLength = Number(g?.finalized_member_count ?? g?.slot_count ?? schedules.length ?? 0)
       return {
         id: g?.id ?? m.id,
         memberId: m.id,
@@ -67,6 +69,7 @@ export async function GET() {
         progress: cycleLength ? Math.min(100, Math.round((paidCount / cycleLength) * 100)) : 0,
         nextDueDate: next?.due_date ?? null,
         nextAmount: Number(next?.amount ?? g?.contribution_amount ?? 0),
+        payoutReceivedAt: m.payout_received_at,
       }
     })
 
@@ -74,6 +77,7 @@ export async function GET() {
       authenticated: true,
       wallet: { balance: Number(walletResult.data?.balance ?? 0), currency: walletResult.data?.currency ?? 'NGN' },
       contributions: { total: totalContributions, thisMonth, upcoming, completed },
+      recoveryCases: (recoveryResult.data ?? []).map((c: any) => ({ id: c.id, groupId: c.group_id, status: c.status, payoutReceived: c.payout_received, outstandingAmount: Number(c.outstanding_amount ?? 0), deotechCoveredAmount: Number(c.deotech_covered_amount ?? 0), recoveredAmount: Number(c.recovered_amount ?? 0), defaultedAt: c.defaulted_at, graceUntil: c.grace_until })),
       activeGroups: memberRows.length,
       groups,
       payouts: (payoutResult.data ?? []).map((p) => { const g = Array.isArray(p.groups) ? p.groups[0] : p.groups; return { id: p.id, groupName: g?.name ?? 'Savings Group', periodNumber: p.period_number, scheduledDate: p.scheduled_date, expectedAmount: Number(p.expected_amount ?? 0), status: p.status, paidAt: p.paid_at } }),
