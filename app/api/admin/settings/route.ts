@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
     const { user } = await requireAdmin()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()
-    const allowed = new Set(['service_fee_percentage','delay_fee_percentage','auto_debit_enabled','reminder_before_days','reminder_after_days','reminder_repeat_days','max_reminders','auto_payout_enabled'])
+    const allowed = new Set(['service_fee_percentage','delay_fee_percentage','auto_debit_enabled','reminder_before_days','reminder_after_days','reminder_repeat_days','max_reminders','auto_payout_enabled','default_grace_days','credit_bureau_notice_days'])
     const client = await adminDb()
     for (const [key, value] of Object.entries(body)) {
       if (!allowed.has(key)) continue
