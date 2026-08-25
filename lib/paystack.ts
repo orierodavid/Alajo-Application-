@@ -8,6 +8,17 @@ function getSecretKey() {
   return key
 }
 
+async function paystackRequest<T>(path: string, init: RequestInit = {}) {
+  const response = await fetch(`${PAYSTACK_API}${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${getSecretKey()}`, 'Content-Type': 'application/json', ...(init.headers ?? {}) },
+    cache: 'no-store',
+  })
+  const payload = await response.json().catch(() => null)
+  if (!response.ok || !payload?.status) throw new Error(payload?.message || `PAYSTACK_REQUEST_FAILED_${response.status}`)
+  return payload.data as T
+}
+
 export function paystackEnvironmentFromSecret() {
   const key = getSecretKey()
   if (key.startsWith('sk_live_')) return 'live'
@@ -22,52 +33,64 @@ export async function initializePaystackTransaction(input: {
   callbackUrl: string
   metadata: Record<string, unknown>
 }) {
-  const response = await fetch(`${PAYSTACK_API}/transaction/initialize`, {
+  return paystackRequest<{ authorization_url: string; access_code: string; reference: string }>('/transaction/initialize', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${getSecretKey()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email: input.email,
-      amount: String(input.amountKobo),
-      currency: 'NGN',
-      reference: input.reference,
-      callback_url: input.callbackUrl,
-      metadata: input.metadata,
-      channels: ['card', 'bank_transfer', 'ussd'],
-    }),
-    cache: 'no-store',
+    body: JSON.stringify({ email: input.email, amount: String(input.amountKobo), currency: 'NGN', reference: input.reference, callback_url: input.callbackUrl, metadata: input.metadata, channels: ['card', 'bank_transfer', 'ussd'] }),
   })
-
-  const payload = await response.json().catch(() => null)
-  if (!response.ok || !payload?.status || !payload?.data?.authorization_url) {
-    throw new Error('PAYSTACK_INITIALIZATION_FAILED')
-  }
-
-  return payload.data as { authorization_url: string; access_code: string; reference: string }
 }
 
 export async function verifyPaystackTransaction(reference: string) {
-  const response = await fetch(`${PAYSTACK_API}/transaction/verify/${encodeURIComponent(reference)}`, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${getSecretKey()}` },
-    cache: 'no-store',
-  })
+  return paystackRequest<{
+    id: number; domain: string; status: string; reference: string; amount: number; requested_amount?: number; currency: string; metadata?: unknown; customer?: { email?: string | null }; gateway_response?: string | null; paid_at?: string | null
+  }>(`/transaction/verify/${encodeURIComponent(reference)}`)
+}
 
-  const payload = await response.json().catch(() => null)
-  if (!response.ok || !payload?.status || !payload?.data) throw new Error('PAYSTACK_VERIFICATION_FAILED')
-  return payload.data as {
-    id: number
-    domain: string
-    status: string
-    reference: string
-    amount: number
-    requested_amount?: number
-    currency: string
-    metadata?: unknown
-    customer?: { email?: string | null }
-    gateway_response?: string | null
-    paid_at?: string | null
-  }
+export type PaystackCustomer = {
+  id: number
+  customer_code: string
+  email: string
+  first_name?: string | null
+  last_name?: string | null
+  phone?: string | null
+  identified?: boolean
+}
+
+export type PaystackDedicatedAccount = {
+  id: number
+  account_name: string
+  account_number: string
+  bank: { name: string; slug?: string; id?: number }
+  currency: string
+  active: boolean
+  assigned: boolean
+  customer?: { customer_code?: string }
+}
+
+export async function createPaystackCustomer(input: { email: string; firstName: string; lastName: string; phone: string; metadata?: Record<string, unknown> }) {
+  return paystackRequest<PaystackCustomer>('/customer', {
+    method: 'POST',
+    body: JSON.stringify({ email: input.email, first_name: input.firstName, last_name: input.lastName, phone: input.phone, metadata: input.metadata ?? {} }),
+  })
+}
+
+export async function validatePaystackCustomer(input: { customerCode: string; firstName: string; lastName: string; middleName?: string; country: 'NG'; bvn: string; bankCode: string; accountNumber: string }) {
+  return paystackRequest<PaystackCustomer>(`/customer/${encodeURIComponent(input.customerCode)}/identification`, {
+    method: 'POST',
+    body: JSON.stringify({ first_name: input.firstName, last_name: input.lastName, ...(input.middleName ? { middle_name: input.middleName } : {}), type: 'bank_account', value: input.accountNumber, country: input.country, bvn: input.bvn, bank_code: input.bankCode, account_number: input.accountNumber }),
+  })
+}
+
+export async function createDedicatedVirtualAccount(input: { customerCode: string; preferredBank?: string }) {
+  return paystackRequest<PaystackDedicatedAccount | undefined>('/dedicated_account', {
+    method: 'POST',
+    body: JSON.stringify({ customer: input.customerCode, ...(input.preferredBank ? { preferred_bank: input.preferredBank } : {}) }),
+  })
+}
+
+export async function fetchDedicatedVirtualAccount(accountId: string) {
+  return paystackRequest<PaystackDedicatedAccount>(`/dedicated_account/${encodeURIComponent(accountId)}`)
+}
+
+export async function requeryDedicatedVirtualAccount(input: { accountNumber: string; providerSlug: string; date: string }) {
+  return paystackRequest<unknown>(`/dedicated_account/requery?account_number=${encodeURIComponent(input.accountNumber)}&provider_slug=${encodeURIComponent(input.providerSlug)}&date=${encodeURIComponent(input.date)}`)
 }
