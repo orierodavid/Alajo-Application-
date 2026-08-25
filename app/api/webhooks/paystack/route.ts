@@ -3,63 +3,55 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
 import { createDedicatedVirtualAccount, paystackEnvironmentFromSecret, verifyPaystackTransaction } from '@/lib/paystack'
 
-function jsonRecord(value: unknown): Record<string, any> {
-  return value && typeof value === 'object' ? value as Record<string, any> : {}
-}
+type ProviderDefinition = { provider_key: string; provider_type: string; status: string }
+type ProviderConfig = { id: string; provider_definitions: ProviderDefinition | ProviderDefinition[] | null }
 
-function webhookEventId(rawBody: string) {
-  return createHash('sha256').update(rawBody).digest('hex')
+function jsonRecord(value: unknown): Record<string, any> { return value && typeof value === 'object' ? value as Record<string, any> : {} }
+function webhookEventId(rawBody: string) { return createHash('sha256').update(rawBody).digest('hex') }
+function providerKeyFromConfig(config: ProviderConfig | null) {
+  const definition = Array.isArray(config?.provider_definitions) ? config?.provider_definitions[0] : config?.provider_definitions
+  return definition?.provider_key ?? null
 }
 
 export async function POST(request: Request) {
   const secret = process.env.PAYSTACK_SECRET_KEY
   if (!secret) return NextResponse.json({ error: 'Webhook unavailable.' }, { status: 503 })
-
   const rawBody = await request.text()
   const signature = request.headers.get('x-paystack-signature') ?? ''
   const expected = createHmac('sha512', secret).update(rawBody).digest('hex')
   const signatureBuffer = Buffer.from(signature, 'utf8')
   const expectedBuffer = Buffer.from(expected, 'utf8')
   if (signatureBuffer.length !== expectedBuffer.length || !timingSafeEqual(signatureBuffer, expectedBuffer)) return NextResponse.json({ error: 'Invalid signature.' }, { status: 401 })
-
   let event: { event?: string; data?: unknown }
   try { event = JSON.parse(rawBody) } catch { return NextResponse.json({ error: 'Invalid payload.' }, { status: 400 }) }
-
   const eventType = String(event.event ?? '')
   const data = jsonRecord(event.data)
   const admin = createAdminClient()
   const eventId = webhookEventId(rawBody)
-
   const { data: existingEvent } = await admin.from('provider_webhook_events').select('id,status').eq('provider_key','paystack').eq('event_id',eventId).maybeSingle()
   if (existingEvent?.status === 'PROCESSED') return NextResponse.json({ received: true, duplicate: true })
-
   await admin.from('provider_webhook_events').upsert({ provider_key:'paystack', event_id:eventId, event_type:eventType, payload_hash:eventId, payload:event, status:'RECEIVED' }, { onConflict:'provider_key,event_id' })
-
   try {
     if (eventType === 'customeridentification.success' || eventType === 'customeridentification.failed') {
       const customerCode = String(data.customer_code ?? data.customer?.customer_code ?? '')
       if (!customerCode) throw new Error('CUSTOMER_CODE_MISSING')
-
       const { data: providerCustomer } = await admin.from('provider_customers').select('id,market_id,user_id,provider_customer_code').eq('provider_customer_code',customerCode).maybeSingle()
       if (!providerCustomer) throw new Error('PROVIDER_CUSTOMER_NOT_FOUND')
-
       const success = eventType === 'customeridentification.success'
       const now = new Date().toISOString()
       await admin.from('user_kyc_profiles').update({ status: success ? 'VERIFIED' : 'REJECTED', verified_at: success ? now : null, rejection_reason: success ? null : String(data.reason ?? data.message ?? 'Paystack customer validation failed'), updated_at: now }).eq('market_id',providerCustomer.market_id).eq('user_id',providerCustomer.user_id)
       await admin.from('user_bank_accounts').update({ status: success ? 'VERIFIED' : 'REJECTED', verified_at: success ? now : null, updated_at: now }).eq('market_id',providerCustomer.market_id).eq('user_id',providerCustomer.user_id)
       await admin.from('provider_customers').update({ status: success ? 'VERIFIED' : 'FAILED', updated_at: now }).eq('id',providerCustomer.id)
-
       const legacyKyc = { status: success ? 'approved' : 'rejected', verification_level: 'bvn', provider_reference: customerCode, reviewed_at: now }
       const { data: legacy } = await admin.from('kyc_records').select('id').eq('user_id',providerCustomer.user_id).maybeSingle()
       if (legacy) await admin.from('kyc_records').update(legacyKyc).eq('id',legacy.id)
       else await admin.from('kyc_records').insert({ user_id:providerCustomer.user_id, ...legacyKyc, submitted_at:now })
-
       if (success) {
-        const { data: dvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
+        const { data: rawDvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
+        const dvaConfig = rawDvaConfig as ProviderConfig | null
         if (!dvaConfig) throw new Error('VIRTUAL_ACCOUNT_PROVIDER_NOT_CONFIGURED')
-        const dvaProviderKey = Array.isArray(dvaConfig.provider_definitions) ? null : dvaConfig.provider_definitions?.provider_key
+        const dvaProviderKey = providerKeyFromConfig(dvaConfig)
         if (!dvaProviderKey?.startsWith('paystack')) throw new Error('VIRTUAL_ACCOUNT_PROVIDER_ADAPTER_UNAVAILABLE')
-
         const dva = await createDedicatedVirtualAccount({ customerCode })
         if (dva?.account_number) {
           const currency = String(dva.currency ?? 'NGN').toUpperCase()
@@ -68,23 +60,20 @@ export async function POST(request: Request) {
         }
       }
     }
-
     if (eventType === 'dedicatedaccount.assign.success' || eventType === 'assigndedicatedaccount.success') {
       const customerCode = String(data.customer_code ?? data.customer?.customer_code ?? '')
       const accountNumber = String(data.account_number ?? '')
       if (!customerCode || !accountNumber) throw new Error('DVA_EVENT_DATA_MISSING')
       const { data: providerCustomer } = await admin.from('provider_customers').select('market_id,user_id').eq('provider_customer_code',customerCode).maybeSingle()
       if (!providerCustomer) throw new Error('PROVIDER_CUSTOMER_NOT_FOUND')
-
-      const { data: dvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
-      const providerKey = dvaConfig && !Array.isArray(dvaConfig.provider_definitions) ? dvaConfig.provider_definitions?.provider_key : null
+      const { data: rawDvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
+      const dvaConfig = rawDvaConfig as ProviderConfig | null
+      const providerKey = providerKeyFromConfig(dvaConfig)
       if (!dvaConfig || !providerKey?.startsWith('paystack')) throw new Error('VIRTUAL_ACCOUNT_PROVIDER_NOT_CONFIGURED')
-
       const currency = String(data.currency ?? 'NGN').toUpperCase()
       await admin.from('user_virtual_accounts').upsert({ market_id:providerCustomer.market_id, user_id:providerCustomer.user_id, provider_config_id:dvaConfig.id, provider_customer_ref:customerCode, provider_account_ref:data.id ? String(data.id) : null, bank_name:data.bank?.name ?? null, account_number:accountNumber, account_name:data.account_name ?? null, currency, status:data.active === false ? 'PENDING' : 'ACTIVE', metadata:{provider:providerKey,bank_slug:data.bank?.slug ?? null}, updated_at:new Date().toISOString() }, { onConflict:'market_id,user_id,currency' })
       if (data.active !== false) await admin.from('profiles').update({ onboarding_step:'complete', updated_at:new Date().toISOString() }).eq('id',providerCustomer.user_id)
     }
-
     if (eventType === 'dedicatedaccount.assign.failed' || eventType === 'assigndedicatedaccount.failed') {
       const customerCode = String(data.customer_code ?? data.customer?.customer_code ?? '')
       if (customerCode) {
@@ -92,7 +81,6 @@ export async function POST(request: Request) {
         if (providerCustomer) await admin.from('user_virtual_accounts').update({ status:'FAILED', metadata:{provider:'paystack',error:data.reason ?? data.message ?? null}, updated_at:new Date().toISOString() }).eq('market_id',providerCustomer.market_id).eq('user_id',providerCustomer.user_id)
       }
     }
-
     if (eventType === 'charge.success') {
       const authorization = jsonRecord(data.authorization)
       if (authorization.channel === 'dedicated_nuban') {
@@ -120,7 +108,6 @@ export async function POST(request: Request) {
         }
       }
     }
-
     await admin.from('provider_webhook_events').update({ status:'PROCESSED', processed_at:new Date().toISOString(), error_message:null }).eq('provider_key','paystack').eq('event_id',eventId)
     return NextResponse.json({ received:true })
   } catch (error) {
