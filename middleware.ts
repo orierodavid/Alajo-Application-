@@ -3,12 +3,11 @@ import { createServerClient } from '@supabase/ssr'
 
 const PUBLIC_PATHS = new Set([
   '/admin/login', '/login', '/signup', '/forgot-password', '/reset-password',
-  '/verify-email', '/auth/callback', '/',
+  '/verify-email', '/auth/callback', '/', '/kyc', '/kyc/status',
 ])
 
 const PUBLIC_API_PATHS = new Set([
-  '/api/wallet/fund/callback',
-  '/api/webhooks/paystack',
+  '/api/wallet/fund/callback', '/api/webhooks/paystack', '/api/kyc/verify', '/api/kyc/banks',
 ])
 
 const USER_PROTECTED_PREFIXES = [
@@ -28,18 +27,9 @@ function privateResponseHeaders(response: NextResponse) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next()
-
-  // Paystack callback/webhook must be reachable without a browser session.
-  if (PUBLIC_API_PATHS.has(pathname)) {
-    return privateResponseHeaders(NextResponse.next())
-  }
-
-  // API responses are never indexable, but API authentication remains route-specific.
-  if (pathname === '/api' || pathname.startsWith('/api/')) {
-    return privateResponseHeaders(NextResponse.next())
-  }
+  if (PUBLIC_API_PATHS.has(pathname)) return privateResponseHeaders(NextResponse.next())
+  if (pathname === '/api' || pathname.startsWith('/api/')) return privateResponseHeaders(NextResponse.next())
 
   const isAdmin = pathname.startsWith('/admin')
   const isUser = isUserProtected(pathname)
@@ -47,10 +37,7 @@ export async function middleware(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.redirect(new URL(isAdmin ? '/admin/login' : '/login', request.url))
-  }
+  if (!supabaseUrl || !supabaseKey) return NextResponse.redirect(new URL(isAdmin ? '/admin/login' : '/login', request.url))
 
   let response = NextResponse.next({ request })
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -70,6 +57,20 @@ export async function middleware(request: NextRequest) {
   if (isAdmin) {
     const { data: role, error: roleError } = await supabase.rpc('get_my_admin_role')
     if (roleError || !role) return NextResponse.redirect(new URL('/dashboard', request.url))
+    return privateResponseHeaders(response)
+  }
+
+  const { data: onboarding } = await supabase
+    .from('profiles').select('onboarding_step').eq('id', user.id).maybeSingle()
+  const { data: kyc } = await supabase
+    .from('user_kyc_profiles').select('status').eq('user_id', user.id).eq('status', 'VERIFIED').limit(1).maybeSingle()
+  const { data: virtualAccount } = await supabase
+    .from('user_virtual_accounts').select('status').eq('user_id', user.id).eq('status', 'ACTIVE').limit(1).maybeSingle()
+
+  const verificationComplete = onboarding?.onboarding_step === 'complete' && !!kyc && !!virtualAccount
+  if (!verificationComplete) {
+    const target = kyc ? '/kyc/status' : '/kyc'
+    if (pathname !== target) return NextResponse.redirect(new URL(target, request.url))
   }
 
   return privateResponseHeaders(response)
