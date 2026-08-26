@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import './zeepay-design.css'
 import { MobileNavigation } from '@/components/layout/mobile-navigation'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://alajo-application.vercel.app'
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'ZeePay', statusBarStyle: 'default' },
 }
 
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#07111f' }
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#0f5b32' }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en"><body><script dangerouslySetInnerHTML={{ __html: `try { if (localStorage.getItem('zeepay-theme') === 'dark') document.documentElement.classList.add('dark') } catch {}` }} /><MobileNavigation />{children}<script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}) }) }` }} /></body></html>
