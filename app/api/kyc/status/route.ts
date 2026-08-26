@@ -13,19 +13,20 @@ export async function GET() {
   const admin = createAdminClient()
   try {
     const { data: kycSeed } = await admin.from('user_kyc_profiles').select('market_id,provider_customer_ref').eq('user_id', user.id).maybeSingle()
-    let { data: providerCustomer } = await admin.from('provider_customers').select('id,market_id,provider_customer_code,status').eq('user_id', user.id).eq('provider_key','paystack').maybeSingle()
+    // The configured KYC adapter is paystack_kyc, not the generic provider_key `paystack`.
+    // Prefer the existing provider customer regardless of the adapter key, then recover from KYC.
+    let { data: providerCustomer } = await admin.from('provider_customers').select('id,market_id,provider_customer_code,status,provider_key').eq('user_id', user.id).like('provider_key','paystack%').maybeSingle()
 
-    // Recover a provider customer that was persisted on the KYC record but lost from provider_customers.
     if (!providerCustomer && kycSeed?.provider_customer_ref && kycSeed.market_id) {
       const { data: recovered } = await admin.from('provider_customers').upsert({
         market_id: kycSeed.market_id,
         user_id: user.id,
-        provider_key: 'paystack',
+        provider_key: 'paystack_kyc',
         provider_customer_code: kycSeed.provider_customer_ref,
         status: 'ACTIVE',
         metadata: { source: 'kyc_reconciliation' },
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'market_id,user_id,provider_key' }).select('id,market_id,provider_customer_code,status').single()
+      }, { onConflict: 'market_id,user_id,provider_key' }).select('id,market_id,provider_customer_code,status,provider_key').single()
       providerCustomer = recovered
     }
 
