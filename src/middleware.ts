@@ -60,14 +60,16 @@ export async function middleware(request: NextRequest) {
     return privateResponseHeaders(response)
   }
 
-  const { data: onboarding } = await supabase
-    .from('profiles').select('onboarding_step').eq('id', user.id).maybeSingle()
+  // A user who has completed KYC and has an ACTIVE virtual account is fully verified.
+  // Do not make the legacy onboarding_step flag capable of sending an already-verified
+  // customer back to KYC/status. The Paystack webhook sets onboarding_step to complete,
+  // but the real financial access gates are the persisted VERIFIED + ACTIVE states.
   const { data: kyc } = await supabase
     .from('user_kyc_profiles').select('status').eq('user_id', user.id).eq('status', 'VERIFIED').limit(1).maybeSingle()
   const { data: virtualAccount } = await supabase
     .from('user_virtual_accounts').select('status').eq('user_id', user.id).eq('status', 'ACTIVE').limit(1).maybeSingle()
 
-  const verificationComplete = onboarding?.onboarding_step === 'complete' && !!kyc && !!virtualAccount
+  const verificationComplete = !!kyc && !!virtualAccount
   if (!verificationComplete) {
     const target = kyc ? '/kyc/status' : '/kyc'
     if (pathname !== target) return NextResponse.redirect(new URL(target, request.url))
