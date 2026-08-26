@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "ZeePay",
+    "slug": "zeepay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "zeepay",
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "experiments": {"typedRoutes": true}
+  }
+}
