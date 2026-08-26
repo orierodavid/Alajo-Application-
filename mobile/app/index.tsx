@@ -1,5 +1,30 @@
-import { Link } from 'expo-router'
-import { SafeAreaView, View, Text, Pressable, StyleSheet } from 'react-native'
+import { useEffect } from 'react'
+import { ActivityIndicator, SafeAreaView, StyleSheet, View } from 'react-native'
+import { router } from 'expo-router'
+import { supabase } from '../lib/auth'
+import { getBootstrap } from '../lib/api'
 
-export default function Home(){return <SafeAreaView style={s.safe}><View style={s.page}><Text style={s.brand}>ZeePay</Text><Text style={s.eyebrow}>YOUR MONEY, SIMPLIFIED</Text><Text style={s.title}>Welcome to ZeePay</Text><Text style={s.copy}>The mobile app will use the same secure ZeePay API and financial business logic as the web platform.</Text><View style={s.card}><Text style={s.label}>Wallet balance</Text><Text style={s.balance}>₦0.00</Text><Text style={s.muted}>Authoritative balance loads from ZeePay API.</Text></View><Link href="/login" asChild><Pressable style={s.button}><Text style={s.buttonText}>Sign in</Text></Pressable></Link></View></SafeAreaView>}
-const s=StyleSheet.create({safe:{flex:1,backgroundColor:'#f5f7f5'},page:{flex:1,padding:24,justifyContent:'center'},brand:{fontSize:34,fontWeight:'800',color:'#fff',backgroundColor:'#0f5b32',alignSelf:'flex-start',paddingHorizontal:16,paddingVertical:7,borderRadius:14},eyebrow:{marginTop:28,fontSize:11,fontWeight:'700',letterSpacing:2,color:'#0f7a3f'},title:{fontSize:30,fontWeight:'800',color:'#142019',marginTop:8},copy:{fontSize:14,lineHeight:22,color:'#718078',marginTop:10},card:{marginTop:28,backgroundColor:'#0f5b32',borderRadius:20,padding:20},label:{fontSize:12,color:'#d8eadf'},balance:{fontSize:32,fontWeight:'800',color:'#fff',marginTop:8},muted:{fontSize:11,color:'#c4dccd',marginTop:8},button:{marginTop:18,backgroundColor:'#0f5b32',borderRadius:14,padding:16,alignItems:'center'},buttonText:{color:'#fff',fontWeight:'800'}})
+export default function Index() {
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const { data } = supabase ? await supabase.auth.getSession() : { data: { session: null } }
+        if (!active) return
+        if (!data.session) return router.replace('/login')
+        const bootstrap: any = await getBootstrap()
+        if (!active) return
+        if (!bootstrap?.authenticated || !bootstrap?.user?.profile) return router.replace('/login')
+        const kyc = String(bootstrap.verification?.kycStatus ?? '').toUpperCase()
+        const dva = String(bootstrap.verification?.virtualAccountStatus ?? '').toUpperCase()
+        if (kyc === 'VERIFIED' && dva === 'ACTIVE') return router.replace('/dashboard')
+        router.replace('/kyc')
+      } catch {
+        if (active) router.replace('/login')
+      }
+    })()
+    return () => { active = false }
+  }, [])
+  return <SafeAreaView style={s.safe}><View style={s.center}><ActivityIndicator size="small" /></View></SafeAreaView>
+}
+const s=StyleSheet.create({safe:{flex:1,backgroundColor:'#f5f7f5'},center:{flex:1,alignItems:'center',justifyContent:'center'}})
