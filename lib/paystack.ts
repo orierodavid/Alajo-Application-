@@ -34,23 +34,23 @@ export async function verifyPaystackTransaction(reference: string) {
   return paystackRequest<{ id: number; domain: string; status: string; reference: string; amount: number; requested_amount?: number; currency: string; metadata?: unknown; customer?: { email?: string | null }; gateway_response?: string | null; paid_at?: string | null }>(`/transaction/verify/${encodeURIComponent(reference)}`)
 }
 
-export type PaystackCustomer = { id: number; customer_code: string; email: string; first_name?: string | null; last_name?: string | null; phone?: string | null; identified?: boolean }
+export type PaystackCustomer = { id: number; customer_code: string; email: string; first_name?: string | null; last_name?: string | null; phone?: string | null; identified?: boolean; dedicated_account?: PaystackDedicatedAccount | null }
 export type PaystackDedicatedAccount = { id: number; account_name: string; account_number: string; bank: { name: string; slug?: string; id?: number }; currency: string; active: boolean; assigned: boolean; customer?: { customer_code?: string } }
 export type PaystackBank = { id: number; name: string; slug: string; code: string; active: boolean; country?: string; currency?: string[] }
+
+export async function fetchPaystackCustomer(customerCode: string) {
+  return paystackRequest<PaystackCustomer>(`/customer/${encodeURIComponent(customerCode)}`)
+}
 
 export async function listPaystackBanks() {
   const allBanks: PaystackBank[] = []
   const perPage = 100
-
-  // Paystack returns the bank list in payload.data. Fetch every page so the
-  // KYC selector is not silently limited to the first 100 Nigerian banks.
   for (let page = 1; page <= 20; page += 1) {
     const banks = await paystackRequest<PaystackBank[]>(`/bank?country=nigeria&perPage=${perPage}&page=${page}`)
     const pageBanks = Array.isArray(banks) ? banks : []
     allBanks.push(...pageBanks)
     if (pageBanks.length < perPage) break
   }
-
   const seen = new Set<string>()
   return allBanks.filter(bank => {
     const key = bank.code || bank.slug || String(bank.id)
