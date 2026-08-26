@@ -1,0 +1,4 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+export const dynamic='force-dynamic'
+export async function GET(){try{const supabase=await createClient();const {data:{user},error:a}=await supabase.auth.getUser();if(a||!user)return NextResponse.json({authenticated:false},{status:401});const {data:p}=await supabase.from('profiles').select('id').eq('id',user.id).maybeSingle();if(!p)return NextResponse.json({authenticated:false,error:'ACCOUNT_NOT_FOUND'},{status:403});const {data:notifications,error}=await supabase.from('notifications').select('id,title,message,type,read,created_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50);if(error)throw error;return NextResponse.json({authenticated:true,notifications:notifications??[]})}catch(e){console.error('ZeePay notifications API error:',e);return NextResponse.json({error:'Unable to load notifications.'},{status:500})}}
