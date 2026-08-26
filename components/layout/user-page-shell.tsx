@@ -26,9 +26,10 @@ export function UserPageShell({
         <header className="h-[76px] bg-white border-b border-[#e6ebe8] px-4 sm:px-7 lg:px-8 flex items-center">
           <div className="w-full max-w-[1180px] mx-auto flex items-center justify-between gap-5">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="lg:hidden flex items-center gap-2 shrink-0">
-                <span className="h-8 w-8 rounded-xl bg-[#e8f6ed] text-[#15803d] flex items-center justify-center"><AlajoIcon name="dashboard" size={16}/></span>
-                <span className="font-extrabold text-[#0d2d1b]">Alajo</span>
+              <div className="lg:hidden flex items-center shrink-0 mr-1">
+                <Link href="/dashboard" aria-label="ZeePay home" className="text-[22px] leading-none font-black italic tracking-[-0.055em] text-[#0d2d1b]">
+                  Zee<span className="text-[#16a34a]">Pay</span>
+                </Link>
               </div>
               <div className="hidden lg:block" />
               <div className="min-w-0">
