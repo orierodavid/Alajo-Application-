@@ -10,9 +10,8 @@ export async function GET() {
     const { data: authData, error: authError } = await supabase.auth.getUser()
     if (authError || !authData.user) return NextResponse.json({ authenticated: false }, { status: 401 })
 
-    await supabase.rpc('finalize_due_groups')
-    await supabase.rpc('activate_due_groups')
-
+    // Read-only endpoint: contribution lifecycle processing is performed by the
+    // authenticated cron worker, never as a side effect of opening this page.
     const userId = authData.user.id
     const { data: memberships, error: membershipError } = await supabase
       .from('group_members')
