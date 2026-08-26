@@ -14,14 +14,14 @@ export async function POST(request: Request) {
     if (!supabaseUrl || !supabaseKey) return NextResponse.json({ error: 'Deotech Finance account service is not configured on the production server.' }, { status: 500 })
 
     const cookieStore = await cookies()
-    let response = NextResponse.json({ success: true })
+    let authResponse = NextResponse.json({ success: true })
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() { return cookieStore.getAll() },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options)
-            response.cookies.set(name, value, options)
+            authResponse.cookies.set(name, value, options)
           })
         },
       },
@@ -30,8 +30,6 @@ export async function POST(request: Request) {
     const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error || !signedIn.user) return NextResponse.json({ error: error?.message || 'Unable to log in.' }, { status: 401 })
 
-    // Authentication alone is not an Alajo account. A corresponding application
-    // profile must exist before we create/retain an application session.
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id,status,onboarding_step')
@@ -55,8 +53,9 @@ export async function POST(request: Request) {
 
     const verificationComplete = profile.onboarding_step === 'complete' && !!kyc && !!virtualAccount
     const redirectTo = verificationComplete ? '/dashboard' : kyc ? '/kyc/status' : '/kyc'
-    response = NextResponse.json({ success: true, redirectTo })
-    return response
+    const finalResponse = NextResponse.json({ success: true, redirectTo })
+    authResponse.cookies.getAll().forEach(cookie => finalResponse.cookies.set(cookie))
+    return finalResponse
   } catch {
     return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 })
   }
