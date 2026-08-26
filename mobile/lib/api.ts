@@ -8,12 +8,15 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   if (data.session?.access_token) headers.Authorization = `Bearer ${data.session.access_token}`
   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers })
   const body = await response.json().catch(() => null)
-  if (!response.ok) throw new Error(body?.error?.message ?? body?.message ?? 'Request failed')
+  if (!response.ok) throw new Error(body?.error?.message ?? body?.message ?? body?.error ?? 'Request failed')
   return body as T
 }
 
-export type Bootstrap = { profile?: Record<string, unknown> | null; kyc?: Record<string, unknown> | null; virtualAccount?: Record<string, unknown> | null; wallet?: Record<string, unknown> | null }
+export type Bootstrap = { authenticated?: boolean; user?: { profile?: Record<string, unknown> | null }; verification?: { kycStatus?: string | null; virtualAccountStatus?: string | null }; profile?: Record<string, unknown> | null; kyc?: Record<string, unknown> | null; virtualAccount?: Record<string, unknown> | null; wallet?: Record<string, unknown> | null }
 export function getBootstrap() { return apiFetch<Bootstrap>('/api/v1/me/bootstrap') }
+export function getBanks() { return apiFetch<{ banks: any[] }>('/api/v1/banks') }
+export function verifyPayoutAccount(accountNumber: string, bankCode: string) { return apiFetch('/api/v1/me/payout-account', { method:'POST', body: JSON.stringify({ accountNumber, bankCode }) }) }
+export function requestPayout(input: { amount: number; bankCode: string; accountNumber: string; accountName: string; payoutId?: string; idempotencyKey: string }) { return apiFetch('/api/v1/me/payout-request', { method:'POST', body: JSON.stringify(input) }) }
 export function getTransactions(cursor?: string) { return apiFetch(`/api/v1/me/transactions${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`) }
 export function getContributions() { return apiFetch('/api/v1/me/contributions') }
 export function getGroups() { return apiFetch('/api/v1/me/groups') }
