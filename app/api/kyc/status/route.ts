@@ -13,8 +13,7 @@ export async function GET() {
   const admin = createAdminClient()
   try {
     const { data: kycSeed } = await admin.from('user_kyc_profiles').select('market_id,provider_customer_ref').eq('user_id', user.id).maybeSingle()
-    // The configured KYC adapter is paystack_kyc, not the generic provider_key `paystack`.
-    // Prefer the existing provider customer regardless of the adapter key, then recover from KYC.
+    // Production reconciliation: paystack_kyc is the configured KYC adapter.
     let { data: providerCustomer } = await admin.from('provider_customers').select('id,market_id,provider_customer_code,status,provider_key').eq('user_id', user.id).like('provider_key','paystack%').maybeSingle()
 
     if (!providerCustomer && kycSeed?.provider_customer_ref && kycSeed.market_id) {
