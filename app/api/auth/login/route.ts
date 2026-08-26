@@ -33,7 +33,9 @@ export async function POST(request: Request) {
 
     const verificationComplete = profile?.onboarding_step === 'complete' && !!kyc && !!virtualAccount
     const redirectTo = verificationComplete ? '/dashboard' : kyc ? '/kyc/status' : '/kyc'
-    return NextResponse.json({ success: true, redirectTo }, { headers: response.headers })
+    const finalResponse = NextResponse.json({ success: true, redirectTo })
+    response.cookies.getAll().forEach(cookie => finalResponse.cookies.set(cookie))
+    return finalResponse
   } catch {
     return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 })
   }
