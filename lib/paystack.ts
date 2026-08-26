@@ -37,9 +37,29 @@ export async function verifyPaystackTransaction(reference: string) {
 export type PaystackCustomer = { id: number; customer_code: string; email: string; first_name?: string | null; last_name?: string | null; phone?: string | null; identified?: boolean }
 export type PaystackDedicatedAccount = { id: number; account_name: string; account_number: string; bank: { name: string; slug?: string; id?: number }; currency: string; active: boolean; assigned: boolean; customer?: { customer_code?: string } }
 export type PaystackBank = { id: number; name: string; slug: string; code: string; active: boolean; country?: string; currency?: string[] }
+type PaystackBankPage = { data: PaystackBank[]; meta?: { perPage?: number; page?: number; pageCount?: number; next?: string | null; previous?: string | null } }
 
 export async function listPaystackBanks() {
-  return paystackRequest<PaystackBank[]>('/bank?country=nigeria&perPage=100&pay_with_bank_transfer=true')
+  const allBanks: PaystackBank[] = []
+  const perPage = 100
+
+  for (let page = 1; page <= 20; page += 1) {
+    const response = await paystackRequest<PaystackBankPage>(`/bank?country=nigeria&perPage=${perPage}&page=${page}`)
+    const banks = response.data ?? []
+    allBanks.push(...banks)
+
+    const pageCount = response.meta?.pageCount
+    if (pageCount && page >= pageCount) break
+    if (banks.length < perPage) break
+  }
+
+  const seen = new Set<string>()
+  return allBanks.filter(bank => {
+    const key = bank.code || bank.slug || String(bank.id)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return bank.active && (!bank.country || bank.country.toLowerCase() === 'nigeria')
+  })
 }
 
 export async function createPaystackCustomer(input: { email: string; firstName: string; lastName: string; phone: string; metadata?: Record<string, unknown> }) {
