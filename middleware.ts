@@ -11,8 +11,8 @@ const PUBLIC_API_PATHS = [
 ]
 
 const USER_PROTECTED_PREFIXES = [
-  '/dashboard', '/groups', '/join-group', '/contributions', '/payouts',
-  '/wallet', '/transactions', '/notifications', '/settings', '/help-center', '/onboarding',
+  '/dashboard', '/groups', '/join-group', '/contributions', '/payouts', '/wallet',
+  '/transactions', '/notifications', '/settings', '/help-center', '/onboarding',
 ]
 
 function isUserProtected(pathname: string) {
@@ -60,20 +60,18 @@ export async function middleware(request: NextRequest) {
     return privateResponseHeaders(response)
   }
 
+  // onboarding_step is the server-controlled completion marker. The status
+  // endpoint sets it to `complete` only after KYC is VERIFIED and the NGN DVA
+  // is ACTIVE. Using this marker here avoids a second RLS-sensitive set of
+  // KYC/account reads in Edge middleware and prevents a completed user from
+  // being bounced back to /kyc/status.
   const { data: onboarding } = await supabase
     .from('profiles').select('onboarding_step').eq('id', user.id).maybeSingle()
-  const { data: kyc } = await supabase
-    .from('user_kyc_profiles').select('status').eq('user_id', user.id).eq('status', 'VERIFIED').limit(1).maybeSingle()
   const { data: anyKyc } = await supabase
     .from('user_kyc_profiles').select('status').eq('user_id', user.id).limit(1).maybeSingle()
-  const { data: virtualAccount } = await supabase
-    .from('user_virtual_accounts').select('status').eq('user_id', user.id).eq('status', 'ACTIVE').limit(1).maybeSingle()
 
-  const verificationComplete = onboarding?.onboarding_step === 'complete' && !!kyc && !!virtualAccount
+  const verificationComplete = onboarding?.onboarding_step === 'complete'
   if (!verificationComplete) {
-    // A submitted KYC, including PENDING/REJECTED, must resume at status so
-    // the live Paystack reconciliation can run. Only a user with no KYC record
-    // is sent to the data-entry form.
     const target = anyKyc ? '/kyc/status' : '/kyc'
     if (pathname !== target) return NextResponse.redirect(new URL(target, request.url))
   }
