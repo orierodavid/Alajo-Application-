@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect } from 'react'
 import { AlajoIcon } from '@/components/ui/alajo-icon'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import SignOutButton from '@/app/dashboard/sign-out-button'
@@ -15,28 +14,21 @@ const nav = [
 
 export function AppSidebar() {
   const pathname = usePathname()
-  useEffect(() => {
-    document.body.classList.add('alajo-user-ui')
-    return () => document.body.classList.remove('alajo-user-ui')
-  }, [])
-
-  return <aside className="user-sidebar hidden lg:flex fixed inset-y-0 left-0 z-30 w-[228px] shrink-0 bg-white text-[#5f6d64] p-4 flex-col border-r border-[#e6ebe8]">
+  return <aside className="user-sidebar hidden lg:flex fixed inset-y-0 left-0 z-30 w-[228px] shrink-0 bg-white text-[#425149] p-4 flex-col border-r border-[#e2e9e4]">
     <div className="flex items-center justify-between px-2 py-3">
-      <Link href="/dashboard" aria-label="ZeePay home" className="zeepay-wordmark">
-        Zee<span>Pay</span>
-      </Link>
+      <Link href="/dashboard" aria-label="ZeePay home" className="zeepay-wordmark">Zee<span>Pay</span></Link>
       <ThemeToggle />
     </div>
-    <p className="mt-8 mb-2 px-3 text-[9px] font-bold uppercase tracking-[.2em] text-[#a1aaa5]">Menu</p>
-    <nav className="flex-1 space-y-0.5 text-[13px] font-medium">
+    <p className="mt-8 mb-2 px-3 text-[9px] font-bold uppercase tracking-[.2em] text-[#718078]">Menu</p>
+    <nav className="flex-1 space-y-0.5 text-[13px] font-semibold">
       {nav.map(([icon, href, label]) => {
         const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))
-        return <Link key={label} href={href} aria-current={active ? 'page' : undefined} className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition ${active ? 'bg-[#eaf7ef] text-[#126b39] font-semibold' : 'text-[#718078] hover:bg-[#f3f7f4] hover:text-[#173c28]'}`}>
-          {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#16a34a]"/>}
+        return <Link key={label} href={href} aria-current={active ? 'page' : undefined} className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${active ? 'bg-[#eaf7ef] text-[#0f5b32] font-bold' : 'text-[#425149] hover:bg-[#f3f7f4] hover:text-[#0f5b32]'}`}>
+          {active && <span className="absolute left-0 top-2 bottom-0 w-[3px] rounded-r-full bg-[#16a34a]"/>}
           <span className="w-5 flex justify-center"><AlajoIcon name={icon} size={17}/></span><span>{label}</span>
         </Link>
       })}
     </nav>
-    <div className="pt-2 border-t border-[#edf0ee]"><SignOutButton /></div>
+    <div className="pt-2 border-t border-[#e6ebe8]"><SignOutButton /></div>
   </aside>
 }
