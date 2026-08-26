@@ -37,20 +37,18 @@ export async function verifyPaystackTransaction(reference: string) {
 export type PaystackCustomer = { id: number; customer_code: string; email: string; first_name?: string | null; last_name?: string | null; phone?: string | null; identified?: boolean }
 export type PaystackDedicatedAccount = { id: number; account_name: string; account_number: string; bank: { name: string; slug?: string; id?: number }; currency: string; active: boolean; assigned: boolean; customer?: { customer_code?: string } }
 export type PaystackBank = { id: number; name: string; slug: string; code: string; active: boolean; country?: string; currency?: string[] }
-type PaystackBankPage = { data: PaystackBank[]; meta?: { perPage?: number; page?: number; pageCount?: number; next?: string | null; previous?: string | null } }
 
 export async function listPaystackBanks() {
   const allBanks: PaystackBank[] = []
   const perPage = 100
 
+  // Paystack returns the bank list in payload.data. Fetch every page so the
+  // KYC selector is not silently limited to the first 100 Nigerian banks.
   for (let page = 1; page <= 20; page += 1) {
-    const response = await paystackRequest<PaystackBankPage>(`/bank?country=nigeria&perPage=${perPage}&page=${page}`)
-    const banks = response.data ?? []
-    allBanks.push(...banks)
-
-    const pageCount = response.meta?.pageCount
-    if (pageCount && page >= pageCount) break
-    if (banks.length < perPage) break
+    const banks = await paystackRequest<PaystackBank[]>(`/bank?country=nigeria&perPage=${perPage}&page=${page}`)
+    const pageBanks = Array.isArray(banks) ? banks : []
+    allBanks.push(...pageBanks)
+    if (pageBanks.length < perPage) break
   }
 
   const seen = new Set<string>()
