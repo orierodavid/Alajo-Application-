@@ -62,6 +62,12 @@ export async function listPaystackBanks() {
   })
 }
 
+export type PaystackResolvedAccount = { account_number: string; account_name: string }
+
+export async function resolvePaystackAccount(input: { accountNumber: string; bankCode: string }) {
+  return paystackRequest<PaystackResolvedAccount>(`/bank/resolve?account_number=${encodeURIComponent(input.accountNumber)}&bank_code=${encodeURIComponent(input.bankCode)}`)
+}
+
 export async function createPaystackCustomer(input: { email: string; firstName: string; lastName: string; phone: string; metadata?: Record<string, unknown> }) {
   return paystackRequest<PaystackCustomer>('/customer', { method: 'POST', body: JSON.stringify({ email: input.email, first_name: input.firstName, last_name: input.lastName, phone: input.phone, metadata: input.metadata ?? {} }) })
 }
