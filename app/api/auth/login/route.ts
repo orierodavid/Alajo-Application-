@@ -51,8 +51,11 @@ export async function POST(request: Request) {
       supabase.from('user_virtual_accounts').select('status').eq('user_id', signedIn.user.id).eq('status', 'ACTIVE').limit(1).maybeSingle(),
     ])
 
+    // A submitted/pending KYC must resume at the status page so its Paystack
+    // reconciliation can run. Do not force the customer to submit BVN again.
+    const { data: anyKyc } = await supabase.from('user_kyc_profiles').select('status').eq('user_id', signedIn.user.id).limit(1).maybeSingle()
     const verificationComplete = profile.onboarding_step === 'complete' && !!kyc && !!virtualAccount
-    const redirectTo = verificationComplete ? '/dashboard' : kyc ? '/kyc/status' : '/kyc'
+    const redirectTo = verificationComplete ? '/dashboard' : anyKyc ? '/kyc/status' : '/kyc'
     const finalResponse = NextResponse.json({ success: true, redirectTo })
     authResponse.cookies.getAll().forEach(cookie => finalResponse.cookies.set(cookie))
     return finalResponse
