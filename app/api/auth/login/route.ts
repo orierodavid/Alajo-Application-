@@ -11,14 +11,30 @@ export async function POST(request: Request) {
     if (!supabaseUrl || !supabaseKey) return NextResponse.json({ error: 'Deotech Finance account service is not configured on the production server.' }, { status: 500 })
     const cookieStore = await cookies()
     const response = NextResponse.json({ success: true })
-    const supabase = createServerClient(supabaseUrl, supabaseKey, { cookies: { getAll(){return cookieStore.getAll()}, setAll(cookiesToSet){cookiesToSet.forEach(({name,value,options})=>{cookieStore.set(name,value,options);response.cookies.set(name,value,options)})} } })
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll(){ return cookieStore.getAll() },
+        setAll(cookiesToSet){ cookiesToSet.forEach(({name,value,options})=>{ cookieStore.set(name,value,options); response.cookies.set(name,value,options) }) },
+      },
+    })
     const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error || !signedIn.user) return NextResponse.json({ error: error?.message || 'Unable to log in.' }, { status: 401 })
-    const { data: profile } = await supabase.from('profiles').select('status').eq('id', signedIn.user.id).maybeSingle()
+
+    const { data: profile } = await supabase.from('profiles').select('status,onboarding_step').eq('id', signedIn.user.id).maybeSingle()
     if (profile?.status === 'suspended') {
       await supabase.auth.signOut()
       return NextResponse.json({ error: 'Your Deotech Finance account is currently disabled. Please contact support.' }, { status: 403 })
     }
-    return response
-  } catch { return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 }) }
+
+    const [{ data: kyc }, { data: virtualAccount }] = await Promise.all([
+      supabase.from('user_kyc_profiles').select('status').eq('user_id', signedIn.user.id).eq('status', 'VERIFIED').limit(1).maybeSingle(),
+      supabase.from('user_virtual_accounts').select('status').eq('user_id', signedIn.user.id).eq('status', 'ACTIVE').limit(1).maybeSingle(),
+    ])
+
+    const verificationComplete = profile?.onboarding_step === 'complete' && !!kyc && !!virtualAccount
+    const redirectTo = verificationComplete ? '/dashboard' : kyc ? '/kyc/status' : '/kyc'
+    return NextResponse.json({ success: true, redirectTo }, { headers: response.headers })
+  } catch {
+    return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 })
+  }
 }
