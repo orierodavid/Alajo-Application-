@@ -1,0 +1,12 @@
+import { useEffect, useState } from 'react'
+import { SafeAreaView, View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
+import { getBootstrap } from '../lib/api'
+
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true)
+  const [wallet, setWallet] = useState('₦0.00')
+  const [name, setName] = useState('there')
+  useEffect(() => { getBootstrap().then((data:any) => { const p=data.profile ?? {}; const w=data.wallet ?? {}; setName(String(p.name ?? p.full_name ?? 'there').split(' ')[0] || 'there'); const amount=Number(w.balance ?? w.available_balance ?? 0); setWallet(`₦${amount.toLocaleString('en-NG',{minimumFractionDigits:2})}`) }).catch(()=>{}).finally(()=>setLoading(false)) }, [])
+  return <SafeAreaView style={s.safe}><ScrollView contentContainerStyle={s.page}><Text style={s.brand}>ZeePay</Text><Text style={s.eyebrow}>OVERVIEW</Text><Text style={s.title}>Good to see you, {name}</Text><View style={s.card}><Text style={s.label}>Wallet balance</Text><Text style={s.balance}>{loading ? '—' : wallet}</Text><Text style={s.muted}>Available balance</Text></View><View style={s.grid}><Pressable style={s.tile}><Text style={s.tileTitle}>Contributions</Text><Text style={s.tileCopy}>Manage your savings</Text></Pressable><Pressable style={s.tile}><Text style={s.tileTitle}>Transactions</Text><Text style={s.tileCopy}>View your activity</Text></Pressable><Pressable style={s.tile}><Text style={s.tileTitle}>Payouts</Text><Text style={s.tileCopy}>See due payouts</Text></Pressable><Pressable style={s.tile}><Text style={s.tileTitle}>Groups</Text><Text style={s.tileCopy}>Your savings groups</Text></Pressable></View></ScrollView></SafeAreaView>
+}
+const s=StyleSheet.create({safe:{flex:1,backgroundColor:'#f5f7f5'},page:{padding:24},brand:{fontSize:32,fontWeight:'800',color:'#0f5b32'},eyebrow:{marginTop:34,fontSize:10,fontWeight:'800',letterSpacing:2,color:'#0f7a3f'},title:{fontSize:28,fontWeight:'800',color:'#142019',marginTop:8},card:{marginTop:22,backgroundColor:'#0f5b32',borderRadius:22,padding:22},label:{fontSize:12,color:'#d8eadf'},balance:{fontSize:34,fontWeight:'800',color:'#fff',marginTop:8},muted:{fontSize:11,color:'#c4dccd',marginTop:6},grid:{marginTop:14,flexDirection:'row',flexWrap:'wrap',gap:12},tile:{width:'47%',backgroundColor:'#fff',borderRadius:18,padding:16,borderWidth:1,borderColor:'#e5ebe7'},tileTitle:{fontSize:14,fontWeight:'800',color:'#142019'},tileCopy:{fontSize:11,color:'#718078',marginTop:6}})
