@@ -17,13 +17,25 @@ export async function POST(request: Request) {
     const bankCode = String(body.bankCode ?? '').trim()
     const accountNumber = String(body.accountNumber ?? '').trim()
     const accountName = String(body.accountName ?? '').trim()
+    const payoutId = body.payoutId ? String(body.payoutId) : null
     if (!Number.isFinite(amount) || amount <= 0) return NextResponse.json({ error: 'INVALID_AMOUNT' }, { status: 400 })
     if (!/^\d{10}$/.test(accountNumber) || !bankCode || !accountName) return NextResponse.json({ error: 'INVALID_DESTINATION' }, { status: 400 })
+
+    if (payoutId) {
+      const { data: membership } = await admin.from('group_members').select('id').eq('user_id', user.id).limit(100)
+      const memberIds = (membership ?? []).map((m) => m.id)
+      const { data: payout } = await admin.from('payouts').select('id, scheduled_date, expected_amount, funded_amount, status').eq('id', payoutId).in('group_member_id', memberIds.length ? memberIds : ['00000000-0000-0000-0000-000000000000']).maybeSingle()
+      const dueStatuses = ['pending', 'scheduled', 'processing']
+      if (!payout || !dueStatuses.includes(String(payout.status).toLowerCase()) || new Date(payout.scheduled_date) > new Date()) return NextResponse.json({ error: 'PAYOUT_NOT_DUE' }, { status: 409 })
+      if (Number(payout.funded_amount ?? 0) < Number(payout.expected_amount ?? 0)) return NextResponse.json({ error: 'PAYOUT_NOT_FUNDED' }, { status: 409 })
+      if (amount > Number(payout.expected_amount ?? 0)) return NextResponse.json({ error: 'AMOUNT_EXCEEDS_PAYOUT' }, { status: 400 })
+    }
+
     const amountMinor = Math.round(amount * 100)
     const idempotencyKey = String(body.idempotencyKey || randomUUID())
     const { data: market, error: marketError } = await admin.from('markets').select('id').eq('country_code', 'NG').eq('status', 'ACTIVE').limit(1).maybeSingle()
     if (marketError || !market) return NextResponse.json({ error: 'NG_MARKET_NOT_CONFIGURED' }, { status: 503 })
-    const destinationToken = JSON.stringify({ bankCode, accountNumber, accountName })
+    const destinationToken = JSON.stringify({ bankCode, accountNumber, accountName, payoutId })
     const { data: payout, error: reserveError } = await admin.rpc('reserve_payout_atomic', { p_market_id: market.id, p_user_id: user.id, p_currency: 'NGN', p_amount_minor: amountMinor, p_fee_minor: 0, p_idempotency_key: idempotencyKey, p_environment: process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live', p_destination_type: 'NG_NUBAN', p_destination_token: destinationToken })
     if (reserveError || !payout) return NextResponse.json({ error: reserveError?.message || 'PAYOUT_RESERVATION_FAILED' }, { status: 400 })
     const currentStatus = String((payout as any).status || '').toUpperCase()
@@ -41,7 +53,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'WITHDRAWAL_FAILED', detail: reason }, { status: 502 })
     }
   } catch (error) {
-    console.error('ZeePay wallet payout error:', error)
+    console.error('ZeePay payout request error:', error)
     return NextResponse.json({ error: 'Unable to process withdrawal.' }, { status: 500 })
   }
 }
