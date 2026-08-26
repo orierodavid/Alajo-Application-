@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     if (!/^\d{11}$/.test(bvn)) return jsonError('BVN must contain exactly 11 digits.', 400, 'INVALID_BVN')
     if (!bankCode) return jsonError('Select your bank.', 400, 'BANK_REQUIRED')
     if (!/^\d{10}$/.test(accountNumber)) return jsonError('Account number must contain exactly 10 digits.', 400, 'INVALID_ACCOUNT_NUMBER')
+
     const admin = createAdminClient()
     const [{ data: profile, error: profileError }, { data: market, error: marketError }] = await Promise.all([
       admin.from('profiles').select('full_name, phone, email').eq('id', user.id).single(),
@@ -30,6 +31,27 @@ export async function POST(request: Request) {
     ])
     if (profileError || !profile) return jsonError('Complete your profile before verification.', 400, 'PROFILE_INCOMPLETE')
     if (marketError || !market || market.status !== 'ACTIVE') return jsonError('Nigeria onboarding is not currently active.', 409, 'MARKET_NOT_ACTIVE')
+
+    const authMeta = (user.user_metadata ?? {}) as Record<string, unknown>
+    const metadataFirstName = typeof authMeta.first_name === 'string' ? authMeta.first_name.trim() : ''
+    const metadataLastName = typeof authMeta.last_name === 'string' ? authMeta.last_name.trim() : ''
+    const metadataName = typeof authMeta.full_name === 'string' ? authMeta.full_name.trim() : (typeof authMeta.name === 'string' ? authMeta.name.trim() : '')
+    const profileName = typeof profile.full_name === 'string' ? profile.full_name.trim() : ''
+    const fullName = profileName || metadataName
+    const nameParts = fullName.split(/\s+/).filter(Boolean)
+    const firstName = metadataFirstName || nameParts[0] || ''
+    const lastName = metadataLastName || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '')
+    const email = (typeof profile.email === 'string' && profile.email.trim()) ? profile.email.trim() : (user.email?.trim() || '')
+    const phone = (typeof profile.phone === 'string' && profile.phone.trim()) ? profile.phone.trim() : (typeof authMeta.phone === 'string' ? authMeta.phone.trim() : '')
+
+    if (!email || !phone || !firstName || !lastName) {
+      console.error('KYC profile data incomplete', { userId: user.id, hasEmail: Boolean(email), hasPhone: Boolean(phone), hasFirstName: Boolean(firstName), hasLastName: Boolean(lastName) })
+      return jsonError('Complete your first name, last name, phone and email before verification.', 400, 'PROFILE_INCOMPLETE')
+    }
+
+    // Keep the application profile synchronized with the identity used for KYC.
+    await admin.from('profiles').update({ full_name: `${firstName} ${lastName}`, phone, email }).eq('id', user.id)
+
     const { data: rawKycConfig, error: kycConfigError } = await admin.from('market_provider_configs')
       .select('id, provider_definitions!inner(provider_key, provider_type, status)')
       .eq('market_id', market.id).eq('provider_type', 'KYC').eq('environment', 'LIVE').eq('status', 'ACTIVE')
@@ -40,16 +62,7 @@ export async function POST(request: Request) {
     const providerDefinition = Array.isArray(kycConfig.provider_definitions) ? kycConfig.provider_definitions[0] : kycConfig.provider_definitions
     const providerKey = providerDefinition?.provider_key
     if (!providerKey || !providerKey.startsWith('paystack')) return jsonError('The configured KYC provider has no installed adapter.', 503, 'KYC_PROVIDER_ADAPTER_UNAVAILABLE')
-    const email = profile.email ?? user.email
-    const phone = profile.phone
-    if (!email || !phone || !profile.full_name) return jsonError('Complete your name, phone and email before verification.', 400, 'PROFILE_INCOMPLETE')
-    const parts = profile.full_name.trim().split(/\s+/)
-    const firstName = parts[0]
-    const lastName = parts.length > 1 ? parts[parts.length - 1] : parts[0]
 
-    // First resolve the selected Nigerian bank account. This confirms the bank code
-    // and account number are a real pair before we submit the BVN-linked identity
-    // validation required by Paystack for financial-services DVAs.
     let resolvedAccount
     try {
       resolvedAccount = await resolvePaystackAccount({ accountNumber, bankCode })
@@ -65,6 +78,7 @@ export async function POST(request: Request) {
       if (customerError || !created) throw new Error('PROVIDER_CUSTOMER_PERSIST_FAILED')
       providerCustomer = created
     }
+
     const { data: bankConfig } = await admin.from('market_provider_configs').select('id, provider_definitions!inner(provider_key, provider_type, status)')
       .eq('market_id', market.id).eq('provider_type', 'BANK_VERIFICATION').eq('environment', 'LIVE').eq('status', 'ACTIVE')
       .eq('provider_definitions.provider_type', 'BANK_VERIFICATION').eq('provider_definitions.status', 'ACTIVE').order('priority', { ascending: true }).limit(1).maybeSingle()
@@ -74,6 +88,7 @@ export async function POST(request: Request) {
     const bankPayload = { market_id: market.id, user_id: user.id, kyc_profile_id: kycProfile.id, provider_config_id: bankConfig?.id ?? null, provider_customer_ref: providerCustomer.provider_customer_code, bank_code: bankCode, account_number_last4: accountNumber.slice(-4), status: 'PENDING', is_default: true, metadata: { provider: providerKey, resolved_account_name: resolvedAccount.account_name }, updated_at: new Date().toISOString() }
     const bankWrite = existingBank ? await admin.from('user_bank_accounts').update(bankPayload).eq('id', existingBank.id) : await admin.from('user_bank_accounts').insert(bankPayload)
     if (bankWrite.error) throw new Error('BANK_ACCOUNT_PERSIST_FAILED')
+
     await validatePaystackCustomer({ customerCode: providerCustomer.provider_customer_code, firstName, lastName, middleName, country: 'NG', bvn, bankCode, accountNumber })
     await admin.from('provider_customers').update({ status: 'ACTIVE', updated_at: new Date().toISOString() }).eq('id', providerCustomer.id)
     return NextResponse.json({ status: 'pending', provider: providerKey, message: 'Your BVN and bank account are being verified. After Paystack confirms the BVN-linked account, your dedicated funding account will be created.' }, { status: 202 })
