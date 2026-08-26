@@ -26,6 +26,20 @@ export async function GET(request: Request) {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
+  // All contribution lifecycle mutations run in the protected scheduled worker,
+  // never as a side effect of a user's read request.
+  const { data: finalized, error: finalizeError } = await supabase.rpc('finalize_due_groups')
+  if (finalizeError) {
+    console.error('Contribution group finalization failed:', finalizeError)
+    return NextResponse.json({ success: false, error: 'Contribution lifecycle processing failed.' }, { status: 500 })
+  }
+
+  const { data: activated, error: activateError } = await supabase.rpc('activate_due_groups')
+  if (activateError) {
+    console.error('Contribution group activation failed:', activateError)
+    return NextResponse.json({ success: false, error: 'Contribution lifecycle processing failed.' }, { status: 500 })
+  }
+
   const { data, error } = await supabase.rpc('process_due_contributions')
   if (error) {
     console.error('Contribution auto-debit runner failed:', error)
@@ -58,13 +72,7 @@ export async function GET(request: Request) {
         const domainMatches = verified.domain === expectedDomain
 
         if (!referenceMatches || !amountMatches || !currencyMatches || !domainMatches) {
-          console.warn('Paystack reconciliation verification mismatch', {
-            paymentId: payment.id,
-            referenceMatches,
-            amountMatches,
-            currencyMatches,
-            domainMatches,
-          })
+          console.warn('Paystack reconciliation verification mismatch', { paymentId: payment.id, referenceMatches, amountMatches, currencyMatches, domainMatches })
           continue
         }
 
@@ -75,27 +83,10 @@ export async function GET(request: Request) {
             p_currency: verified.currency,
             p_provider_payload: verified,
           })
-          if (creditError || !result?.success) {
-            console.error('Paystack reconciliation credit failed:', creditError)
-          } else {
-            reconciled += 1
-            console.log('Paystack wallet funding reconciled successfully', { paymentId: payment.id })
-          }
+          if (creditError || !result?.success) console.error('Paystack reconciliation credit failed:', creditError)
+          else reconciled += 1
         } else if (verified.status === 'failed' || verified.status === 'reversed') {
-          const { error: updateError } = await supabase
-            .from('payments')
-            .update({
-              status: verified.status,
-              updated_at: now,
-              metadata: {
-                ...(payment.metadata as Record<string, unknown> ?? {}),
-                provider_status: verified.status,
-                provider_payload: verified,
-                reconciled_at: now,
-              },
-            })
-            .eq('id', payment.id)
-            .in('status', ['pending', 'processing'])
+          const { error: updateError } = await supabase.from('payments').update({ status: verified.status, updated_at: now, metadata: { ...(payment.metadata as Record<string, unknown> ?? {}), provider_status: verified.status, provider_payload: verified, reconciled_at: now } }).eq('id', payment.id).in('status', ['pending', 'processing'])
           if (!updateError) failed += 1
           else console.error('Paystack reconciliation status update failed:', updateError)
         }
@@ -105,5 +96,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ success: true, result: data, paystackReconciliation: { reconciled, failed } })
+  return NextResponse.json({ success: true, lifecycle: { finalized, activated }, result: data, paystackReconciliation: { reconciled, failed } })
 }
