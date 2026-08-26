@@ -11,15 +11,18 @@ export async function GET() {
     if (authError || !authData.user) return NextResponse.json({ authenticated: false }, { status: 401 })
 
     const userId = authData.user.id
-    const { data: memberships, error: membershipError } = await supabase
-      .from('group_members')
-      .select('id, status, joined_at, payout_received_at, groups(id, name, status, contribution_amount, cycle, slot_count, finalized_member_count)')
-      .eq('user_id', userId)
-      .in('status', activeMembershipStatuses)
+    const [profileResult, membershipResult] = await Promise.all([
+      supabase.from('profiles').select('full_name, email, phone').eq('id', userId).maybeSingle(),
+      supabase
+        .from('group_members')
+        .select('id, status, joined_at, payout_received_at, groups(id, name, status, contribution_amount, cycle, slot_count, finalized_member_count)')
+        .eq('user_id', userId)
+        .in('status', activeMembershipStatuses),
+    ])
 
-    if (membershipError) throw membershipError
+    if (membershipResult.error) throw membershipResult.error
 
-    const memberRows = memberships ?? []
+    const memberRows = membershipResult.data ?? []
     const membershipIds = memberRows.map((m) => m.id)
     const emptyIds = ['00000000-0000-0000-0000-000000000000']
     const ids = membershipIds.length ? membershipIds : emptyIds
@@ -73,8 +76,13 @@ export async function GET() {
       }
     })
 
+    const profile = profileResult.data
+    const metadataName = authData.user.user_metadata?.full_name
+    const name = profile?.full_name || (typeof metadataName === 'string' && metadataName.trim()) || authData.user.email?.split('@')[0] || 'User'
+
     return NextResponse.json({
       authenticated: true,
+      profile: { name, email: profile?.email ?? authData.user.email ?? '', phone: profile?.phone ?? authData.user.phone ?? '' },
       wallet: { balance: Number(walletResult.data?.balance ?? 0), currency: walletResult.data?.currency ?? 'NGN' },
       contributions: { total: totalContributions, thisMonth, upcoming, completed },
       recoveryCases: (recoveryResult.data ?? []).map((c: any) => ({ id: c.id, groupId: c.group_id, status: c.status, payoutReceived: c.payout_received, outstandingAmount: Number(c.outstanding_amount ?? 0), deotechCoveredAmount: Number(c.deotech_covered_amount ?? 0), recoveredAmount: Number(c.recovered_amount ?? 0), defaultedAt: c.defaulted_at, graceUntil: c.grace_until })),
