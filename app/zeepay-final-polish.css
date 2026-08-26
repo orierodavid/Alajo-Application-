@@ -1,0 +1,135 @@
+/* ZeePay final visual corrections. Loaded last so legacy styles cannot override the approved UI. */
+
+/* Mobile drawer: absolutely no logo tile/white rectangle. */
+@media (max-width: 1023px) {
+  aside[aria-label],
+  aside {
+    background: #0f5b32 !important;
+  }
+
+  aside .mobile-drawer-brand,
+  aside .mobile-drawer-brand:first-child,
+  aside > .mobile-drawer-brand {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    background: #0f5b32 !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  aside .mobile-drawer-brand * {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  aside .zeepay-drawer-wordmark {
+    display: inline-block !important;
+    margin: 0 !important;
+    color: #fff !important;
+    font-size: 58px !important;
+    line-height: .9 !important;
+    font-weight: 950 !important;
+    font-style: italic !important;
+    letter-spacing: -.08em !important;
+    text-shadow: -1.5px 0 #16a34a, 0 1.5px 0 #16a34a, 1.5px 0 #16a34a, 0 -1.5px 0 #16a34a !important;
+  }
+
+  aside .zeepay-drawer-wordmark span { color: #fff !important; }
+  aside .mobile-drawer-brand + nav a:not([aria-current="page"]) {
+    color: #fff !important;
+    opacity: 1 !important;
+  }
+  aside .mobile-drawer-brand + nav a:not([aria-current="page"]) svg {
+    color: #fff !important;
+    stroke: #fff !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Settings switches: clean, standard mobile-finance control. The real thumb is a pseudo-element so old child-span transforms cannot break it. */
+.zeepay-toggle,
+main button[role="switch"] {
+  position: relative !important;
+  width: 52px !important;
+  height: 32px !important;
+  min-width: 52px !important;
+  min-height: 32px !important;
+  flex: 0 0 52px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #d9e2dc !important;
+  box-shadow: inset 0 0 0 1px #c4d0c8 !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+
+.zeepay-toggle::after,
+main button[role="switch"]::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 4px !important;
+  top: 4px !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  box-shadow: 0 2px 5px rgba(16,37,26,.20) !important;
+  transform: translateX(0) !important;
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease !important;
+  pointer-events: none !important;
+}
+
+.zeepay-toggle[aria-checked="true"],
+main button[role="switch"][aria-checked="true"] {
+  background: #0f7a3f !important;
+  box-shadow: 0 3px 10px rgba(15,122,63,.18) !important;
+}
+
+.zeepay-toggle[aria-checked="true"]::after,
+main button[role="switch"][aria-checked="true"]::after {
+  transform: translateX(20px) !important;
+}
+
+.zeepay-toggle > span,
+main button[role="switch"] > span {
+  display: none !important;
+}
+
+.zeepay-toggle:focus-visible,
+main button[role="switch"]:focus-visible {
+  outline: 2px solid rgba(22,163,74,.45) !important;
+  outline-offset: 3px !important;
+}
+
+/* Dark mode retains the same geometry and white thumb. */
+html.dark .zeepay-toggle,
+html.dark main button[role="switch"] {
+  background: #294033 !important;
+  box-shadow: inset 0 0 0 1px #3b5645 !important;
+}
+html.dark .zeepay-toggle[aria-checked="true"],
+html.dark main button[role="switch"][aria-checked="true"] {
+  background: #16a34a !important;
+  box-shadow: 0 3px 10px rgba(22,163,74,.22) !important;
+}
+
+/* Mobile header brand: white Zee, green Pay, with enough contrast on dark header. */
+@media (max-width: 1023px) {
+  header .mobile-brand {
+    color: #fff !important;
+    text-shadow: none !important;
+  }
+  header .mobile-brand span { color: #22c55e !important; }
+  header button[aria-label="Open navigation menu"],
+  header button[aria-label*="dark mode"],
+  header button[aria-label*="light mode"] {
+    color: #22c55e !important;
+  }
+}
