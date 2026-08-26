@@ -1,0 +1,106 @@
+/* ZeePay UI polish layer: consistent controls, mobile hierarchy, and responsive cleanup. */
+
+:root {
+  --zp-forest: #0f5b32;
+  --zp-green: #16a34a;
+  --zp-green-dark: #0f7a3f;
+  --zp-ink: #10251a;
+  --zp-muted: #66756c;
+  --zp-surface: #ffffff;
+  --zp-soft: #eaf7ef;
+  --zp-border: #e1e9e4;
+}
+
+/* One switch language everywhere. The thumb is always a crisp white circle. */
+.alajo-switch,
+button[role="switch"] {
+  width: 46px !important;
+  height: 26px !important;
+  min-width: 46px;
+  padding: 2px !important;
+  border: 1px solid #c7d3cb !important;
+  border-radius: 999px !important;
+  background: #e7ece9 !important;
+  box-shadow: inset 0 1px 2px rgba(16,37,26,.10) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+.alajo-switch > span,
+button[role="switch"] > span {
+  position: absolute !important;
+  left: 3px !important;
+  top: 3px !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  border: 1px solid rgba(16,37,26,.10) !important;
+  box-shadow: 0 1px 4px rgba(16,37,26,.24) !important;
+  transform: translateX(0) !important;
+}
+.alajo-switch[data-state="on"],
+.alajo-switch[aria-checked="true"],
+button[role="switch"][aria-checked="true"] {
+  background: var(--zp-green) !important;
+  border-color: var(--zp-green) !important;
+}
+.alajo-switch[data-state="on"] > span,
+.alajo-switch[aria-checked="true"] > span,
+button[role="switch"][aria-checked="true"] > span {
+  transform: translateX(20px) !important;
+}
+.alajo-switch:focus-visible,
+button[role="switch"]:focus-visible {
+  outline: 2px solid rgba(22,163,74,.45) !important;
+  outline-offset: 3px !important;
+}
+
+/* Brand wordmark: no icon, no competing colours. */
+.zeepay-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--zp-forest) !important;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  text-decoration: none !important;
+}
+.zeepay-wordmark span { color: var(--zp-green) !important; }
+.zeepay-wordmark-light { color: #fff !important; }
+.zeepay-wordmark-light span { color: #86efac !important; }
+
+/* Remove the second page-specific mobile header. The global ZeePay mobile bar owns navigation. */
+@media (max-width: 1023px) {
+  header.sticky.top-16 {
+    display: none !important;
+  }
+  .alajo-user-ui main {
+    padding-top: 0 !important;
+  }
+}
+
+/* Give mobile pages a deliberate breathing room under the fixed navigation. */
+@media (max-width: 1023px) {
+  .alajo-user-ui main > section:first-of-type,
+  main > .px-4.pt-20 {
+    padding-top: 5.75rem;
+  }
+}
+
+/* Avoid generic button lift on compact controls; financial UI should feel stable. */
+.alajo-switch:hover,
+button[role="switch"]:hover,
+.user-sidebar .zeepay-wordmark:hover,
+.mobile-brand:hover {
+  transform: none !important;
+}
+
+/* Mobile drawer spacing and brand hierarchy. */
+@media (max-width: 1023px) {
+  .mobile-brand { font-size: 23px; }
+}
