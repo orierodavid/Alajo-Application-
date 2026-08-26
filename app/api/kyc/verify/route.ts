@@ -19,6 +19,10 @@ export async function POST(request: Request) {
     const bvn = typeof body?.bvn === 'string' ? body.bvn.replace(/\D/g, '') : ''
     const bankCode = typeof body?.bankCode === 'string' ? body.bankCode.trim() : ''
     const accountNumber = typeof body?.accountNumber === 'string' ? body.accountNumber.replace(/\D/g, '') : ''
+    const firstNameInput = typeof body?.firstName === 'string' ? body.firstName.trim() : ''
+    const lastNameInput = typeof body?.lastName === 'string' ? body.lastName.trim() : ''
+    const phoneInput = typeof body?.phone === 'string' ? body.phone.replace(/\D/g, '') : ''
+    const emailInput = typeof body?.email === 'string' ? body.email.trim() : ''
     const middleName = typeof body?.middleName === 'string' ? body.middleName.trim() : undefined
     if (!/^\d{11}$/.test(bvn)) return jsonError('BVN must contain exactly 11 digits.', 400, 'INVALID_BVN')
     if (!bankCode) return jsonError('Select your bank.', 400, 'BANK_REQUIRED')
@@ -39,17 +43,18 @@ export async function POST(request: Request) {
     const profileName = typeof profile.full_name === 'string' ? profile.full_name.trim() : ''
     const fullName = profileName || metadataName
     const nameParts = fullName.split(/\s+/).filter(Boolean)
-    const firstName = metadataFirstName || nameParts[0] || ''
-    const lastName = metadataLastName || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '')
-    const email = (typeof profile.email === 'string' && profile.email.trim()) ? profile.email.trim() : (user.email?.trim() || '')
-    const phone = (typeof profile.phone === 'string' && profile.phone.trim()) ? profile.phone.trim() : (typeof authMeta.phone === 'string' ? authMeta.phone.trim() : '')
+    const firstName = firstNameInput || metadataFirstName || nameParts[0] || ''
+    const lastName = lastNameInput || metadataLastName || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '')
+    const email = emailInput || ((typeof profile.email === 'string' && profile.email.trim()) ? profile.email.trim() : (user.email?.trim() || ''))
+    const phone = phoneInput || ((typeof profile.phone === 'string' && profile.phone.trim()) ? profile.phone.trim() : (typeof authMeta.phone === 'string' ? authMeta.phone.replace(/\D/g, '') : ''))
 
     if (!email || !phone || !firstName || !lastName) {
       console.error('KYC profile data incomplete', { userId: user.id, hasEmail: Boolean(email), hasPhone: Boolean(phone), hasFirstName: Boolean(firstName), hasLastName: Boolean(lastName) })
-      return jsonError('Complete your first name, last name, phone and email before verification.', 400, 'PROFILE_INCOMPLETE')
+      return jsonError('Enter your first name, last name, phone and email before verification.', 400, 'PROFILE_INCOMPLETE')
     }
+    if (!/^\d{11}$/.test(phone)) return jsonError('Phone number must contain exactly 11 digits.', 400, 'INVALID_PHONE')
+    if (!/^\S+@\S+\.\S+$/.test(email)) return jsonError('Enter a valid email address.', 400, 'INVALID_EMAIL')
 
-    // Keep the application profile synchronized with the identity used for KYC.
     await admin.from('profiles').update({ full_name: `${firstName} ${lastName}`, phone, email }).eq('id', user.id)
 
     const { data: rawKycConfig, error: kycConfigError } = await admin.from('market_provider_configs')
@@ -64,14 +69,10 @@ export async function POST(request: Request) {
     if (!providerKey || !providerKey.startsWith('paystack')) return jsonError('The configured KYC provider has no installed adapter.', 503, 'KYC_PROVIDER_ADAPTER_UNAVAILABLE')
 
     let resolvedAccount
-    try {
-      resolvedAccount = await resolvePaystackAccount({ accountNumber, bankCode })
-    } catch {
-      return jsonError('We could not verify that account number with the selected bank. Check the bank and account number and try again.', 400, 'BANK_ACCOUNT_NOT_RESOLVED')
-    }
+    try { resolvedAccount = await resolvePaystackAccount({ accountNumber, bankCode }) }
+    catch { return jsonError('We could not verify that account number with the selected bank. Check the bank and account number and try again.', 400, 'BANK_ACCOUNT_NOT_RESOLVED') }
 
-    let { data: providerCustomer } = await admin.from('provider_customers').select('id, provider_customer_code, provider_key')
-      .eq('market_id', market.id).eq('user_id', user.id).eq('provider_key', providerKey).maybeSingle()
+    let { data: providerCustomer } = await admin.from('provider_customers').select('id, provider_customer_code, provider_key').eq('market_id', market.id).eq('user_id', user.id).eq('provider_key', providerKey).maybeSingle()
     if (!providerCustomer?.provider_customer_code) {
       const customer = await createPaystackCustomer({ email, firstName, lastName, phone, metadata: { alajo_user_id: user.id, market: 'NG' } })
       const { data: created, error: customerError } = await admin.from('provider_customers').upsert({ market_id: market.id, user_id: user.id, provider_key: providerKey, provider_customer_id: String(customer.id), provider_customer_code: customer.customer_code, status: 'PENDING', metadata: { source: 'kyc' } }, { onConflict: 'market_id,user_id,provider_key' }).select('id, provider_customer_code, provider_key').single()
@@ -79,9 +80,7 @@ export async function POST(request: Request) {
       providerCustomer = created
     }
 
-    const { data: bankConfig } = await admin.from('market_provider_configs').select('id, provider_definitions!inner(provider_key, provider_type, status)')
-      .eq('market_id', market.id).eq('provider_type', 'BANK_VERIFICATION').eq('environment', 'LIVE').eq('status', 'ACTIVE')
-      .eq('provider_definitions.provider_type', 'BANK_VERIFICATION').eq('provider_definitions.status', 'ACTIVE').order('priority', { ascending: true }).limit(1).maybeSingle()
+    const { data: bankConfig } = await admin.from('market_provider_configs').select('id, provider_definitions!inner(provider_key, provider_type, status)').eq('market_id', market.id).eq('provider_type', 'BANK_VERIFICATION').eq('environment', 'LIVE').eq('status', 'ACTIVE').eq('provider_definitions.provider_type', 'BANK_VERIFICATION').eq('provider_definitions.status', 'ACTIVE').order('priority', { ascending: true }).limit(1).maybeSingle()
     const { data: kycProfile, error: kycPersistError } = await admin.from('user_kyc_profiles').upsert({ market_id: market.id, user_id: user.id, provider_config_id: kycConfig.id, provider_customer_ref: providerCustomer.provider_customer_code, status: 'PENDING', country_code: 'NG', verification_type: 'bank_account', metadata: { provider: providerKey, resolved_account_name: resolvedAccount.account_name }, updated_at: new Date().toISOString() }, { onConflict: 'market_id,user_id' }).select('id').single()
     if (kycPersistError || !kycProfile) throw new Error('KYC_PROFILE_PERSIST_FAILED')
     const { data: existingBank } = await admin.from('user_bank_accounts').select('id').eq('market_id', market.id).eq('user_id', user.id).eq('bank_code', bankCode).eq('account_number_last4', accountNumber.slice(-4)).maybeSingle()
