@@ -25,9 +25,8 @@ export function MobileNavigation(){
   </header>
   {open&&<button aria-label="Close navigation menu" onClick={()=>setOpen(false)} className="fixed inset-0 bg-[#07111f]/40 backdrop-blur-[2px] z-[90]"/>}
   <aside className={`${open?'translate-x-0':'-translate-x-full'} fixed inset-y-0 left-0 z-[95] w-[280px] bg-[#0f5b32] text-white transition-transform duration-200 shadow-2xl`}>
-    <div className="mobile-drawer-brand px-7 pt-20 pb-7 border-b border-white/15">
+    <div className="mobile-drawer-brand px-7 pt-20 pb-7">
       <Link href="/dashboard" onClick={()=>setOpen(false)} aria-label="ZeePay home" className="zeepay-drawer-wordmark">Zee<span>Pay</span></Link>
-      <p className="text-[11px] text-white mt-2">Your savings, payments & wallet</p>
     </div>
     <nav className="px-5 py-5 space-y-1 text-[15px] font-semibold">{nav.map(([icon,href,label])=>{const active=pathname===href||(href!=='/dashboard'&&pathname.startsWith(`${href}/`));return <Link key={label} href={href} onClick={()=>setOpen(false)} aria-current={active?'page':undefined} className={`flex items-center gap-3 px-3 py-3 rounded-xl ${active?'bg-white text-[#0f7a3f] font-bold shadow-sm':'text-white hover:bg-white/10'}`}><span className="w-6 flex justify-center"><AlajoIcon name={icon} size={18}/></span>{label}</Link>})}</nav>
   </aside>
