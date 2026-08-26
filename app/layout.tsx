@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import './zeepay-design.css'
+import './zeepay-polish.css'
 import { MobileNavigation } from '@/components/layout/mobile-navigation'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://alajo-application.vercel.app'
