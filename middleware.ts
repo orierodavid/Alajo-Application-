@@ -6,9 +6,9 @@ const PUBLIC_PATHS = new Set([
   '/verify-email', '/auth/callback', '/', '/kyc', '/kyc/status',
 ])
 
-const PUBLIC_API_PATHS = new Set([
+const PUBLIC_API_PATHS = [
   '/api/wallet/fund/callback', '/api/webhooks/paystack', '/api/kyc/verify', '/api/kyc/banks',
-])
+]
 
 const USER_PROTECTED_PREFIXES = [
   '/dashboard', '/groups', '/join-group', '/contributions', '/payouts',
@@ -18,7 +18,7 @@ const USER_PROTECTED_PREFIXES = [
 function isUserProtected(pathname: string) {
   return USER_PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
-
+function isPublicApi(pathname: string) { return PUBLIC_API_PATHS.includes(pathname) }
 function privateResponseHeaders(response: NextResponse) {
   response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
   response.headers.set('Cache-Control', 'private, no-store, max-age=0')
@@ -28,7 +28,7 @@ function privateResponseHeaders(response: NextResponse) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next()
-  if (PUBLIC_API_PATHS.has(pathname)) return privateResponseHeaders(NextResponse.next())
+  if (isPublicApi(pathname)) return privateResponseHeaders(NextResponse.next())
   if (pathname === '/api' || pathname.startsWith('/api/')) return privateResponseHeaders(NextResponse.next())
 
   const isAdmin = pathname.startsWith('/admin')
@@ -64,12 +64,17 @@ export async function middleware(request: NextRequest) {
     .from('profiles').select('onboarding_step').eq('id', user.id).maybeSingle()
   const { data: kyc } = await supabase
     .from('user_kyc_profiles').select('status').eq('user_id', user.id).eq('status', 'VERIFIED').limit(1).maybeSingle()
+  const { data: anyKyc } = await supabase
+    .from('user_kyc_profiles').select('status').eq('user_id', user.id).limit(1).maybeSingle()
   const { data: virtualAccount } = await supabase
     .from('user_virtual_accounts').select('status').eq('user_id', user.id).eq('status', 'ACTIVE').limit(1).maybeSingle()
 
   const verificationComplete = onboarding?.onboarding_step === 'complete' && !!kyc && !!virtualAccount
   if (!verificationComplete) {
-    const target = kyc ? '/kyc/status' : '/kyc'
+    // A submitted KYC, including PENDING/REJECTED, must resume at status so
+    // the live Paystack reconciliation can run. Only a user with no KYC record
+    // is sent to the data-entry form.
+    const target = anyKyc ? '/kyc/status' : '/kyc'
     if (pathname !== target) return NextResponse.redirect(new URL(target, request.url))
   }
 
