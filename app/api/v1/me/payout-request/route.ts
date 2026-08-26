@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { createPaystackTransferRecipient, initiatePaystackTransfer } from '@/lib/paystack'
 
@@ -19,8 +20,16 @@ export async function POST(request: Request) {
     if (!/^\d{10}$/.test(accountNumber) || !bankCode || !accountName) return NextResponse.json({ error: 'INVALID_DESTINATION' }, { status: 400 })
     const amountMinor = Math.round(amount * 100)
     const idempotencyKey = String(body.idempotencyKey || randomUUID())
-    const { data: market, error: marketError } = await supabase.from('markets').select('id').eq('country_code', 'NG').eq('status', 'ACTIVE').limit(1).maybeSingle()
+
+    // Markets are configuration, not user-owned data. Use the server-side admin client
+    // so RLS cannot incorrectly make the active Nigeria market appear missing.
+    const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const marketClient = adminKey
+      ? createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, adminKey, { auth: { autoRefreshToken: false, persistSession: false } })
+      : supabase
+    const { data: market, error: marketError } = await marketClient.from('markets').select('id').eq('country_code', 'NG').eq('status', 'ACTIVE').limit(1).maybeSingle()
     if (marketError || !market) return NextResponse.json({ error: 'NG_MARKET_NOT_CONFIGURED' }, { status: 503 })
+
     const destinationToken = JSON.stringify({ bankCode, accountNumber, accountName })
     const { data: payout, error: reserveError } = await supabase.rpc('reserve_payout_atomic', { p_market_id: market.id, p_user_id: user.id, p_currency: 'NGN', p_amount_minor: amountMinor, p_fee_minor: 0, p_idempotency_key: idempotencyKey, p_environment: process.env.PAYSTACK_ENVIRONMENT === 'test' ? 'test' : 'live', p_destination_type: 'NG_NUBAN', p_destination_token: destinationToken })
     if (reserveError || !payout) return NextResponse.json({ error: reserveError?.message || 'PAYOUT_RESERVATION_FAILED' }, { status: 400 })
