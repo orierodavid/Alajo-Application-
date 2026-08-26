@@ -21,13 +21,15 @@ export default function KycStatusPage() {
   async function loadStatus() {
     setRefreshing(true)
     try {
-      const response = await fetch('/api/kyc/status', { credentials: 'include', cache: 'no-store' })
+      const response = await fetch(`/api/kyc/status?ts=${Date.now()}`, { credentials: 'include', cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
       const result = await response.json().catch(() => ({}))
       if (response.status === 401) { router.replace('/login?next=/kyc/status'); return }
       if (!response.ok) throw new Error(result.error || 'Unable to load verification status.')
       setStatus(result)
       setError('')
-      if (result.complete) window.setTimeout(() => router.replace('/dashboard'), 1200)
+      if (result.complete === true) {
+        router.replace('/dashboard')
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load verification status.')
     } finally { setRefreshing(false) }
