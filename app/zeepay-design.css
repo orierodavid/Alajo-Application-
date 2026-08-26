@@ -4,7 +4,7 @@ body{background:var(--zeepay-bg)}
 .zeepay-wordmark{display:inline-flex;align-items:center;gap:0;color:var(--zeepay-forest);font-size:24px;line-height:1;font-weight:850;letter-spacing:-.055em;text-decoration:none;font-style:italic;white-space:nowrap}
 .zeepay-wordmark span{color:var(--zeepay-green)}
 .zeepay-wordmark:hover{color:var(--zeepay-forest);transform:none}
-.zeepay-wordmark-light{color:#fff}.zeepay-wordmark-light span{color:#86efac}.zeepay-wordmark-light:hover{color:#fff}
+.zeepay-wordmark-light{color:#fff;-webkit-text-stroke:1px var(--zeepay-green);paint-order:stroke fill;text-shadow:0 1px 0 rgba(0,0,0,.08)}.zeepay-wordmark-light span{color:#fff;-webkit-text-stroke:1px var(--zeepay-green)}.zeepay-wordmark-light:hover{color:#fff}
 .mobile-brand{font-size:22px;position:absolute;left:50%;transform:translateX(-50%)}.mobile-brand:hover{transform:translateX(-50%)}
 .safe-top{padding-top:env(safe-area-inset-top);height:calc(4rem + env(safe-area-inset-top))}
 @media(max-width:639px){.mobile-brand{font-size:21px}.zeepay-wordmark{letter-spacing:-.06em}.user-sidebar{display:none!important}main{padding-bottom:calc(24px + env(safe-area-inset-bottom))}.rounded-2xl{border-radius:16px}.rounded-xl{border-radius:12px}}
