@@ -16,15 +16,14 @@ const nav = [
 export function AppSidebar() {
   const pathname = usePathname()
   useEffect(() => {
-    document.body.classList.add('alajo-user-ui')
-    return () => document.body.classList.remove('alajo-user-ui')
+    document.body.classList.add('zeepay-user-ui')
+    return () => document.body.classList.remove('zeepay-user-ui')
   }, [])
 
   return <aside className="user-sidebar hidden lg:flex fixed inset-y-0 left-0 z-30 w-[228px] shrink-0 bg-white text-[#5f6d64] p-4 flex-col border-r border-[#e6ebe8]">
-    <div className="flex items-center justify-between px-2 py-2">
-      <Link href="/dashboard" className="flex items-center gap-2 text-[21px] font-extrabold tracking-tight text-[#0d2d1b]">
-        <span className="h-8 w-8 rounded-xl bg-[#e8f6ed] text-[#15803d] flex items-center justify-center"><AlajoIcon name="dashboard" size={17}/></span>
-        <span>Alajo</span>
+    <div className="flex items-center justify-between px-2 py-3">
+      <Link href="/dashboard" aria-label="ZeePay home" className="text-[25px] leading-none font-black italic tracking-[-0.055em] text-[#0d2d1b] hover:text-[#126b39] transition-colors">
+        Zee<span className="text-[#16a34a]">Pay</span>
       </Link>
       <ThemeToggle />
     </div>
