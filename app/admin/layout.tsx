@@ -1,3 +1,4 @@
+import './admin.css'
 import { createClient } from '@/lib/supabase/server'
 import AdminShell from './admin-shell'
 
