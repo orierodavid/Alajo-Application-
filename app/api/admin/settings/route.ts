@@ -18,6 +18,11 @@ async function adminDb() {
   return createServiceClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } })
 }
 
+const allowedKeys = new Set([
+  'service_fee_percentage','delay_fee_percentage','auto_debit_enabled','reminder_before_days','reminder_after_days','reminder_repeat_days','max_reminders','auto_payout_enabled','default_grace_days','credit_bureau_notice_days',
+  'market_registration_enabled','wallet_enabled','savings_enabled','deposits_enabled','withdrawals_enabled','transfers_enabled','global_transaction_pause','payment_retry_enabled','webhook_processing_enabled','automatic_reconciliation_enabled','automatic_group_formation_enabled','automatic_contribution_collection_enabled','contribution_reminders_enabled','automatic_late_fee_enabled','automatic_cycle_processing_enabled','automatic_payout_processing_enabled','kyc_required_enabled','kyc_manual_review_enabled','kyc_reverification_enabled','risk_screening_enabled','transaction_monitoring_enabled','automatic_account_freeze_enabled','email_notifications_enabled','sms_notifications_enabled','push_notifications_enabled'
+])
+
 export async function GET() {
   try {
     const { user } = await requireAdmin()
@@ -36,10 +41,9 @@ export async function PATCH(request: Request) {
     const { user } = await requireAdmin()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()
-    const allowed = new Set(['service_fee_percentage','delay_fee_percentage','auto_debit_enabled','reminder_before_days','reminder_after_days','reminder_repeat_days','max_reminders','auto_payout_enabled','default_grace_days','credit_bureau_notice_days'])
     const client = await adminDb()
     for (const [key, value] of Object.entries(body)) {
-      if (!allowed.has(key)) continue
+      if (!allowedKeys.has(key)) continue
       const patch = typeof value === 'boolean'
         ? { numeric_value: null, integer_value: null, boolean_value: value, updated_by: user.id, updated_at: new Date().toISOString() }
         : key.includes('percentage')
