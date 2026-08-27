@@ -6,7 +6,9 @@
     "orientation": "portrait",
     "scheme": "zeepay",
     "userInterfaceStyle": "automatic",
-    "plugins": ["expo-router"],
+    "ios": {"bundleIdentifier": "com.zeepay.mobile"},
+    "android": {"package": "com.zeepay.mobile"},
+    "plugins": ["expo-router", "expo-dev-client"],
     "experiments": {"typedRoutes": true}
   }
 }
