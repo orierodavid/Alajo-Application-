@@ -11,11 +11,12 @@ const nav = [['dashboard','/dashboard','Dashboard'],['groups','/groups','Groups'
 export function MobileNavigation(){
  const pathname=usePathname();const[open,setOpen]=useState(false);const[accountOpen,setAccountOpen]=useState(false);const[firstName,setFirstName]=useState('User');const[dark,setDark]=useState(false);const[loggingOut,setLoggingOut]=useState(false)
  const publicPage=pathname==='/'
+ const adminPage=pathname==='/admin'||pathname.startsWith('/admin/')
  const authPage=publicPage||pathname==='/login'||pathname==='/signup'||pathname==='/forgot-password'||pathname.startsWith('/reset-password')
- useEffect(()=>{if(authPage)return;fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.name)setFirstName(s.name.trim().split(/\s+/)[0])}).catch(()=>{});const d=localStorage.getItem('zeepay-theme')==='dark';setDark(d);document.documentElement.classList.toggle('dark',d)},[authPage])
+ useEffect(()=>{if(authPage||adminPage)return;fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(s?.name)setFirstName(s.name.trim().split(/\s+/)[0])}).catch(()=>{});const d=localStorage.getItem('zeepay-theme')==='dark';setDark(d);document.documentElement.classList.toggle('dark',d)},[authPage,adminPage])
  const toggleTheme=()=>{const n=!dark;setDark(n);localStorage.setItem('zeepay-theme',n?'dark':'light');document.documentElement.classList.toggle('dark',n);setAccountOpen(false)}
  async function logout(){if(loggingOut)return;setLoggingOut(true);setAccountOpen(false);try{try{await createClient().auth.signOut({scope:'global'})}catch{}fetch('/api/auth/logout',{method:'POST',credentials:'include',cache:'no-store',keepalive:true}).catch(()=>{})}finally{window.location.assign('/')}}
- if(authPage)return null
+ if(authPage||adminPage)return null
  const initial=firstName.charAt(0).toUpperCase()
  return <div className="lg:hidden">
   <header className="fixed top-0 inset-x-0 h-16 bg-white/95 dark:bg-[#0d1d13]/95 backdrop-blur-md border-b border-[#e6ebe8] dark:border-[#203b2a] z-[100] flex items-center justify-between px-4 pointer-events-auto safe-top">
@@ -25,9 +26,7 @@ export function MobileNavigation(){
   </header>
   {open&&<button aria-label="Close navigation menu" onClick={()=>setOpen(false)} className="fixed inset-0 bg-[#07111f]/40 backdrop-blur-[2px] z-[90]"/>}
   <aside className={`${open?'translate-x-0':'-translate-x-full'} fixed inset-y-0 left-0 z-[95] w-[280px] bg-[#0f5b32] text-white transition-transform duration-200 shadow-2xl`}>
-    <div className="mobile-drawer-brand px-7 pt-20 pb-7">
-      <Link href="/dashboard" onClick={()=>setOpen(false)} aria-label="ZeePay home" className="zeepay-drawer-wordmark">Zee<span>Pay</span></Link>
-    </div>
+    <div className="mobile-drawer-brand px-7 pt-20 pb-7"><Link href="/dashboard" onClick={()=>setOpen(false)} aria-label="ZeePay home" className="zeepay-drawer-wordmark">Zee<span>Pay</span></Link></div>
     <nav className="px-5 py-5 space-y-1 text-[15px] font-semibold">{nav.map(([icon,href,label])=>{const active=pathname===href||(href!=='/dashboard'&&pathname.startsWith(`${href}/`));return <Link key={label} href={href} onClick={()=>setOpen(false)} aria-current={active?'page':undefined} className={`flex items-center gap-3 px-3 py-3 rounded-xl ${active?'bg-white text-[#0f7a3f] font-bold shadow-sm':'text-white hover:bg-white/10'}`}><span className="w-6 flex justify-center"><AlajoIcon name={icon} size={18}/></span>{label}</Link>})}</nav>
   </aside>
  </div>
