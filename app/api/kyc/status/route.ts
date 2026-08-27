@@ -13,19 +13,10 @@ export async function GET() {
   const admin = createAdminClient()
   try {
     const { data: kycSeed } = await admin.from('user_kyc_profiles').select('market_id,provider_customer_ref').eq('user_id', user.id).maybeSingle()
-    // Production reconciliation: paystack_kyc is the configured KYC adapter.
     let { data: providerCustomer } = await admin.from('provider_customers').select('id,market_id,provider_customer_code,status,provider_key').eq('user_id', user.id).like('provider_key','paystack%').maybeSingle()
 
     if (!providerCustomer && kycSeed?.provider_customer_ref && kycSeed.market_id) {
-      const { data: recovered } = await admin.from('provider_customers').upsert({
-        market_id: kycSeed.market_id,
-        user_id: user.id,
-        provider_key: 'paystack_kyc',
-        provider_customer_code: kycSeed.provider_customer_ref,
-        status: 'ACTIVE',
-        metadata: { source: 'kyc_reconciliation' },
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'market_id,user_id,provider_key' }).select('id,market_id,provider_customer_code,status,provider_key').single()
+      const { data: recovered } = await admin.from('provider_customers').upsert({ market_id: kycSeed.market_id, user_id: user.id, provider_key: 'paystack_kyc', provider_customer_code: kycSeed.provider_customer_ref, status: 'ACTIVE', metadata: { source: 'kyc_reconciliation' }, updated_at: new Date().toISOString() }, { onConflict: 'market_id,user_id,provider_key' }).select('id,market_id,provider_customer_code,status,provider_key').single()
       providerCustomer = recovered
     }
 
@@ -43,7 +34,8 @@ export async function GET() {
         if (dedicated?.account_number) {
           await admin.from('user_virtual_accounts').upsert({ market_id:providerCustomer.market_id,user_id:user.id,provider_customer_ref:providerCustomer.provider_customer_code,provider_account_ref:String(dedicated.id),bank_name:dedicated.bank?.name ?? null,account_number:dedicated.account_number,account_name:dedicated.account_name,currency:String(dedicated.currency ?? 'NGN').toUpperCase(),status:dedicated.active && dedicated.assigned ? 'ACTIVE' : 'PENDING',metadata:{provider:'paystack',bank_slug:dedicated.bank?.slug ?? null},updated_at:now },{onConflict:'market_id,user_id,currency'})
         } else {
-          const { data: dvaConfig } = await admin.from('market_provider_configs').select('id').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
+          const environment = await paystackEnvironmentFromSecret()
+          const { data: dvaConfig } = await admin.from('market_provider_configs').select('id').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',environment==='test'?'TEST':'LIVE').eq('status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
           if (dvaConfig) {
             try {
               const dva = await createDedicatedVirtualAccount({ customerCode:providerCustomer.provider_customer_code })
