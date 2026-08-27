@@ -10,10 +10,10 @@ export async function getProviderCredential(providerKey: string) {
   return null
 }
 
-export async function getPaystackSecretKey() {
-  const managed = await getProviderCredential('paystack_payout')
+export async function getPaystackSecretKey(providerKey: 'paystack_payment' | 'paystack_kyc' | 'paystack_payout' = 'paystack_payment') {
+  const managed = await getProviderCredential(providerKey)
   if (managed) return managed
   const fallback = process.env.PAYSTACK_SECRET_KEY
-  if (!fallback) throw new Error('Paystack server credentials are not configured')
+  if (!fallback) throw new Error(`Paystack server credentials are not configured for ${providerKey}`)
   return fallback
 }
