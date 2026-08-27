@@ -26,11 +26,7 @@ export async function POST(request: Request) {
     if (!paymentId) return NextResponse.json({ error: 'Payment is required.' }, { status: 400 })
 
     const { admin, user } = auth
-    const { data: payment, error: paymentError } = await admin
-      .from('payments')
-      .select('id,user_id,amount,currency,provider,provider_reference,status,metadata')
-      .eq('id', paymentId)
-      .maybeSingle()
+    const { data: payment, error: paymentError } = await admin.from('payments').select('id,user_id,amount,currency,provider,provider_reference,status,metadata').eq('id', paymentId).maybeSingle()
     if (paymentError) throw paymentError
     if (!payment) return NextResponse.json({ error: 'Payment not found.' }, { status: 404 })
     if (payment.provider !== 'paystack') return NextResponse.json({ error: 'Only Paystack payments can be requeried.' }, { status: 400 })
@@ -38,11 +34,8 @@ export async function POST(request: Request) {
 
     const reference = suppliedReference || payment.provider_reference
     const verified = await verifyPaystackTransaction(reference)
-    const expectedEnvironment = paystackEnvironmentFromSecret()
+    const expectedEnvironment = await paystackEnvironmentFromSecret()
     const expectedAmountKobo = Math.round(Number(payment.amount) * 100)
-    // Paystack can report the total amount charged to the customer separately
-    // from the original requested transaction amount (for example when fees are
-    // passed through). Wallet credit must always equal Alajo's requested amount.
     const requestedAmount = Number(verified.requested_amount ?? verified.amount)
     const amountMatches = requestedAmount === expectedAmountKobo
     const currencyMatches = String(verified.currency).toUpperCase() === String(payment.currency).toUpperCase()
@@ -54,72 +47,29 @@ export async function POST(request: Request) {
     const userIdentityMatches = metadataUserId === payment.user_id && metadataPaymentReference === payment.provider_reference
 
     await admin.from('audit_logs').insert({
-      id: crypto.randomUUID(),
-      actor_user_id: user.id,
-      action: 'payment_requery',
-      entity_type: 'payment',
-      entity_id: payment.id,
+      id: crypto.randomUUID(), actor_user_id: user.id, action: 'payment_requery', entity_type: 'payment', entity_id: payment.id,
       previous_state: payment,
-      new_state: {
-        paystack_reference_checked: reference,
-        paystack_status: verified.status,
-        domain: verified.domain,
-        amount: verified.amount,
-        requested_amount: verified.requested_amount ?? null,
-        currency: verified.currency,
-        expected_amount_kobo: expectedAmountKobo,
-        reference_matches_stored: referenceMatchesStored,
-        metadata_identity_matches: userIdentityMatches,
-      },
+      new_state: { paystack_reference_checked: reference, paystack_status: verified.status, domain: verified.domain, amount: verified.amount, requested_amount: verified.requested_amount ?? null, currency: verified.currency, expected_amount_kobo: expectedAmountKobo, reference_matches_stored: referenceMatchesStored, metadata_identity_matches: userIdentityMatches },
       reason: suppliedReference ? 'Admin manually requeried a supplied Paystack reference.' : 'Admin manually requeried the stored Paystack reference.',
     })
 
-    if (!amountMatches || !currencyMatches || !domainMatches || !userIdentityMatches) {
-      return NextResponse.json({
-        status: 'verification_failed',
-        message: 'Paystack verification did not provide sufficient evidence to settle this Alajo payment.',
-        checks: {
-          amountMatches,
-          currencyMatches,
-          domainMatches,
-          metadataIdentityMatches: userIdentityMatches,
-          storedReferenceMatches: referenceMatchesStored,
-        },
-        paystack: {
-          reference: verified.reference,
-          status: verified.status,
-          amount: verified.amount,
-          requestedAmount: verified.requested_amount ?? null,
-          currency: verified.currency,
-          domain: verified.domain,
-          gatewayResponse: verified.gateway_response ?? null,
-        },
-      }, { status: 422 })
-    }
+    if (!amountMatches || !currencyMatches || !domainMatches || !userIdentityMatches) return NextResponse.json({ status: 'verification_failed', message: 'Paystack verification did not provide sufficient evidence to settle this Alajo payment.', checks: { amountMatches, currencyMatches, domainMatches, metadataIdentityMatches: userIdentityMatches, storedReferenceMatches: referenceMatchesStored }, paystack: { reference: verified.reference, status: verified.status, amount: verified.amount, requestedAmount: verified.requested_amount ?? null, currency: verified.currency, domain: verified.domain, gatewayResponse: verified.gateway_response ?? null } }, { status: 422 })
 
     if (verified.status === 'success') {
-      const { data: result, error: creditError } = await admin.rpc('credit_wallet_from_paystack', {
-        p_provider_reference: payment.provider_reference,
-        p_verified_amount_kobo: expectedAmountKobo,
-        p_currency: verified.currency,
-        p_provider_payload: verified,
-      })
+      const { data: result, error: creditError } = await admin.rpc('credit_wallet_from_paystack', { p_provider_reference: payment.provider_reference, p_verified_amount_kobo: expectedAmountKobo, p_currency: verified.currency, p_provider_payload: verified })
       if (creditError) throw creditError
       return NextResponse.json({ status: 'settled', result, paystackReference: verified.reference })
     }
-
     if (verified.status === 'refunded') {
       const { error } = await admin.from('payments').update({ status: 'refunded', updated_at: new Date().toISOString(), metadata: { ...metadataRecord(payment.metadata), paystack_status: verified.status, reconciled_at: new Date().toISOString() } }).eq('id', payment.id).eq('status', payment.status)
       if (error) throw error
       return NextResponse.json({ status: 'refunded', paystackStatus: verified.status })
     }
-
     if (['failed', 'reversed'].includes(verified.status)) {
       const { error } = await admin.from('payments').update({ status: 'failed', updated_at: new Date().toISOString(), metadata: { ...metadataRecord(payment.metadata), paystack_status: verified.status, reconciled_at: new Date().toISOString() } }).eq('id', payment.id).eq('status', payment.status)
       if (error) throw error
       return NextResponse.json({ status: 'not_credited', paystackStatus: verified.status })
     }
-
     return NextResponse.json({ status: 'still_pending', paystackStatus: verified.status })
   } catch (error) {
     console.error('Admin payment requery error:', error)
