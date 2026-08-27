@@ -1,0 +1,28 @@
+-- ZeePay operational controls: configuration only; existing provider/KYC architecture remains unchanged.
+INSERT INTO public.system_settings(key,boolean_value,updated_at) VALUES
+('market_registration_enabled',true,now()),
+('wallet_enabled',true,now()),
+('savings_enabled',true,now()),
+('deposits_enabled',true,now()),
+('withdrawals_enabled',true,now()),
+('transfers_enabled',true,now()),
+('global_transaction_pause',false,now()),
+('payment_retry_enabled',true,now()),
+('webhook_processing_enabled',true,now()),
+('automatic_reconciliation_enabled',true,now()),
+('automatic_group_formation_enabled',true,now()),
+('automatic_contribution_collection_enabled',true,now()),
+('contribution_reminders_enabled',true,now()),
+('automatic_late_fee_enabled',true,now()),
+('automatic_cycle_processing_enabled',true,now()),
+('automatic_payout_processing_enabled',true,now()),
+('kyc_required_enabled',true,now()),
+('kyc_manual_review_enabled',true,now()),
+('kyc_reverification_enabled',true,now()),
+('risk_screening_enabled',true,now()),
+('transaction_monitoring_enabled',true,now()),
+('automatic_account_freeze_enabled',true,now()),
+('email_notifications_enabled',true,now()),
+('sms_notifications_enabled',true,now()),
+('push_notifications_enabled',true,now())
+ON CONFLICT(key) DO NOTHING;
