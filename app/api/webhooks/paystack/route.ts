@@ -1,21 +1,17 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
-import { createDedicatedVirtualAccount, paystackEnvironmentFromSecret, verifyPaystackTransaction } from '@/lib/paystack'
+import { createDedicatedVirtualAccount, getPaystackSecretKey, paystackEnvironmentFromSecret, verifyPaystackTransaction } from '@/lib/paystack'
 
 type ProviderDefinition = { provider_key: string; provider_type: string; status: string }
 type ProviderConfig = { id: string; provider_definitions: ProviderDefinition | ProviderDefinition[] | null }
-
 function jsonRecord(value: unknown): Record<string, any> { return value && typeof value === 'object' ? value as Record<string, any> : {} }
 function webhookEventId(rawBody: string) { return createHash('sha256').update(rawBody).digest('hex') }
-function providerKeyFromConfig(config: ProviderConfig | null) {
-  const definition = Array.isArray(config?.provider_definitions) ? config?.provider_definitions[0] : config?.provider_definitions
-  return definition?.provider_key ?? null
-}
+function providerKeyFromConfig(config: ProviderConfig | null) { const definition = Array.isArray(config?.provider_definitions) ? config?.provider_definitions[0] : config?.provider_definitions; return definition?.provider_key ?? null }
 
 export async function POST(request: Request) {
-  const secret = process.env.PAYSTACK_SECRET_KEY
-  if (!secret) return NextResponse.json({ error: 'Webhook unavailable.' }, { status: 503 })
+  let secret: string
+  try { secret = await getPaystackSecretKey() } catch { return NextResponse.json({ error: 'Webhook unavailable.' }, { status: 503 }) }
   const rawBody = await request.text()
   const signature = request.headers.get('x-paystack-signature') ?? ''
   const expected = createHmac('sha512', secret).update(rawBody).digest('hex')
@@ -47,7 +43,8 @@ export async function POST(request: Request) {
       if (legacy) await admin.from('kyc_records').update(legacyKyc).eq('id',legacy.id)
       else await admin.from('kyc_records').insert({ user_id:providerCustomer.user_id, ...legacyKyc, submitted_at:now })
       if (success) {
-        const { data: rawDvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
+        const environment = await paystackEnvironmentFromSecret()
+        const { data: rawDvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',environment==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
         const dvaConfig = rawDvaConfig as ProviderConfig | null
         if (!dvaConfig) throw new Error('VIRTUAL_ACCOUNT_PROVIDER_NOT_CONFIGURED')
         const dvaProviderKey = providerKeyFromConfig(dvaConfig)
@@ -66,7 +63,8 @@ export async function POST(request: Request) {
       if (!customerCode || !accountNumber) throw new Error('DVA_EVENT_DATA_MISSING')
       const { data: providerCustomer } = await admin.from('provider_customers').select('market_id,user_id').eq('provider_customer_code',customerCode).maybeSingle()
       if (!providerCustomer) throw new Error('PROVIDER_CUSTOMER_NOT_FOUND')
-      const { data: rawDvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',paystackEnvironmentFromSecret()==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
+      const environment = await paystackEnvironmentFromSecret()
+      const { data: rawDvaConfig } = await admin.from('market_provider_configs').select('id,provider_definitions!inner(provider_key,provider_type,status)').eq('market_id',providerCustomer.market_id).eq('provider_type','VIRTUAL_ACCOUNT').eq('environment',environment==='test'?'TEST':'LIVE').eq('status','ACTIVE').eq('provider_definitions.provider_type','VIRTUAL_ACCOUNT').eq('provider_definitions.status','ACTIVE').order('priority',{ascending:true}).limit(1).maybeSingle()
       const dvaConfig = rawDvaConfig as ProviderConfig | null
       const providerKey = providerKeyFromConfig(dvaConfig)
       if (!dvaConfig || !providerKey?.startsWith('paystack')) throw new Error('VIRTUAL_ACCOUNT_PROVIDER_NOT_CONFIGURED')
@@ -98,7 +96,8 @@ export async function POST(request: Request) {
         if (payment) {
           const requestedAmount = Number(verified.requested_amount ?? verified.amount)
           const expectedAmountKobo = Math.round(Number(payment.amount) * 100)
-          if (verified.domain === paystackEnvironmentFromSecret() && verified.status === 'success' && verified.reference === reference && String(verified.currency).toUpperCase() === String(payment.currency).toUpperCase() && requestedAmount === expectedAmountKobo) {
+          const environment = await paystackEnvironmentFromSecret()
+          if (verified.domain === environment && verified.status === 'success' && verified.reference === reference && String(verified.currency).toUpperCase() === String(payment.currency).toUpperCase() && requestedAmount === expectedAmountKobo) {
             const metadata = verified.metadata && typeof verified.metadata === 'object' ? verified.metadata as Record<string, unknown> : {}
             if (metadata.user_id === payment.user_id && metadata.payment_reference === payment.provider_reference) {
               const { data: result, error } = await admin.rpc('credit_wallet_from_paystack', { p_provider_reference:reference, p_verified_amount_kobo:expectedAmountKobo, p_currency:verified.currency, p_provider_payload:verified })
