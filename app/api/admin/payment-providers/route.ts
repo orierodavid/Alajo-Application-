@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/src/lib/supabase/admin'
 
 const providerTypes = new Set(['PAYMENT','KYC','BANK_VERIFICATION','VIRTUAL_ACCOUNT','PAYOUT','NOTIFICATION'])
 
@@ -25,7 +26,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { s, user, role } = await session()
+    const { user, role } = await session()
     if (!user || role !== 'super_admin') return NextResponse.json({ error: 'Super Admin access required.' }, { status: 403 })
     const body = await req.json().catch(() => null) as Record<string, unknown> | null
     const providerKey = typeof body?.providerKey === 'string' ? body.providerKey.trim().toLowerCase() : ''
@@ -39,15 +40,16 @@ export async function POST(req: Request) {
     if (!displayName || !providerTypes.has(providerType) || !/^[A-Z]{2}$/.test(countryCode)) return NextResponse.json({ error: 'Provider name, provider type and country are required.' }, { status: 400 })
     if (!Number.isInteger(priority) || priority < 1 || priority > 10000) return NextResponse.json({ error: 'Priority must be between 1 and 10000.' }, { status: 400 })
 
-    const { data: market, error: marketError } = await s.from('markets').select('id').eq('country_code', countryCode).maybeSingle()
+    const admin = createAdminClient()
+    const { data: market, error: marketError } = await admin.from('markets').select('id').eq('country_code', countryCode).maybeSingle()
     if (marketError) throw marketError
     if (!market) return NextResponse.json({ error: `Market ${countryCode} is not configured yet.` }, { status: 400 })
 
-    const { data: provider, error: providerError } = await s.from('provider_definitions').upsert({ provider_key: providerKey, provider_type: providerType, display_name: displayName, status: 'ACTIVE', capabilities }, { onConflict: 'provider_key' }).select('id,provider_key,provider_type,display_name,status,capabilities').single()
+    const { data: provider, error: providerError } = await admin.from('provider_definitions').upsert({ provider_key: providerKey, provider_type: providerType, display_name: displayName, status: 'ACTIVE', capabilities }, { onConflict: 'provider_key' }).select('id,provider_key,provider_type,display_name,status,capabilities').single()
     if (providerError || !provider) throw providerError || new Error('PROVIDER_CREATE_FAILED')
-
-    const { data: config, error: configError } = await s.from('market_provider_configs').upsert({ market_id: market.id, provider_id: provider.id, provider_type: providerType, environment, status: 'DISABLED', priority, public_config: {} }, { onConflict: 'market_id,provider_id,environment' }).select('id,market_id,provider_id,provider_type,environment,status,priority').single()
+    const { data: config, error: configError } = await admin.from('market_provider_configs').upsert({ market_id: market.id, provider_id: provider.id, provider_type: providerType, environment, status: 'DISABLED', priority, public_config: {} }, { onConflict: 'market_id,provider_id,environment' }).select('id,market_id,provider_id,provider_type,environment,status,priority').single()
     if (configError || !config) throw configError || new Error('PROVIDER_CONFIG_CREATE_FAILED')
+    await admin.from('provider_config_audit_logs').insert({ market_provider_config_id: config.id, action: 'CREATED', actor_user_id: user.id, details: { provider_key: providerKey, provider_type: providerType, country_code: countryCode, environment, note: 'Created disabled; server adapter must be verified before activation.' } })
     return NextResponse.json({ success: true, provider, config, note: 'Provider created disabled. Install/verify its server adapter before enabling production traffic.' }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Unable to create provider.' }, { status: 500 })
@@ -59,7 +61,6 @@ export async function PATCH(req: Request) {
     const { s, user, role } = await session()
     if (!user || !role) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await req.json()
-
     if (body.action === 'rotate_credential') {
       if (role !== 'super_admin') return NextResponse.json({ error: 'Super Admin access required.' }, { status: 403 })
       const providerId = typeof body.providerId === 'string' ? body.providerId : ''
@@ -69,7 +70,6 @@ export async function PATCH(req: Request) {
       if (error) throw error
       return NextResponse.json({ success: true, credential: data })
     }
-
     const { configId, isActive } = body
     if (typeof configId !== 'string' || typeof isActive !== 'boolean') return NextResponse.json({ error: 'Invalid provider configuration.' }, { status: 400 })
     const { data, error } = await s.rpc('admin_set_market_provider', { p_config_id: configId, p_active: isActive })
