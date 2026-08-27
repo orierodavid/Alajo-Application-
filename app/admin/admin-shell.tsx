@@ -8,7 +8,7 @@ import AdminLogout from './logout'
 const nav = [
   ['Dashboard', '/admin'], ['Users', '/admin/users'], ['KYC', '/admin/kyc'], ['Groups', '/admin/groups'],
   ['Contributions', '/admin/contributions'], ['Defaults & Recovery', '/admin/defaults'], ['Payouts', '/admin/payouts'], ['Transactions', '/admin/transactions'],
-  ['Wallets', '/admin/wallets'], ['Notifications', '/admin/notifications'], ['Administrators', '/admin/administrators'], ['Administration', '/admin/settings'],
+  ['Wallets', '/admin/wallets'], ['Notifications', '/admin/notifications'], ['Administrators', '/admin/administrators'], ['Administration', '/admin/settings'], ['Operational Controls', '/admin/controls'],
 ] as const
 
 export default function AdminShell({ children, email, role }: { children: React.ReactNode; email: string; role: string }) {
