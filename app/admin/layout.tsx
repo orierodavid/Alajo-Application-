@@ -5,10 +5,11 @@ import AdminShell from './admin-shell'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Middleware already authenticates and authorizes every /admin request.
+  // Avoid a second admin-role RPC here; it was causing the admin shell to wait twice.
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: role } = user ? await supabase.rpc('get_my_admin_role') : { data: null }
-  if (!user || !role) return children
+  if (!user) return children
 
-  return <AdminShell email={user.email || 'Administrator'} role={role}>{children}</AdminShell>
+  return <AdminShell email={user.email || 'Administrator'} role="Administrator">{children}</AdminShell>
 }
