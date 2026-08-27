@@ -1,15 +1,34 @@
-/* Admin-only contrast hardening. */
+/* Admin workspace contrast contract: light surfaces use dark text; dark surfaces use bright text. */
+.admin-workspace { background:#f5f7f5; color:#111814; }
+.admin-workspace :is(h1,h2,h3,h4,h5,h6) { color:inherit; }
+.admin-workspace :is(p,span,small,label,th,td,li) { color:inherit; }
+
 html.dark .admin-workspace { background:#08150d !important; color:#f4f8f5 !important; }
-html.dark .admin-workspace :is(h1,h2,h3,h4,h5,h6,.font-bold,.font-semibold) { color:#f7fbf8; }
-html.dark .admin-workspace p { color:#d2e2d8; }
-html.dark .admin-workspace .text-gray-950,html.dark .admin-workspace .text-gray-900,html.dark .admin-workspace .text-gray-800 { color:#f4f8f5 !important; }
-html.dark .admin-workspace .text-gray-700,html.dark .admin-workspace .text-gray-600 { color:#d3e1d8 !important; }
-html.dark .admin-workspace .text-gray-500,html.dark .admin-workspace .text-gray-400 { color:#b7c8bc !important; }
+html.dark .admin-workspace :is(h1,h2,h3,h4,h5,h6,.font-bold,.font-semibold,.font-medium) { color:#f7fbf8 !important; }
+html.dark .admin-workspace :is(p,span,small,label,th,td,li,button,a) { color:inherit; }
+html.dark .admin-workspace p { color:#d2e2d8 !important; }
+html.dark .admin-workspace .text-black,
+html.dark .admin-workspace .text-gray-950,
+html.dark .admin-workspace .text-gray-900,
+html.dark .admin-workspace .text-gray-800 { color:#f7fbf8 !important; }
+html.dark .admin-workspace .text-gray-700,
+html.dark .admin-workspace .text-gray-600 { color:#dbe8e0 !important; }
+html.dark .admin-workspace .text-gray-500,
+html.dark .admin-workspace .text-gray-400,
+html.dark .admin-workspace .text-gray-300 { color:#c3d2c8 !important; }
+html.dark .admin-workspace [class*='text-[#111814]'],
+html.dark .admin-workspace [class*='text-[#17231c]'],
+html.dark .admin-workspace [class*='text-[#163c27]'],
+html.dark .admin-workspace [class*='text-[#66736b]'],
+html.dark .admin-workspace [class*='text-[#9fb3a8]'],
+html.dark .admin-workspace [class*='text-[#b7c7be]'],
+html.dark .admin-workspace [class*='text-[#879d90]'],
+html.dark .admin-workspace [class*='text-[#d6e1da]'] { color:#e4eee7 !important; }
 html.dark .admin-workspace table th { color:#d7e6dc !important; }
 html.dark .admin-workspace table td { color:#e4eee7 !important; }
-html.dark .admin-workspace [class*='text-[#9fb3a8]'] { color:#c4d3ca !important; }
-html.dark .admin-workspace [class*='text-[#b7c7be]'] { color:#d5e2d9 !important; }
-html.dark .admin-workspace [class*='text-[#879d90]'] { color:#b8c9bd !important; }
-html.dark .admin-workspace [class*='text-[#d6e1da]'] { color:#e8f1eb !important; }
-html.dark .admin-workspace input,html.dark .admin-workspace select,html.dark .admin-workspace textarea { background:#12271b;color:#f3f7f4;border-color:#31503d; }
-html.dark .admin-workspace input::placeholder,html.dark .admin-workspace textarea::placeholder { color:#9fb2a5; }
+html.dark .admin-workspace input,
+html.dark .admin-workspace select,
+html.dark .admin-workspace textarea { background:#12271b !important; color:#f3f7f4 !important; border-color:#31503d !important; }
+html.dark .admin-workspace input::placeholder,
+html.dark .admin-workspace textarea::placeholder { color:#9fb2a5 !important; }
+html.dark .admin-workspace option { background:#12271b; color:#f3f7f4; }
