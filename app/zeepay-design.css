@@ -4,31 +4,27 @@ body{background:var(--zeepay-bg)}
 .zeepay-wordmark{display:inline-flex;align-items:center;gap:0;color:var(--zeepay-forest);font-size:24px;line-height:1;font-weight:850;letter-spacing:-.055em;text-decoration:none;font-style:italic;white-space:nowrap}
 .zeepay-wordmark span{color:var(--zeepay-green)}
 .zeepay-wordmark:hover{color:var(--zeepay-forest);transform:none}
-.zeepay-wordmark-light{color:#fff;-webkit-text-stroke:1px var(--zeepay-green);paint-order:stroke fill;text-shadow:0 1px 0 rgba(0,0,0,.08)}.zeepay-wordmark-light span{color:#fff;-webkit-text-stroke:1px var(--zeepay-green)}.zeepay-wordmark-light:hover{color:#fff}
+.zeepay-wordmark-light{display:inline-flex;align-items:center;gap:0;color:#fff;font-size:26px;line-height:1;font-weight:850;letter-spacing:-.055em;text-decoration:none;font-style:italic;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.08)}.zeepay-wordmark-light span{color:#fff}.zeepay-wordmark-light:hover{color:#fff}
 .mobile-brand{font-size:22px;position:absolute;left:50%;transform:translateX(-50%)}.mobile-brand:hover{transform:translateX(-50%)}
 .safe-top{padding-top:env(safe-area-inset-top);height:calc(4rem + env(safe-area-inset-top))}
 @media(max-width:639px){.mobile-brand{font-size:21px}.zeepay-wordmark{letter-spacing:-.06em}.user-sidebar{display:none!important}main{padding-bottom:calc(24px + env(safe-area-inset-bottom))}.rounded-2xl{border-radius:16px}.rounded-xl{border-radius:12px}}
-/* Calm, stable interaction: avoid layout-jumping hover transforms on navigation and text links. */
-aside nav a:hover,.user-sidebar a:hover,.mobile-navigation a:hover{transform:none!important}
-a[href]:not(.alajo-button):not(.alajo-interactive):hover{transform:none!important}
-button:not(.alajo-button):not(.alajo-switch):not([role="switch"]):hover{transform:none!important}
-/* Consistent controls */
-button,input,select,textarea{min-height:40px}button{cursor:pointer}button:disabled{cursor:not-allowed}
-main input,main select,main textarea{border-radius:12px}
-main input::placeholder,main textarea::placeholder{color:#8a958f}
-/* Better mobile readability and tap targets */
+aside nav a:hover,.user-sidebar a:hover,.mobile-navigation a:hover{transform:none!important}a[href]:not(.alajo-button):not(.alajo-interactive):hover{transform:none!important}button:not(.alajo-button):not(.alajo-switch):not([role="switch"]):hover{transform:none!important}
+button,input,select,textarea{min-height:40px}button{cursor:pointer}button:disabled{cursor:not-allowed}main input,main select,main textarea{border-radius:12px}main input::placeholder,main textarea::placeholder{color:#8a958f}
 @media(max-width:767px){main button,main a{min-height:40px}.text-\[9px\]{font-size:10px}.text-\[10px\]{font-size:11px}}
-/* Brand-led primary surfaces */
-.bg-\[\#0f5b32\],.bg-\[\#0f6b3b\]{background:var(--zeepay-forest)!important}
-.text-\[\#0f5b32\],.text-\[\#0f6b3b\],.text-\[\#168047\]{color:var(--zeepay-green-strong)!important}
-.border-\[\#0f5b32\]{border-color:var(--zeepay-forest)!important}
-/* Accessible status text */
+.bg-\[\#0f5b32\],.bg-\[\#0f6b3b\]{background:var(--zeepay-forest)!important}.text-\[\#0f5b32\],.text-\[\#0f6b3b\],.text-\[\#168047\]{color:var(--zeepay-green-strong)!important}.border-\[\#0f5b32\]{border-color:var(--zeepay-forest)!important}
 .text-\[\#9aa59f\],.text-\[\#9a\]{color:#6f7d74}
-/* Switches: white thumb always visible, brand green only when on */
-.alajo-switch,button[role="switch"]{width:46px;height:26px;border-radius:999px;background:#dfe6e1;border:1px solid #cbd7cf;box-shadow:inset 0 1px 2px rgba(0,0,0,.10);padding:0;position:relative;display:inline-flex;align-items:center}
-.alajo-switch>span,button[role="switch"]>span{width:18px;height:18px;left:3px;top:3px;background:#fff!important;border:1px solid rgba(0,0,0,.08);box-shadow:0 2px 6px rgba(0,0,0,.22)}
-.alajo-switch[data-state="on"]>span,.alajo-switch[aria-checked="true"]>span,.alajo-switch[aria-pressed="true"]>span,button[role="switch"][aria-checked="true"]>span{transform:translateX(20px)}
-.alajo-switch[data-state="on"],.alajo-switch[aria-checked="true"],.alajo-switch[aria-pressed="true"],button[role="switch"][aria-checked="true"]{background:var(--zeepay-green);border-color:var(--zeepay-green)}
-html.dark .zeepay-wordmark{color:#e8f7ed}html.dark .zeepay-wordmark span{color:#86efac}
-html.dark body{background:#08150d}
-@media(prefers-reduced-motion:reduce){.zeepay-wordmark,.mobile-brand{transition:none!important}}
+.alajo-switch,button[role="switch"]{width:46px;height:26px;border-radius:999px;background:#dfe6e1;border:1px solid #cbd7cf;box-shadow:inset 0 1px 2px rgba(0,0,0,.10);padding:0;position:relative;display:inline-flex;align-items:center}.alajo-switch>span,button[role="switch"]>span{width:18px;height:18px;left:3px;top:3px;background:#fff!important;border:1px solid rgba(0,0,0,.08);box-shadow:0 2px 6px rgba(0,0,0,.22)}.alajo-switch[data-state="on"]>span,.alajo-switch[aria-checked="true"]>span,.alajo-switch[aria-pressed="true"]>span,button[role="switch"][aria-checked="true"]>span{transform:translateX(20px)}.alajo-switch[data-state="on"],.alajo-switch[aria-checked="true"],.alajo-switch[aria-pressed="true"],button[role="switch"][aria-checked="true"]{background:var(--zeepay-green);border-color:var(--zeepay-green)}
+/* Admin readability: white text must not survive onto the light application surfaces. */
+.admin-shell main .bg-white .text-white,.admin-shell main .bg-\[\#fff\] .text-white{color:#17201a!important}
+.admin-shell main .bg-white .text-white\/80{color:#526159!important}.admin-shell main .bg-white .text-white\/70{color:#5f6d65!important}.admin-shell main .bg-white .text-white\/65{color:#66736c!important}.admin-shell main .bg-white .text-white\/60{color:#6f7d74!important}
+.admin-shell main .bg-white .text-white\/50{color:#7b8780!important}
+.admin-shell main h1,.admin-shell main h2,.admin-shell main h3{color:#17201a}
+.admin-shell main p,.admin-shell main label,.admin-shell main th,.admin-shell main td,.admin-shell main span{--tw-text-opacity:1}
+.admin-shell main .text-white{color:#17201a}
+.admin-shell main .bg-\[\#0f5b32\] .text-white,.admin-shell main .bg-\[\#0f6b3b\] .text-white{color:#fff!important}
+.admin-shell main .bg-\[\#0f5b32\] .text-white\/80,.admin-shell main .bg-\[\#0f6b3b\] .text-white\/80{color:rgba(255,255,255,.8)!important}
+.admin-shell main .bg-\[\#0f5b32\] .text-white\/70,.admin-shell main .bg-\[\#0f6b3b\] .text-white\/70{color:rgba(255,255,255,.7)!important}
+.admin-shell main .bg-\[\#0f5b32\] .text-white\/65,.admin-shell main .bg-\[\#0f6b3b\] .text-white\/65{color:rgba(255,255,255,.65)!important}
+.admin-shell main .bg-\[\#0f5b32\] .text-white\/60,.admin-shell main .bg-\[\#0f6b3b\] .text-white\/60{color:rgba(255,255,255,.6)!important}
+html.dark .zeepay-wordmark{color:#e8f7ed}html.dark .zeepay-wordmark span{color:#86efac}html.dark body{background:#08150d}
+@media(prefers-reduced-motion:reduce){.zeepay-wordmark,.mobile-brand,.zeepay-wordmark-light{transition:none!important}}
