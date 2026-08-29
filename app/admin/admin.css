@@ -1,34 +1,43 @@
-/* ZeePay Admin — mirrors the user dashboard: light surfaces, dark readable text, green accents. */
-.admin-shell,.admin-workspace{min-height:100vh;background:#f5f7f5;color:#142019}
-.admin-workspace{overflow-x:hidden}
-.admin-workspace :is(h1,h2,h3,h4,h5,h6){color:#142019!important;letter-spacing:-.025em}
-.admin-workspace :is(p,span,small,label,th,td,li){color:inherit}
-.admin-workspace :is(input,select,textarea){background:#fff!important;color:#142019!important;border:1px solid #e5ebe7!important;border-radius:.75rem}
-.admin-workspace :is(input,select,textarea)::placeholder{color:#8b9790!important;opacity:1}
-.admin-workspace table{background:#fff;color:#425149;border-color:#e5ebe7}
-.admin-workspace table th{background:#f7faf8!important;color:#718078!important;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.admin-workspace table td{color:#425149!important}
-.admin-workspace tbody tr:hover{background:#f8fbf9}
-.admin-workspace a,.admin-workspace button{transition:background-color .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}
-.admin-workspace :is(a,button,input,select,textarea):focus-visible{outline:2px solid #16a34a;outline-offset:2px}
-/* Normalize legacy dark admin cards back to dashboard white surfaces. */
-.admin-workspace [class*='bg-[#06130b]'],.admin-workspace [class*='bg-[#06110a]'],.admin-workspace [class*='bg-[#081b10]'],.admin-workspace [class*='bg-[#0b2113]'],.admin-workspace [class*='bg-[#0b1b11]'],.admin-workspace [class*='bg-[#102419]'],.admin-workspace [class*='bg-[#112419]'],.admin-workspace [class*='bg-[#0d1d13]']{background:#fff!important;color:#142019!important;border-color:#e5ebe7!important}
-.admin-workspace .text-white{color:#142019!important}
-.admin-workspace .text-gray-950,.admin-workspace .text-gray-900{color:#142019!important}
-.admin-workspace .text-gray-800{color:#26372e!important}
-.admin-workspace .text-gray-700{color:#425149!important}
-.admin-workspace .text-gray-600{color:#52635a!important}
-.admin-workspace .text-gray-500,.admin-workspace .text-gray-400,.admin-workspace .text-gray-300{color:#718078!important}
-.admin-workspace [class*='text-[#9aa59f]'],.admin-workspace [class*='text-[#9fb3a8]'],.admin-workspace [class*='text-[#879d90]']{color:#8b9790!important}
-.admin-workspace [class*='text-[#0f5b32]'],.admin-workspace [class*='text-[#168047]'],.admin-workspace [class*='text-[#16a34a]']{color:#0f5b32!important}
-.admin-workspace [class*='border-white'],.admin-workspace [class*='border-[#1c5130]']{border-color:#e5ebe7!important}
-.admin-workspace .bg-white{background:#fff!important;color:#142019}
-.admin-workspace [class*='bg-white/']{background:#f7faf8!important;color:#142019!important}
-.admin-workspace .admin-dashboard-card,.admin-workspace .admin-dashboard-secondary-card{border-radius:1rem;overflow:hidden;background:#fff!important;color:#142019!important;border:1px solid #e5ebe7!important}
-.admin-workspace .admin-dashboard-card :is(h1,h2,h3,h4,h5,h6,p,span,small,label),.admin-workspace .admin-dashboard-secondary-card :is(h1,h2,h3,h4,h5,h6,p,span,small,label){color:inherit!important}
-/* Preserve intentional action/status colors and readable green controls. */
-.admin-workspace button.bg-[#16a34a],.admin-workspace a.bg-[#16a34a],.admin-workspace button.bg-[#0f5b32],.admin-workspace a.bg-[#0f5b32]{color:#fff!important}
-.admin-workspace button.bg-[#16a34a] *, .admin-workspace a.bg-[#16a34a] *, .admin-workspace button.bg-[#0f5b32] *, .admin-workspace a.bg-[#0f5b32] *{color:#fff!important}
-.admin-workspace [class*='bg-[#eaf7ef]']{background:#eaf7ef!important}
+/* ZeePay Admin: same product design language as the user dashboard, but a distinct operations workspace. */
+.admin-shell{min-height:100vh;background:#f5f7f5;color:#142019}
+.admin-workspace{min-height:100vh;overflow-x:hidden;color:#142019}
+.admin-workspace :is(h1,h2,h3,h4,h5,h6){letter-spacing:-.025em}
+.admin-workspace :is(input,select,textarea){border-radius:.75rem}
+.admin-workspace table{border-collapse:separate;border-spacing:0}
+.admin-workspace button,.admin-workspace a{transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.admin-workspace button:focus-visible,.admin-workspace a:focus-visible,.admin-workspace input:focus,.admin-workspace select:focus,.admin-workspace textarea:focus{outline:2px solid rgba(22,163,74,.55);outline-offset:2px}
+
+/* Admin dashboard keeps its operational identity: dark KPI cards, light workspace. */
+.admin-dashboard-card{color:#fff!important;border-color:#138044!important;box-shadow:0 14px 36px rgba(0,0,0,.20)}
+.admin-dashboard-card p:first-child{color:#eaffef!important}
+.admin-dashboard-card p:nth-child(2){color:#fff!important}
+.admin-dashboard-card span{color:#c4dfce!important}
+.admin-dashboard-secondary-card{color:#fff!important;border-color:#1e5a35!important;background:#0b2113!important}
+.admin-dashboard-secondary-card h2{color:#fff!important}
+.admin-dashboard-secondary-card p:first-child{color:#4ade80!important}
+.admin-dashboard-secondary-card p:not(:first-child){color:#d7e7dc!important}
+.admin-dashboard-secondary-card span{color:#a7f3c0!important}
+
+/* Light operational surfaces inherit the same spacing, borders and typography language as the user dashboard. */
+.admin-workspace .admin-surface{background:#fff;border:1px solid #e3e9e5;box-shadow:0 7px 22px rgba(12,49,28,.045)}
+.admin-workspace .admin-muted{color:#748078}
+.admin-workspace table th{background:#f5f8f6;color:#4f5f55}
+.admin-workspace table td{color:#25352b;border-color:#edf1ee}
+.admin-workspace tbody tr:hover td{background:#f7faf8}
+
+/* Settings remains an Admin control centre, not a copy of the user dashboard. */
+.admin-settings{background:#f5f7f5!important;color:#142019!important}
+.admin-settings .rounded-3xl.border{background:#fff!important;border-color:#e3e9e5!important;color:#142019!important;box-shadow:0 7px 22px rgba(12,49,28,.045)}
+.admin-settings .rounded-2xl.border{border-color:#e6ece8!important}
+.admin-settings [class*='bg-white/[.035]'],.admin-settings [class*='bg-white/5']{background:#f7faf8!important}
+.admin-settings [class*='border-white'],.admin-settings [class*='border-[#1c5130]']{border-color:#e3e9e5!important}
+.admin-settings .text-white{color:#142019!important}
+.admin-settings .text-\[\#d1dfd5\],.admin-settings .text-\[\#c7d8cc\],.admin-settings .text-\[\#aebfb3\],.admin-settings .text-\[\#8fa296\]{color:#718078!important}
+.admin-settings input,.admin-settings select{background:#fff!important;color:#142019!important;border-color:#dce5df!important}
+.admin-settings input::placeholder{color:#8b9790!important}
+.admin-settings select option{background:#fff;color:#142019}
+.admin-settings button.bg-\[\#16a34a\],.admin-settings button.bg-\[\#0f5b32\]{color:#fff!important}
+.admin-settings button.bg-\[\#16a34a\] *, .admin-settings button.bg-\[\#0f5b32\] *{color:#fff!important}
+
 @media (max-width:1023px){.admin-workspace{min-width:0}.admin-workspace table{min-width:680px}}
 @media (prefers-reduced-motion:reduce){.admin-workspace *{scroll-behavior:auto!important;transition-duration:.01ms!important}}
