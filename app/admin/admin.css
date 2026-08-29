@@ -1,23 +1,34 @@
-/* ZeePay Admin — intentionally mirrors the user dashboard visual language. */
-.admin-workspace{min-height:100vh;background:#f5f7f5;color:#142019;overflow-x:hidden}
-.admin-workspace :is(h1,h2,h3,h4,h5,h6){color:#142019;letter-spacing:-.025em}
+/* ZeePay Admin — mirrors the user dashboard: light surfaces, dark readable text, green accents. */
+.admin-shell,.admin-workspace{min-height:100vh;background:#f5f7f5;color:#142019}
+.admin-workspace{overflow-x:hidden}
+.admin-workspace :is(h1,h2,h3,h4,h5,h6){color:#142019!important;letter-spacing:-.025em}
 .admin-workspace :is(p,span,small,label,th,td,li){color:inherit}
-.admin-workspace :is(input,select,textarea){background:#fff;color:#142019;border:1px solid #e5ebe7;border-radius:.75rem}
-.admin-workspace :is(input,select,textarea)::placeholder{color:#8b9790;opacity:1}
-.admin-workspace table th{background:#f7faf8;color:#718078;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.admin-workspace table td{color:#425149}
+.admin-workspace :is(input,select,textarea){background:#fff!important;color:#142019!important;border:1px solid #e5ebe7!important;border-radius:.75rem}
+.admin-workspace :is(input,select,textarea)::placeholder{color:#8b9790!important;opacity:1}
+.admin-workspace table{background:#fff;color:#425149;border-color:#e5ebe7}
+.admin-workspace table th{background:#f7faf8!important;color:#718078!important;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.admin-workspace table td{color:#425149!important}
 .admin-workspace tbody tr:hover{background:#f8fbf9}
 .admin-workspace a,.admin-workspace button{transition:background-color .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}
 .admin-workspace :is(a,button,input,select,textarea):focus-visible{outline:2px solid #16a34a;outline-offset:2px}
+/* Normalize legacy dark admin cards back to dashboard white surfaces. */
+.admin-workspace [class*='bg-[#06130b]'],.admin-workspace [class*='bg-[#06110a]'],.admin-workspace [class*='bg-[#081b10]'],.admin-workspace [class*='bg-[#0b2113]'],.admin-workspace [class*='bg-[#0b1b11]'],.admin-workspace [class*='bg-[#102419]'],.admin-workspace [class*='bg-[#112419]'],.admin-workspace [class*='bg-[#0d1d13]']{background:#fff!important;color:#142019!important;border-color:#e5ebe7!important}
+.admin-workspace .text-white{color:#142019!important}
 .admin-workspace .text-gray-950,.admin-workspace .text-gray-900{color:#142019!important}
 .admin-workspace .text-gray-800{color:#26372e!important}
 .admin-workspace .text-gray-700{color:#425149!important}
 .admin-workspace .text-gray-600{color:#52635a!important}
-.admin-workspace .text-gray-500,.admin-workspace .text-gray-400{color:#718078!important}
+.admin-workspace .text-gray-500,.admin-workspace .text-gray-400,.admin-workspace .text-gray-300{color:#718078!important}
 .admin-workspace [class*='text-[#9aa59f]'],.admin-workspace [class*='text-[#9fb3a8]'],.admin-workspace [class*='text-[#879d90]']{color:#8b9790!important}
 .admin-workspace [class*='text-[#0f5b32]'],.admin-workspace [class*='text-[#168047]'],.admin-workspace [class*='text-[#16a34a]']{color:#0f5b32!important}
-.admin-workspace .bg-white{background:#fff}
-.admin-workspace .admin-dashboard-card,.admin-workspace .admin-dashboard-secondary-card{border-radius:1rem;overflow:hidden}
-.admin-workspace .admin-dashboard-card :is(h1,h2,h3,h4,h5,h6,p,span,small,label),.admin-workspace .admin-dashboard-secondary-card :is(h1,h2,h3,h4,h5,h6,p,span,small,label){color:inherit}
+.admin-workspace [class*='border-white'],.admin-workspace [class*='border-[#1c5130]']{border-color:#e5ebe7!important}
+.admin-workspace .bg-white{background:#fff!important;color:#142019}
+.admin-workspace [class*='bg-white/']{background:#f7faf8!important;color:#142019!important}
+.admin-workspace .admin-dashboard-card,.admin-workspace .admin-dashboard-secondary-card{border-radius:1rem;overflow:hidden;background:#fff!important;color:#142019!important;border:1px solid #e5ebe7!important}
+.admin-workspace .admin-dashboard-card :is(h1,h2,h3,h4,h5,h6,p,span,small,label),.admin-workspace .admin-dashboard-secondary-card :is(h1,h2,h3,h4,h5,h6,p,span,small,label){color:inherit!important}
+/* Preserve intentional action/status colors and readable green controls. */
+.admin-workspace button.bg-[#16a34a],.admin-workspace a.bg-[#16a34a],.admin-workspace button.bg-[#0f5b32],.admin-workspace a.bg-[#0f5b32]{color:#fff!important}
+.admin-workspace button.bg-[#16a34a] *, .admin-workspace a.bg-[#16a34a] *, .admin-workspace button.bg-[#0f5b32] *, .admin-workspace a.bg-[#0f5b32] *{color:#fff!important}
+.admin-workspace [class*='bg-[#eaf7ef]']{background:#eaf7ef!important}
 @media (max-width:1023px){.admin-workspace{min-width:0}.admin-workspace table{min-width:680px}}
 @media (prefers-reduced-motion:reduce){.admin-workspace *{scroll-behavior:auto!important;transition-duration:.01ms!important}}
