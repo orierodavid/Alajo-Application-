@@ -3,6 +3,7 @@ import { createClient } from '../../../../src/lib/supabase/server'
 import { createAdminClient } from '../../../../src/lib/supabase/admin'
 import { createDedicatedVirtualAccount, fetchPaystackCustomer, paystackEnvironmentFromSecret } from '@/lib/paystack'
 import { singleFlight } from '@/lib/resilience/single-flight'
+import { withDistributedLock } from '@/lib/resilience/distributed-lock'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +43,10 @@ export async function GET() {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
   try {
-    await singleFlight(`kyc:reconcile:${user.id}`, () => reconcileKyc(user.id), 15_000)
+    await singleFlight(`kyc:reconcile:${user.id}`, async () => {
+      const lock = await withDistributedLock(`kyc:reconcile:${user.id}`, () => reconcileKyc(user.id), 180)
+      return lock.acquired ? lock.value : undefined
+    }, 15_000)
   } catch (reconcileError) {
     console.error('Paystack status reconciliation failed:', reconcileError)
   }
