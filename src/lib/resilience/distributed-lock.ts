@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient } from '@/src/lib/supabase/admin'
 
 /** Cross-instance lease used only to prevent duplicate expensive work. */
 export async function withDistributedLock<T>(key: string, work: () => Promise<T>, leaseSeconds = 120): Promise<{ acquired: boolean; value?: T }> {
