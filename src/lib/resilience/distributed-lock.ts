@@ -14,6 +14,10 @@ export async function withDistributedLock<T>(key: string, work: () => Promise<T>
   try {
     return { acquired: true, value: await work() }
   } finally {
-    await admin.rpc('release_work_lock', { p_lock_key: key, p_owner_id: ownerId }).catch(() => undefined)
+    try {
+      await admin.rpc('release_work_lock', { p_lock_key: key, p_owner_id: ownerId })
+    } catch {
+      // Best-effort release. The lease expiry remains the safety net.
+    }
   }
 }
