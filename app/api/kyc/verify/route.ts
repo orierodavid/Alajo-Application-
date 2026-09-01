@@ -4,12 +4,15 @@ import { createAdminClient } from '../../../../src/lib/supabase/admin'
 import { createPaystackCustomer, resolvePaystackAccount, validatePaystackCustomer } from '@/lib/paystack'
 import { singleFlight } from '@/src/lib/resilience/single-flight'
 import { withDistributedLock } from '@/src/lib/resilience/distributed-lock'
+import { mutationGuard } from '@/src/lib/security/request-guards'
 
 type ProviderDefinition = { provider_key: string; provider_type: string; status: string; capabilities?: Record<string, unknown> }
 type KycConfigRow = { id: string; provider_definitions: ProviderDefinition | ProviderDefinition[] | null }
 function jsonError(message: string, status: number, code?: string) { return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status }) }
 
 export async function POST(request: Request) {
+  const guard = mutationGuard(request, 'kyc-verify', 5)
+  if (guard) return guard
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -23,13 +26,17 @@ export async function POST(request: Request) {
     const phoneInput = typeof body?.phone === 'string' ? body.phone.replace(/\D/g, '') : ''
     const emailInput = typeof body?.email === 'string' ? body.email.trim() : ''
     const middleName = typeof body?.middleName === 'string' ? body.middleName.trim() : undefined
+    if (!/^\d{11}$/.test(bvn)) return jsonError('BVN must contain exactly 11 digits.', 400, 'INVALID_BVN')
+    if (!/^\d{10}$/.test(accountNumber)) return jsonError('Account number must contain exactly 10 digits.', 400, 'INVALID_ACCOUNT_NUMBER')
+    if (!/^\d{2,10}$/.test(bankCode)) return jsonError('Select a valid bank.', 400, 'INVALID_BANK')
+
     const admin = createAdminClient()
     const [{ data: profile, error: profileError }, { data: userKyc }] = await Promise.all([admin.from('profiles').select('full_name, phone, email, country_code').eq('id', user.id).single(), admin.from('user_kyc_profiles').select('country_code').eq('user_id', user.id).maybeSingle()])
     if (profileError || !profile) return jsonError('Complete your profile before verification.', 400, 'PROFILE_INCOMPLETE')
     const authMeta = (user.user_metadata ?? {}) as Record<string, unknown>
     const countryCode = String(profile.country_code || userKyc?.country_code || authMeta.country_code || 'NG').toUpperCase()
     const { data: market, error: marketError } = await admin.from('markets').select('id, country_code, default_currency, status').eq('country_code', countryCode).single()
-    if (marketError || !market) return jsonError(`ZeePay is not configured for ${countryCode} yet. An administrator must add a market provider before verification can start.`, 409, 'MARKET_NOT_CONFIGURED')
+    if (marketError || !market) return jsonError('ZeePay is not configured for this market yet.', 409, 'MARKET_NOT_CONFIGURED')
     if (!['ACTIVE', 'CONFIGURING', 'TESTING'].includes(market.status)) return jsonError('This market is not currently available for onboarding.', 409, 'MARKET_NOT_ACTIVE')
     const metadataFirstName = typeof authMeta.first_name === 'string' ? authMeta.first_name.trim() : ''
     const metadataLastName = typeof authMeta.last_name === 'string' ? authMeta.last_name.trim() : ''
@@ -43,6 +50,7 @@ export async function POST(request: Request) {
     const phone = phoneInput || ((typeof profile.phone === 'string' && profile.phone.trim()) ? profile.phone.trim() : (typeof authMeta.phone === 'string' ? authMeta.phone.replace(/\D/g, '') : ''))
     if (!email || !phone || !firstName || !lastName) return jsonError('Enter your first name, last name, phone and email before verification.', 400, 'PROFILE_INCOMPLETE')
     if (!/^\S+@\S+\.\S+$/.test(email)) return jsonError('Enter a valid email address.', 400, 'INVALID_EMAIL')
+    if (!/^\d{11}$/.test(phone)) return jsonError('Phone number must contain exactly 11 digits.', 400, 'INVALID_PHONE')
     await admin.from('profiles').update({ full_name: `${firstName} ${lastName}`, phone, email, country_code: countryCode, market_id: market.id }).eq('id', user.id)
     const { data: rawKycConfig, error: kycConfigError } = await admin.from('market_provider_configs').select('id, provider_definitions!inner(provider_key, provider_type, status, capabilities)').eq('market_id', market.id).eq('provider_type', 'KYC').eq('environment', 'LIVE').eq('status', 'ACTIVE').eq('provider_definitions.provider_type', 'KYC').eq('provider_definitions.status', 'ACTIVE').order('priority', { ascending: true }).limit(1).maybeSingle()
     const kycConfig = rawKycConfig as KycConfigRow | null
@@ -50,15 +58,12 @@ export async function POST(request: Request) {
     const providerDefinition = Array.isArray(kycConfig.provider_definitions) ? kycConfig.provider_definitions[0] : kycConfig.provider_definitions
     const providerKey = providerDefinition?.provider_key
     const capabilities = providerDefinition?.capabilities ?? {}
-    if (countryCode !== 'NG' || providerKey !== 'paystack_kyc') return jsonError(`The configured KYC provider is not yet connected to ZeePay's ${countryCode} verification flow. Add a compatible provider adapter in Admin before activating onboarding.`, 503, 'KYC_PROVIDER_ADAPTER_UNAVAILABLE')
-    if (!capabilities.bank_account_validation) return jsonError('The selected KYC provider does not support bank account validation for this market.', 503, 'BANK_VERIFICATION_UNSUPPORTED')
-    if (!/^\d{11}$/.test(bvn)) return jsonError('BVN must contain exactly 11 digits.', 400, 'INVALID_BVN')
-    if (!bankCode) return jsonError('Select your bank.', 400, 'BANK_REQUIRED')
-    if (!/^\d{10}$/.test(accountNumber)) return jsonError('Account number must contain exactly 10 digits.', 400, 'INVALID_ACCOUNT_NUMBER')
-    if (!/^\d{11}$/.test(phone)) return jsonError('Phone number must contain exactly 11 digits.', 400, 'INVALID_PHONE')
+    if (countryCode !== 'NG' || providerKey !== 'paystack_kyc') return jsonError('The configured KYC provider is unavailable for this verification flow.', 503, 'KYC_PROVIDER_ADAPTER_UNAVAILABLE')
+    if (!capabilities.bank_account_validation) return jsonError('Bank verification is unavailable for this market.', 503, 'BANK_VERIFICATION_UNSUPPORTED')
+
     let resolvedAccount
     try { resolvedAccount = await singleFlight(`kyc:resolve:${user.id}:${bankCode}:${accountNumber}`, () => resolvePaystackAccount({ accountNumber, bankCode }), 30_000) }
-    catch { return jsonError('We could not verify that account number with the selected bank. Check the bank and account number and try again.', 400, 'BANK_ACCOUNT_NOT_RESOLVED') }
+    catch { return jsonError('We could not verify that account number with the selected bank.', 400, 'BANK_ACCOUNT_NOT_RESOLVED') }
     let { data: providerCustomer } = await admin.from('provider_customers').select('id, provider_customer_code, provider_key').eq('market_id', market.id).eq('user_id', user.id).eq('provider_key', providerKey).maybeSingle()
     if (!providerCustomer?.provider_customer_code) {
       const lock = await withDistributedLock(`kyc:customer:${user.id}`, async () => {
