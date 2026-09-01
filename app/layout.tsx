@@ -4,6 +4,7 @@ import './zeepay-design.css'
 import './zeepay-polish.css'
 import './zeepay-final-polish.css'
 import { MobileNavigation } from '@/components/layout/mobile-navigation'
+import { PublicNavigation } from '@/components/layout/public-navigation'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://alajo-application.vercel.app'
 
@@ -24,5 +25,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#0f5b32' }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><script dangerouslySetInnerHTML={{ __html: `try { if (localStorage.getItem('zeepay-theme') === 'dark') document.documentElement.classList.add('dark') } catch {}` }} /><MobileNavigation />{children}<script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}) }) }` }} /></body></html>
+  return <html lang="en"><body><script dangerouslySetInnerHTML={{ __html: `try { if (localStorage.getItem('zeepay-theme') === 'dark') document.documentElement.classList.add('dark') } catch {}` }} /><PublicNavigation /><MobileNavigation />{children}<script dangerouslySetInnerHTML={{ __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}) }) }` }} /></body></html>
 }
