@@ -2,13 +2,16 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { mutationGuard } from '@/src/lib/security/request-guards'
 
 export async function POST(request: Request) {
+  const guard = mutationGuard(request, 'auth-login', 10)
+  if (guard) return guard
   try {
     const body = await request.json().catch(() => ({}))
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
-    if (!email || !password) return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 })
+    if (!email || !password || email.length > 254 || password.length > 256) return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 400 })
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     if (!supabaseUrl || !supabaseKey) return NextResponse.json({ error: 'ZeePay account service is not configured on the production server.' }, { status: 500 })
@@ -16,13 +19,11 @@ export async function POST(request: Request) {
     let authResponse = NextResponse.json({ success: true })
     const supabase = createServerClient(supabaseUrl, supabaseKey, { cookies: { getAll() { return cookieStore.getAll() }, setAll(cookiesToSet) { cookiesToSet.forEach(({ name, value, options }) => { cookieStore.set(name, value, options); authResponse.cookies.set(name, value, options) }) } } })
     const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error || !signedIn.user) return NextResponse.json({ error: error?.message || 'Unable to log in.' }, { status: 401 })
+    if (error || !signedIn.user) return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 401 })
     const { data: profile, error: profileError } = await supabase.from('profiles').select('id,status,onboarding_step').eq('id', signedIn.user.id).maybeSingle()
-    if (profileError || !profile) { await supabase.auth.signOut(); return NextResponse.json({ error: 'No ZeePay account exists for these credentials. Please register first.' }, { status: 403 }) }
+    if (profileError || !profile) { await supabase.auth.signOut(); return NextResponse.json({ error: 'Unable to complete login.' }, { status: 403 }) }
     if (profile.status && profile.status !== 'active') { await supabase.auth.signOut(); return NextResponse.json({ error: 'Your ZeePay account is currently disabled. Please contact support.' }, { status: 403 }) }
 
-    // Verification is authoritative only when both KYC and the required DVA are active.
-    // Read these server-side with service role so RLS cannot send a verified user back to KYC.
     let admin: ReturnType<typeof createClient> | null = null
     if (process.env.SUPABASE_SERVICE_ROLE_KEY) admin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } })
     const stateClient = admin ?? supabase
