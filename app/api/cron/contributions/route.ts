@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyPaystackTransaction } from '@/lib/paystack'
-import { withDistributedLock } from '@/lib/resilience/distributed-lock'
+import { withDistributedLock } from '@/src/lib/resilience/distributed-lock'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
