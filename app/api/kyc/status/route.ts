@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '../../../../src/lib/supabase/server'
 import { createAdminClient } from '../../../../src/lib/supabase/admin'
 import { createDedicatedVirtualAccount, fetchPaystackCustomer, paystackEnvironmentFromSecret } from '@/lib/paystack'
-import { singleFlight } from '@/lib/resilience/single-flight'
-import { withDistributedLock } from '@/lib/resilience/distributed-lock'
+import { singleFlight } from '@/src/lib/resilience/single-flight'
+import { withDistributedLock } from '@/src/lib/resilience/distributed-lock'
 
 export const dynamic = 'force-dynamic'
 
