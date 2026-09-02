@@ -41,7 +41,9 @@ export async function middleware(request: NextRequest) {
   const isAdmin = pathname.startsWith('/admin'), isUser = isUserProtected(pathname)
   if (!isAdmin && !isUser) return securityHeaders(NextResponse.next())
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // Keep browser, server and middleware authentication on the same established key.
+  // The publishable key remains only a compatibility fallback.
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   if (!supabaseUrl || !supabaseKey) return securityHeaders(NextResponse.redirect(new URL(isAdmin ? '/admin/login' : '/login', request.url)))
   let response = NextResponse.next({ request })
   const supabase = createServerClient(supabaseUrl, supabaseKey, { cookies: { getAll() { return request.cookies.getAll() }, setAll(cookiesToSet) { cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value)); response = NextResponse.next({ request }); cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options)) } } })
