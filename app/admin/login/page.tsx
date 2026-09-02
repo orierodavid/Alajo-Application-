@@ -2,11 +2,9 @@
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
@@ -17,21 +15,39 @@ export default function AdminLoginPage() {
     event.preventDefault()
     setError('')
     setLoading(true)
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    if (signInError) {
-      setError('Invalid administrator credentials.')
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        credentials: 'same-origin',
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        setError(data.error || 'Invalid administrator credentials.')
+        return
+      }
+
+      const sessionResponse = await fetch('/api/admin/session', {
+        cache: 'no-store',
+        credentials: 'same-origin',
+      })
+      if (!sessionResponse.ok) {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {})
+        setError(sessionResponse.status === 403
+          ? 'This account does not have administrator access.'
+          : 'Administrator session could not be established. Please try again.')
+        return
+      }
+
+      router.replace('/admin')
+      router.refresh()
+    } catch {
+      setError('Unable to log in right now. Please try again.')
+    } finally {
       setLoading(false)
-      return
     }
-    const response = await fetch('/api/admin/session', { cache: 'no-store' })
-    if (!response.ok) {
-      await supabase.auth.signOut()
-      setError('This account does not have administrator access.')
-      setLoading(false)
-      return
-    }
-    router.replace('/admin')
-    router.refresh()
   }
 
   return <main className="min-h-screen bg-[#f5faf7] dark:bg-[#07150c] flex items-center justify-center px-5 py-10">
