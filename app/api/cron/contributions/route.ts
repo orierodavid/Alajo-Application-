@@ -23,6 +23,8 @@ export async function GET(request: Request) {
     if (finalizeError) throw finalizeError
     const { data: activated, error: activateError } = await owner.rpc('activate_due_groups')
     if (activateError) throw activateError
+    const { data: delayFees, error: delayFeeError } = await owner.rpc('apply_overdue_delay_fees')
+    if (delayFeeError) throw delayFeeError
     const { data, error } = await owner.rpc('process_due_contributions')
     if (error) throw error
 
@@ -50,7 +52,7 @@ export async function GET(request: Request) {
         }
       } catch (e) { console.error(`Paystack reconciliation failed for ${payment.provider_reference}:`, e) }
     }
-    return { finalized, activated, result: data, paystackReconciliation: { reconciled, failed } }
+    return { finalized, activated, delayFees, result: data, paystackReconciliation: { reconciled, failed } }
   }, 600)
 
   if (!lock.acquired) return NextResponse.json({ success: true, skipped: true, reason: 'Another contribution worker is already running.' }, { status: 200 })
