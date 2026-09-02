@@ -1,42 +1,50 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { mutationGuard } from '@/src/lib/security/request-guards'
 
 export async function POST(request: Request) {
-  const guard = mutationGuard(request, 'auth-login', 10)
+  const guard = mutationGuard(request, 'auth-login', 30)
   if (guard) return guard
   try {
     const body = await request.json().catch(() => ({}))
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const password = typeof body.password === 'string' ? body.password : ''
-    if (!email || !password || email.length > 254 || password.length > 256) return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 400 })
+    if (!email || !password || email.length > 254 || password.length > 256) {
+      return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 400 })
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!supabaseUrl || !supabaseKey) return NextResponse.json({ error: 'ZeePay account service is not configured on the production server.' }, { status: 500 })
-    const cookieStore = await cookies()
-    let authResponse = NextResponse.json({ success: true })
-    const supabase = createServerClient(supabaseUrl, supabaseKey, { cookies: { getAll() { return cookieStore.getAll() }, setAll(cookiesToSet) { cookiesToSet.forEach(({ name, value, options }) => { cookieStore.set(name, value, options); authResponse.cookies.set(name, value, options) }) } } })
-    const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error || !signedIn.user) return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 401 })
-    const { data: profile, error: profileError } = await supabase.from('profiles').select('id,status,onboarding_step').eq('id', signedIn.user.id).maybeSingle()
-    if (profileError || !profile) { await supabase.auth.signOut(); return NextResponse.json({ error: 'Unable to complete login.' }, { status: 403 }) }
-    if (profile.status && profile.status !== 'active') { await supabase.auth.signOut(); return NextResponse.json({ error: 'Your ZeePay account is currently disabled. Please contact support.' }, { status: 403 }) }
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: 'ZeePay account service is temporarily unavailable.' }, { status: 503 })
+    }
 
-    let admin: ReturnType<typeof createClient> | null = null
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) admin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { autoRefreshToken: false, persistSession: false } })
-    const stateClient = admin ?? supabase
-    const [{ data: anyKyc }, { data: kyc }, { data: virtualAccount }] = await Promise.all([
-      stateClient.from('user_kyc_profiles').select('status,provider_customer_ref').eq('user_id', signedIn.user.id).limit(1).maybeSingle(),
-      stateClient.from('user_kyc_profiles').select('status').eq('user_id', signedIn.user.id).eq('status', 'VERIFIED').limit(1).maybeSingle(),
-      stateClient.from('user_virtual_accounts').select('status').eq('user_id', signedIn.user.id).eq('status', 'ACTIVE').limit(1).maybeSingle(),
-    ])
-    const verificationComplete = !!kyc && !!virtualAccount
-    const hasSubmittedKyc = !!anyKyc || (!!profile.onboarding_step && profile.onboarding_step !== 'kyc')
-    const redirectTo = verificationComplete ? '/dashboard' : hasSubmittedKyc ? '/kyc/status' : '/kyc'
-    const finalResponse = NextResponse.json({ success: true, redirectTo })
-    authResponse.cookies.getAll().forEach(cookie => finalResponse.cookies.set(cookie))
-    return finalResponse
-  } catch { return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 }) }
+    const cookieStore = await cookies()
+    const response = NextResponse.json({ success: true, redirectTo: '/dashboard' })
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    })
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error || !data.user) {
+      return NextResponse.json({ error: 'Invalid login credentials.' }, { status: 401 })
+    }
+
+    // The protected-route middleware is the single authoritative onboarding
+    // gate. Avoid repeating KYC/virtual-account reads during login; this keeps
+    // sign-in fast and prevents a slow secondary lookup from making login look
+    // broken on mobile or high-latency connections.
+    return response
+  } catch {
+    return NextResponse.json({ error: 'Unable to log in right now. Please try again.' }, { status: 500 })
+  }
 }
