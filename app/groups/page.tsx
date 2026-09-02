@@ -25,9 +25,8 @@ export default function GroupsPage() {
         if (authError || !authData.user) { router.replace('/login?error=session'); return }
         if (!cancelled) setUserEmail(authData.user.email ?? '')
 
-        await supabase.rpc('finalize_due_groups')
-        await supabase.rpc('activate_due_groups')
-
+        // Group lifecycle transitions are durable scheduled work. They are handled by
+        // the protected cron worker, not by every browser page load.
         const [{ data: groupRows, error: groupsError }, { data: membershipRows, error: membershipError }] = await Promise.all([
           supabase.from('groups').select('id,name,description,cycle,contribution_amount,slot_count,start_date,close_date,finalized_member_count,finalized_at,status,lifecycle_managed').in('status', ['open', 'full', 'closed', 'active']).order('created_at', { ascending: true }),
           supabase.from('group_members').select('id,group_id,status,joined_at,slot_id,payout_position').eq('user_id', authData.user.id),

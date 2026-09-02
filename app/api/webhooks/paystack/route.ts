@@ -24,9 +24,9 @@ export async function POST(request: Request) {
   const data = jsonRecord(event.data)
   const admin = createAdminClient()
   const eventId = webhookEventId(rawBody)
-  const { data: existingEvent } = await admin.from('provider_webhook_events').select('id,status').eq('provider_key','paystack').eq('event_id',eventId).maybeSingle()
-  if (existingEvent?.status === 'PROCESSED') return NextResponse.json({ received: true, duplicate: true })
-  await admin.from('provider_webhook_events').upsert({ provider_key:'paystack', event_id:eventId, event_type:eventType, payload_hash:eventId, payload:event, status:'RECEIVED' }, { onConflict:'provider_key,event_id' })
+  const { data: claimed, error: claimError } = await admin.rpc('claim_provider_webhook_event', { p_provider_key:'paystack', p_event_id:eventId, p_event_type:eventType, p_payload_hash:eventId, p_payload:event })
+  if (claimError) return NextResponse.json({ error:'Webhook unavailable.' }, { status:503 })
+  if (claimed !== true) return NextResponse.json({ received:true, duplicate:true })
   try {
     if (eventType === 'customeridentification.success' || eventType === 'customeridentification.failed') {
       const customerCode = String(data.customer_code ?? data.customer?.customer_code ?? '')
