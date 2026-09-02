@@ -1,22 +1,22 @@
-const CACHE_NAME = 'alajo-shell-v2'
-const APP_SHELL = ['/dashboard', '/manifest.webmanifest']
+const CACHE_NAME = 'zeepay-shell-v3'
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)))
+  event.waitUntil(caches.keys().then((keys) => Promise.all(
+    keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+  )))
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))).then(() => self.clients.claim()))
+  event.waitUntil(caches.keys().then((keys) => Promise.all(
+    keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+  )).then(() => self.clients.claim()))
 })
 
 self.addEventListener('fetch', (event) => {
+  // Authentication, navigation and financial application data must always
+  // reach the network. Never serve stale HTML or dashboard state from a
+  // service-worker cache.
   if (event.request.method !== 'GET') return
-  const url = new URL(event.request.url)
-  if (url.origin !== self.location.origin) return
-  if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match('/dashboard')))
-    return
-  }
-  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)))
+  event.respondWith(fetch(event.request))
 })
