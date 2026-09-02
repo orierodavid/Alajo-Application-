@@ -1,22 +1,19 @@
-const CACHE_NAME = 'zeepay-shell-v3'
-
+// ZeePay no longer uses a service worker. This file intentionally exists only
+// to retire any registrations left by older deployments.
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(
-    keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-  )))
-  self.skipWaiting()
+  event.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(
-    keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-  )).then(() => self.clients.claim()))
+  event.waitUntil(
+    Promise.all([
+      self.registration.unregister(),
+      caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))),
+    ]).then(() => self.clients.matchAll({ type: 'window' }))
+      .then((clients) => clients.forEach((client) => client.navigate(client.url)))
+  )
 })
 
 self.addEventListener('fetch', (event) => {
-  // Authentication, navigation and financial application data must always
-  // reach the network. Never serve stale HTML or dashboard state from a
-  // service-worker cache.
-  if (event.request.method !== 'GET') return
-  event.respondWith(fetch(event.request))
+  // Never intercept requests while the legacy worker is being retired.
 })
