@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/src/lib/supabase/admin'
 import { mutationGuard, requireIdempotencyKey } from '@/src/lib/security/request-guards'
 
-const PAYABLE_STATUSES = ['pending', 'overdue']
+const PAYABLE_STATUSES = ['pending', 'due', 'overdue', 'late', 'missed', 'grace']
 function errorResponse(message: string, status = 400) { return NextResponse.json({ success: false, error: message }, { status }) }
 
 export async function POST(request: Request) {
