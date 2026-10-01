@@ -67,10 +67,22 @@ SELECT * INTO v_member FROM public.group_members WHERE group_id=p_group_id AND u
 UPDATE public.group_members SET status='cancelled'::public.membership_status,updated_at=now() WHERE id=v_member.id;UPDATE public.group_slots SET status='available'::public.slot_status,reserved_by=NULL,reserved_until=NULL WHERE id=v_member.slot_id;UPDATE public.groups SET status=CASE WHEN status::text='full' THEN 'open'::public.group_status ELSE status END,updated_at=now() WHERE id=p_group_id;RETURN jsonb_build_object('group_id',p_group_id,'membership_id',v_member.id,'status','cancelled');END;$$;
 
 CREATE OR REPLACE FUNCTION public.delete_group(p_group_id uuid)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='public,auth' AS $
 DECLARE v_user uuid:=auth.uid();v_role public.admin_role;v_group public.groups%ROWTYPE;
 BEGIN
-IF v_user IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED';END IF;SELECT ur.role INTO v_role FROM public.user_roles ur WHERE ur.user_id=v_user;IF v_role IS NULL THEN RAISE EXCEPTION 'ADMIN_REQUIRED';END IF;PERFORM public.finalize_due_groups();PERFORM public.activate_due_groups();SELECT * INTO v_group FROM public.groups WHERE id=p_group_id FOR UPDATE;IF NOT FOUND THEN RAISE EXCEPTION 'GROUP_NOT_FOUND';END IF;IF v_group.status::text NOT IN('draft','open','full') OR v_group.lifecycle_managed=false THEN RAISE EXCEPTION 'GROUP_CLOSED';END IF;DELETE FROM public.groups WHERE id=p_group_id;RETURN jsonb_build_object('group_id',p_group_id,'deleted',true);END;$$;
+IF v_user IS NULL THEN RAISE EXCEPTION 'AUTH_REQUIRED';END IF;
+SELECT ur.role INTO v_role FROM public.user_roles ur WHERE ur.user_id=v_user;
+IF v_role IS NULL THEN RAISE EXCEPTION 'ADMIN_REQUIRED';END IF;
+SELECT * INTO v_group FROM public.groups WHERE id=p_group_id FOR UPDATE;
+IF NOT FOUND THEN RAISE EXCEPTION 'GROUP_NOT_FOUND';END IF;
+DELETE FROM public.disputes WHERE group_id=p_group_id;
+DELETE FROM public.ledger_transactions WHERE group_id=p_group_id;
+DELETE FROM public.reserve_transactions WHERE group_id=p_group_id;
+DELETE FROM public.payments WHERE group_id=p_group_id;
+DELETE FROM public.payouts WHERE group_id=p_group_id;
+DELETE FROM public.groups WHERE id=p_group_id;
+RETURN jsonb_build_object('group_id',p_group_id,'deleted',true);
+END;$;
 
 CREATE OR REPLACE FUNCTION public.join_group(p_group_id uuid,p_slot_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
