@@ -45,7 +45,7 @@ export async function GET() {
     const totalExpected = rows.reduce((sum, r) => sum + r.expectedAmount, 0)
     const totalReceived = paid.reduce((sum, r) => sum + r.fundedAmount, 0)
     const next = pending.find((r) => new Date(r.scheduledDate) >= new Date(new Date().setHours(0, 0, 0, 0))) ?? null
-    return NextResponse.json({ authenticated: true, rows, summary: { totalExpected, totalReceived, pendingExpected: pending.reduce((sum, r) => sum + r.expectedAmount, 0), failedCount: failed.length, paidCount: paid.length, pendingCount: pending.length }, next })
+    return NextResponse.json({ authenticated: true, rows, summary: { totalExpected, totalReceived, pendingExpected: pending.reduce((sum, r) => sum + r.expectedAmount, 0), failedCount: failed.length, paidCount: paid.length, pendingCount: pending.length }, next },{headers:{'Cache-Control':'private, max-age=5, stale-while-revalidate=15'}})
   } catch (error) {
     console.error('Payouts data error:', error)
     return NextResponse.json({ authenticated: true, error: 'Unable to load payouts' }, { status: 500 })
