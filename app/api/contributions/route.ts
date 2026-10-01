@@ -84,7 +84,7 @@ export async function GET() {
     const sum = (items: typeof rows) => items.reduce((total, row) => total + row.amount, 0)
     const allScheduled = sum(rows); const completedTotal = sum(completed); const upcomingTotal = sum(upcoming); const missedTotal = sum(missed); const thisMonthTotal = sum(rows.filter((row) => row.isCurrentMonth)); const progress = allScheduled ? Math.min(100, Math.round((completedTotal / allScheduled) * 100)) : 0
 
-    return NextResponse.json({ authenticated: true, rows, summary: { total: allScheduled, thisMonth: thisMonthTotal, upcoming: upcomingTotal, completed: completedTotal, missed: missedTotal, progress }, recoveryCases: activeRecovery })
+    return NextResponse.json({ authenticated: true, rows, summary: { total: allScheduled, thisMonth: thisMonthTotal, upcoming: upcomingTotal, completed: completedTotal, missed: missedTotal, progress }, recoveryCases: activeRecovery },{headers:{'Cache-Control':'private, max-age=5, stale-while-revalidate=15'}})
   } catch (error) {
     console.error('Contributions data error:', error)
     return NextResponse.json({ authenticated: true, error: 'Unable to load contributions' }, { status: 500 })
