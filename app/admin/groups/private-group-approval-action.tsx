@@ -1,0 +1,7 @@
+'use client'
+import { useState } from 'react'
+export function PrivateGroupApprovalAction({groupId,full}:{groupId:string;full:boolean}){
+ const [loading,setLoading]=useState(false),[message,setMessage]=useState('')
+ async function approve(){if(!full)return;if(!confirm('Approve this full private group and make it live? Contributions and the payout cycle will begin after approval.'))return;setLoading(true);setMessage('');try{const r=await fetch('/api/admin/groups/approve-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({group_id:groupId})});const d=await r.json();if(!r.ok)throw new Error(d?.error||'Unable to approve group');setMessage('Approved — group is now live.');setTimeout(()=>location.reload(),700)}catch(e){setMessage(e instanceof Error?e.message:'Unable to approve group')}finally{setLoading(false)}}
+ return <div className="flex flex-col items-end gap-2"><button onClick={approve} disabled={!full||loading} className={full?'rounded-lg px-4 py-2 text-xs font-bold bg-[#16a34a] text-white':'rounded-lg px-4 py-2 text-xs font-bold bg-[#e4e9e6] text-[#7b8981] cursor-not-allowed'}>{loading?'Approving…':full?'Approve & Make Live':'Waiting for Full Group'}</button>{message&&<span className="text-[10px] font-semibold text-[#166534]">{message}</span>}</div>
+}
