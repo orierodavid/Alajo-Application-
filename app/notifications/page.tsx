@@ -5,7 +5,7 @@ import { UserPageShell } from '@/components/layout/user-page-shell'
 
 export default function NotificationsPage(){
  const[items,setItems]=useState<any[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState('')
- const load=()=>{setLoading(true);fetch('/api/notifications',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to load notifications');setItems(d.notifications??[])}).catch(e=>setError(e.message)).finally(()=>setLoading(false))}
+ const load=()=>{setLoading(true);fetch('/api/notifications',{cache:'default'}).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Unable to load notifications');setItems(d.notifications??[])}).catch(e=>setError(e.message)).finally(()=>setLoading(false))}
  useEffect(load,[])
  const markRead=async(id:string)=>{await fetch('/api/notifications',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});setItems(v=>v.map(n=>n.id===id?{...n,read_at:new Date().toISOString()}:n))}
  const markAll=async()=>{await fetch('/api/notifications',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({all:true})});setItems(v=>v.map(n=>({...n,read_at:new Date().toISOString()})))}
