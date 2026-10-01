@@ -15,7 +15,7 @@ export default function TransactionsPage(){
  const load=async(cursor?:string)=>{
   const params=new URLSearchParams({limit:'25'})
   if(cursor)params.set('cursor',cursor)
-  const r=await fetch(`/api/transactions?${params.toString()}`,{cache:'no-store'})
+  const r=await fetch(`/api/transactions?${params.toString()}`,{cache:'default'})
   const d=await r.json()
   if(!r.ok)throw new Error(d.error||'Unable to load transactions')
   return d as {transactions:Transaction[];pagination:Pagination}
