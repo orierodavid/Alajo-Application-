@@ -78,7 +78,7 @@ export async function GET(request: Request) {
         hasMore,
         nextCursor: hasMore && pageRows.length ? encodeCursor(pageRows[pageRows.length - 1]) : null,
       },
-    })
+    },{headers:{'Cache-Control':'private, max-age=5, stale-while-revalidate=15'}})
   } catch (error) {
     console.error('Transactions data error:', error)
     return NextResponse.json({ authenticated: true, error: 'Unable to load transactions' }, { status: 500 })
