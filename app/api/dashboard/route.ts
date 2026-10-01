@@ -90,7 +90,7 @@ export async function GET() {
       groups,
       payouts: (payoutResult.data ?? []).map((p) => { const g = Array.isArray(p.groups) ? p.groups[0] : p.groups; return { id: p.id, groupName: g?.name ?? 'Savings Group', periodNumber: p.period_number, scheduledDate: p.scheduled_date, expectedAmount: Number(p.expected_amount ?? 0), status: p.status, paidAt: p.paid_at } }),
       activity: (activityResult.data ?? []).map((t) => ({ id: t.id, type: t.type, status: t.status, amount: Number(t.amount ?? 0), currency: t.currency ?? 'NGN', description: t.description ?? t.type, createdAt: t.created_at })),
-    })
+    },{headers:{'Cache-Control':'private, max-age=5, stale-while-revalidate=15'}})
   } catch (error) {
     console.error('Dashboard data error:', error)
     return NextResponse.json({ authenticated: true, error: 'Unable to load dashboard data' }, { status: 500 })
