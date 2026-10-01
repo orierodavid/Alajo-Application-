@@ -6,7 +6,7 @@ export function DeleteGroupButton({ groupId }: { groupId: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   async function remove() {
-    if (!confirm('Delete this group? This is only available before the group closes.')) return
+    if (!confirm('Delete this group? This permanently removes the group and its group-specific records. This cannot be undone.')) return
     setLoading(true); setError('')
     try {
       const response = await fetch(`/api/admin/groups/${groupId}`, { method: 'DELETE' })
